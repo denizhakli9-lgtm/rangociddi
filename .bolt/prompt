@@ -1,0 +1,339 @@
+RANGO – MASTER PROJECT GUIDELINES
+
+1. PROJECT VISION AND BRAND IDENTITY
+
+You are developing RANGO, a scalable technology company building a modern, premium, and comprehensive service discovery and appointment booking ecosystem.
+
+RANGO is the parent company and technology brand.
+
+"Hizmet Burada" is the consumer-facing application brand for the Turkish market.
+
+Our long-term vision is to become one of the leading service booking platforms in Türkiye and eventually expand internationally.
+
+Do not think of this project as just a salon booking application. Build it as a multi-category service marketplace that can support different industries, business types, and service providers.
+
+2. CORE PRODUCT OBJECTIVE
+
+Create a platform where customers can discover, compare, book, and pay for personal services through one application.
+
+Initial service categories include:
+
+- Barbershops
+- Hair salons
+- Beauty centers
+- Spas and massage centers
+- Tattoo studios
+- Nail and skincare services
+- Personal care services
+- Other non-medical personal services
+
+The system must support adding unlimited new service categories without requiring major architectural changes.
+
+The platform must be suitable for both men and women.
+
+3. DESIGN AND USER EXPERIENCE
+
+Maintain a premium, modern, elegant, and professional technology brand identity.
+
+Design principles:
+
+- Clean and intuitive interfaces.
+- Premium visual quality.
+- Consistent typography, spacing, and colors.
+- Modern layouts and carefully designed components.
+- Smooth interactions and subtle animations.
+- Fully responsive design.
+- Mobile-first experience.
+- Accessible navigation.
+- Professional loading, empty, success, and error states.
+
+Avoid generic templates, amateur designs, unnecessary visual clutter, and inconsistent components.
+
+Every screen must feel like part of one coherent, high-quality technology product.
+
+The Turkish application interface should use natural, professional Turkish language.
+
+Keep the architecture ready for English and additional languages in the future.
+
+4. TECHNICAL ARCHITECTURE
+
+Use the existing project architecture and preserve working functionality.
+
+Preferred technologies:
+
+- React and JSX
+- Tailwind CSS
+- Supabase for authentication, database, and backend services.
+- Lucide React for icons.
+
+Technical rules:
+
+- Use the existing project structure.
+- Use the @/ path alias for imports.
+- Prefer reusable components and modular architecture.
+- Keep business logic separate from UI components.
+- Avoid unnecessary dependencies.
+- Write clean, maintainable, production-quality code.
+- Use proper error handling.
+- Avoid duplicated code.
+- Never introduce breaking changes without a clear reason.
+- Optimize performance and database queries.
+
+Build the application with scalability and long-term maintenance in mind.
+
+5. USER ROLES AND AUTHORIZATION
+
+The platform must support separate user roles:
+
+CUSTOMER:
+
+- Create and manage an account.
+- Discover businesses.
+- Browse services and prices.
+- Select staff members when available.
+- View available appointment times.
+- Book appointments.
+- Pay booking deposits.
+- Cancel or reschedule appointments according to business policies.
+- View booking history.
+- Receive notifications.
+
+BUSINESS OWNER:
+
+- Register and manage a business.
+- Manage business information and locations.
+- Create and manage service categories.
+- Set service prices and durations.
+- Manage employees and staff availability.
+- Configure working hours and holidays.
+- Manage appointment requests.
+- Approve or reject same-day booking requests.
+- Track revenue and commissions.
+- View business analytics.
+- Manage cancellation and deposit policies.
+
+STAFF:
+
+- Access only authorized business information.
+- View assigned appointments.
+- Manage their availability according to permissions.
+- Have role-based access restrictions.
+
+ADMIN:
+
+- Manage customers and businesses.
+- Manage categories and platform settings.
+- Monitor appointments and transactions.
+- Manage commission settings.
+- Handle disputes and support requests.
+- Monitor platform performance.
+
+Implement secure role-based authorization.
+
+Never rely only on frontend role checks. Enforce permissions on the backend and through Supabase Row Level Security (RLS).
+
+6. APPOINTMENT MANAGEMENT SYSTEM
+
+The appointment system is the core of the entire platform.
+
+It must support:
+
+- Real-time availability.
+- Service duration calculations.
+- Staff-specific availability.
+- Business working hours.
+- Break times and holidays.
+- Appointment conflict prevention.
+- Booking confirmation.
+- Cancellation.
+- Rescheduling.
+- Appointment status tracking.
+
+Prevent double bookings using reliable database-level validation and transactional operations where appropriate.
+
+IMPORTANT SAME-DAY BOOKING RULE:
+
+If a customer wants to book an appointment for the current day, the appointment must require business owner approval before becoming confirmed.
+
+For future-day appointments, follow the standard booking confirmation process, subject to payment and availability rules.
+
+Clearly distinguish pending, confirmed, rejected, cancelled, completed, and refunded appointments.
+
+7. PAYMENT AND REVENUE MODEL
+
+RANGO operates primarily on a commission-based marketplace business model.
+
+The platform earns a commission from successful appointments.
+
+Customers pay a deposit during booking.
+
+Design the payment architecture to support Turkish payment providers such as iyzico and PayTR, subject to their marketplace and payment-splitting requirements.
+
+Payment architecture must support:
+
+- Deposit payments.
+- Platform commissions.
+- Business earnings.
+- Refunds.
+- Cancellation policies.
+- Payment status tracking.
+- Transaction history.
+- Secure payment verification.
+- Webhook processing.
+
+Never expose payment secrets or private API keys in frontend code.
+
+Never simulate a successful payment in production.
+
+Keep payment provider integrations modular so additional providers can be added later.
+
+Do not assume that a payment is successful based only on a frontend response.
+
+8. DATABASE AND DATA SECURITY
+
+Design a scalable and relational database structure.
+
+Important entities may include:
+
+- Users
+- User profiles
+- Businesses
+- Business locations
+- Business categories
+- Services
+- Employees
+- Employee permissions
+- Working hours
+- Availability
+- Appointments
+- Payments
+- Commissions
+- Refunds
+- Notifications
+- Reviews (future feature)
+- Platform settings
+
+Use appropriate relationships, indexes, constraints, and timestamps.
+
+Implement Supabase Row Level Security policies for all sensitive tables.
+
+Customers must never access another customer's private information.
+
+Businesses must only access their own authorized data.
+
+Administrative privileges must be protected.
+
+Never store passwords, payment card details, or sensitive credentials in ordinary database fields.
+
+9. NOTIFICATIONS
+
+Prepare the architecture for:
+
+- Appointment request notifications.
+- Booking confirmations.
+- Booking rejections.
+- Cancellation notifications.
+- Appointment reminders.
+- Payment confirmations.
+- Business notifications.
+
+Keep notification services modular so push notifications, email, and SMS can be integrated independently.
+
+10. FUTURE SCALABILITY AND ROADMAP
+
+Build the MVP carefully without blocking future development.
+
+The architecture should be ready for these future capabilities:
+
+PHASE 1 – MVP:
+
+- Customer registration and login.
+- Business registration and management.
+- Business discovery.
+- Service selection.
+- Staff selection.
+- Appointment calendar.
+- Booking and cancellation.
+- Same-day owner approval.
+- Deposit payments.
+- Basic customer and business dashboards.
+
+PHASE 2 – BUSINESS GROWTH:
+
+- Advanced business analytics.
+- Automated appointment reminders.
+- Customer reviews and ratings.
+- Favorites.
+- Promotional campaigns.
+- Discount codes.
+- Referral system.
+- Advanced business subscription plans.
+
+PHASE 3 – MARKETPLACE EXPANSION:
+
+- Multiple business locations.
+- Advanced search and filters.
+- Personalized recommendations.
+- Loyalty and rewards system.
+- Advanced reporting.
+- More payment providers.
+- Improved customer retention tools.
+
+PHASE 4 – INTERNATIONAL EXPANSION:
+
+- Multi-language infrastructure.
+- Multi-currency support.
+- Country-specific payment providers.
+- Regional tax and compliance configurations.
+- International business onboarding.
+
+Do not implement all future features prematurely. Build the foundations so they can be added without rebuilding the entire system.
+
+Customer ratings and reviews are NOT required for the initial MVP.
+
+11. DEVELOPMENT WORKFLOW
+
+Before making any changes:
+
+1. Inspect the existing application and understand its architecture.
+2. Review existing pages, components, database tables, and integrations.
+3. Identify existing functionality that must be preserved.
+4. Plan changes before implementing them.
+5. Make incremental, controlled improvements.
+6. Test affected functionality after each significant change.
+7. Check responsive behavior and error states.
+8. Verify that existing features continue working.
+
+Never unnecessarily rebuild working features.
+
+Never remove existing functionality without explicit approval.
+
+Never create fake data or placeholder interactions that appear to be real production functionality.
+
+If a backend integration is not configured, clearly identify it rather than pretending it works.
+
+12. PRODUCT DEVELOPMENT PHILOSOPHY
+
+Always think like a senior software architect, product manager, UX designer, and technology entrepreneur.
+
+Prioritize:
+
+1. Security.
+2. Reliability.
+3. Excellent user experience.
+4. Scalability.
+5. Performance.
+6. Maintainability.
+7. Commercial viability.
+
+Every development decision should support RANGO's long-term vision.
+
+Do not optimize only for making the application look finished. Build real, functional, secure, and production-ready features.
+
+When requirements are unclear, explain the potential consequences and recommend the most scalable solution before making major architectural decisions.
+
+FINAL PRINCIPLE:
+
+Build RANGO as if it will serve millions of customers and hundreds of thousands of businesses in the future.
+
+Think big, build carefully, and never sacrifice long-term architecture for short-term convenience.

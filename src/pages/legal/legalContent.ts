@@ -250,7 +250,7 @@ const cerez: LegalDocument = {
           ['Kayıt', 'Amaç', 'Tür', 'Süre'],
           [
             ['sb-…-auth-token', 'Oturumunuzun açık kalması ve güvenli kimlik doğrulama', 'Zorunlu', 'Çıkış yapana veya oturum süresi dolana kadar'],
-            ['hizmet-theme', 'Seçtiğiniz açık/koyu tema tercihi', 'İşlevsel (tercih)', 'Siz silene kadar'],
+            ['rango-theme', 'Koyu temayı seçtiyseniz bu tercihin hatırlanması (seçim yapmazsanız kayıt oluşmaz)', 'İşlevsel (tercih)', 'Siz silene kadar'],
             ['veyra.location', 'Seçtiğiniz semt/konum; yakınınızdaki işletmeleri göstermek için', 'İşlevsel (tercih)', 'Siz değiştirene veya silene kadar'],
             ['veyra.onboarded', 'Tanıtım ekranlarının tekrar gösterilmemesi', 'İşlevsel', 'Siz silene kadar'],
             ['rango.slogan', 'Her ziyarette farklı bir slogan gösterilmesi (kişisel veri içermez)', 'İşlevsel', 'Siz silene kadar'],

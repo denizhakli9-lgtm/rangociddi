@@ -2,11 +2,12 @@ import { useSyncExternalStore } from 'react';
 
 export type Theme = 'light' | 'dark';
 
-const STORAGE_KEY = 'hizmet-theme';
+// Only an explicit choice is stored; without one every visit starts in light mode (public/theme.js).
+const STORAGE_KEY = 'rango-theme';
 const EVENT = 'rango:theme';
 
 function read(): Theme {
-  return document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
+  return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
 }
 
 function subscribe(onChange: () => void) {
@@ -37,6 +38,6 @@ export function setTheme(theme: Theme) {
 }
 
 export function useTheme(): [Theme, (theme: Theme) => void] {
-  const theme = useSyncExternalStore(subscribe, read, () => 'dark' as Theme);
+  const theme = useSyncExternalStore(subscribe, read, () => 'light' as Theme);
   return [theme, setTheme];
 }

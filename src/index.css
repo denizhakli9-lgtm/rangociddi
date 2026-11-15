@@ -112,6 +112,20 @@
   :root[data-theme='light'] .card { box-shadow: 0 8px 32px -24px rgb(45 39 24 / 0.2); }
   :root[data-theme='light'] .eyebrow { color: #846719; }
   :focus-visible { outline: 2px solid #a38326; outline-offset: 4px; }
+  /* Soft cross-fade while switching light/dark (added briefly by src/lib/theme.ts). */
+  .theme-transition,
+  .theme-transition *,
+  .theme-transition *::before,
+  .theme-transition *::after {
+    transition-property: background-color, border-color, color, fill, stroke, box-shadow !important;
+    transition-duration: 400ms !important;
+    transition-timing-function: ease !important;
+  }
+  .theme-transition .theme-icon {
+    transition-property: transform, opacity, color !important;
+    transition-duration: 500ms !important;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
+  }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0.01ms !important;

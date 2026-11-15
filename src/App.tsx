@@ -4,6 +4,7 @@ import { CustomerLayout } from '@/components/layout/CustomerLayout';
 import { RequireAuth } from '@/components/layout/RequireAuth';
 import { PageLoader } from '@/components/ui/Feedback';
 import { ScrollToTop } from '@/components/ScrollToTop';
+import { CookieNotice } from '@/components/legal/CookieNotice';
 import Splash from '@/pages/Splash';
 import Login from '@/pages/auth/Login';
 import Home from '@/pages/customer/Home';
@@ -24,6 +25,7 @@ const Favorites = lazy(() => import('@/pages/customer/Favorites'));
 const Profile = lazy(() => import('@/pages/customer/Profile'));
 const SupportCenter = lazy(() => import('@/pages/support/SupportCenter'));
 const Notifications = lazy(() => import('@/pages/Notifications'));
+const LegalPage = lazy(() => import('@/pages/legal/LegalPage'));
 
 const OwnerArea = lazy(() => import('@/pages/owner/OwnerArea'));
 const AdminArea = lazy(() => import('@/pages/admin/AdminArea'));
@@ -56,6 +58,8 @@ export default function App() {
             <Route path="/destek" element={<RequireAuth><SupportCenter /></RequireAuth>} />
             <Route path="/profil" element={<RequireAuth><Profile /></RequireAuth>} />
             <Route path="/bildirimler" element={<RequireAuth><Notifications /></RequireAuth>} />
+            <Route path="/yasal" element={<Navigate to="/yasal/aydinlatma-metni" replace />} />
+            <Route path="/yasal/:slug" element={<LegalPage />} />
           </Route>
 
           <Route path="/isletme/*" element={<RequireAuth roles={['business']}><OwnerArea /></RequireAuth>} />
@@ -65,6 +69,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/kesfet" replace />} />
         </Routes>
       </Suspense>
+      <CookieNotice />
     </BrowserRouter>
   );
 }

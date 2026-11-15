@@ -8,11 +8,18 @@ export async function supportAction(action: string, thread?: string, text = '') 
   if (typeof data !== 'string') throw new Error('Invalid response');
   return data;
 }
-export async function requestAI(thread: string) {
-  const { data, error } = await supabase.functions.invoke('support-ai', { body: { thread } });
-  if (error || !data || typeof data.handoff !== 'boolean') {
-    await supportAction('handoff', thread);
-    return true;
-  }
-  return data.handoff as boolean;
+/**
+ * 'answered': the AI replied (or had nothing to do); 'handoff': the conversation was deliberately passed to the team;
+ * 'failed': the AI could not be reached, so the conversation was queued for the team. Never throws: the user's
+ * message is already saved when this runs.
+ */
+export type AIResult = 'answered' | 'handoff' | 'failed';
+export async function requestAI(thread: string): Promise<AIResult> {
+  try {
+    const { data, error } = await supabase.functions.invoke('support-ai', { body: { thread } });
+    if (!error && data && typeof data.handoff === 'boolean') return data.handoff ? 'handoff' : 'answered';
+  } catch { /* handled below */ }
+  // The server may already have moved the thread out of AI mode; the caller reloads the thread to show its real status.
+  try { await supportAction('handoff', thread); } catch { /* already queued or no longer in AI mode */ }
+  return 'failed';
 }

@@ -141,10 +141,16 @@ export interface Appointment {
   cancellation_reason: string | null;
   cancelled_at: string | null;
   reschedule_count: number;
+  /**
+   * Cancellation window snapshotted at booking time by the security-hardening migration.
+   * Undefined before that migration runs (and null on rows it could not backfill), so callers
+   * fall back to businesses.cancellation_hours.
+   */
+  cancellation_hours?: number | null;
   created_at: string;
-  businesses?: Pick<Business, 'id' | 'name' | 'slug' | 'cover_url' | 'address' | 'district' | 'city' | 'latitude' | 'longitude' | 'cancellation_hours' | 'phone'> | null;
+  businesses?: Pick<Business, 'id' | 'name' | 'slug' | 'cover_url' | 'address' | 'district' | 'city' | 'latitude' | 'longitude' | 'cancellation_hours' | 'phone'> & Partial<Pick<Business, 'owner_id'>> | null;
   profiles?: Pick<Profile, 'full_name' | 'phone' | 'email' | 'gender'> | null;
-  payments?: Pick<Payment, 'id' | 'status' | 'amount' | 'card_last4'>[];
+  payments?: Pick<Payment, 'id' | 'status' | 'amount' | 'card_last4' | 'provider_payment_id'>[];
   reviews?: { id: string }[];
 }
 
@@ -170,7 +176,9 @@ export interface Review {
   id: string;
   appointment_id: string;
   business_id: string;
-  customer_id: string;
+  /** Not selected by the public review list (src/lib/api.ts fetchBusinessReviews). */
+  customer_id?: string;
+  employee_id?: string | null;
   rating: number;
   comment: string;
   reviewer_name: string;

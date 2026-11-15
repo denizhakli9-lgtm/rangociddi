@@ -75,6 +75,11 @@ export const tr = {
   refundStatus: { pending: 'Bekliyor', approved: 'Onaylandı', rejected: 'Reddedildi' },
   commissionStatus: { pending: 'Tahsil Edilmedi', invoiced: 'Faturalandı', paid: 'Tahsil Edildi' },
   role: { customer: 'Müşteri', business: 'İşletme Sahibi', admin: 'Yönetici' },
+  demo: {
+    badge: 'Örnek işletme',
+    notBookable: 'Bu bir örnek işletmedir, randevu alınamaz.',
+    explanation: 'Bu sayfa, Rango’nun nasıl çalıştığını göstermek için hazırlanmış örnek bir işletmeye aittir. Hizmet ve fiyat bilgileri temsilidir; iletişim bilgileri gösterilmez.',
+  },
   errors: {
     generic: 'Bir sorun oluştu. Lütfen tekrar deneyin.',
     network: 'Bağlantı kurulamadı. İnternet bağlantınızı kontrol edin.',
@@ -93,6 +98,11 @@ export const tr = {
     VEYRA_ALREADY_REVIEWED: 'Bu randevuyu zaten değerlendirdiniz.',
     VEYRA_FORBIDDEN: 'Bu işlem için yetkiniz yok.',
     VEYRA_INVALID_IBAN: 'IBAN geçersiz. TR ile başlayan 26 haneli IBAN numaranızı kontrol edin.',
+    VEYRA_BOOKING_CLOSED: 'Bu işletme şu anda randevu kabul etmiyor.',
+    VEYRA_LIMIT: 'Aynı anda oluşturabileceğiniz randevu sınırına ulaştınız. Bekleyen ödemelerinizi tamamlayın, mevcut randevularınızdan birini iptal edin veya daha sonra tekrar deneyin.',
+    VEYRA_INVALID_IMAGE: 'Görsel okunamadı. Lütfen JPG, PNG veya WebP bir fotoğraf seçin.',
+    VEYRA_ACTIVE_APPOINTMENTS: 'Yaklaşan veya ödeme/onay bekleyen randevunuz var. Hesabınızı silmeden önce bu randevuları iptal edin ya da tamamlanmasını bekleyin.',
+    VEYRA_OPEN_REFUND: 'Sonuçlanmamış bir iade talebiniz var. İade süreci tamamlandıktan sonra hesabınızı silebilirsiniz.',
     invalidCredentials: 'E-posta veya şifre hatalı.',
     userExists: 'Bu e-posta ile kayıt oluşturulamadı. Giriş yapmayı deneyin.',
     weakPassword: 'Şifre en az 8 karakter olmalıdır.',

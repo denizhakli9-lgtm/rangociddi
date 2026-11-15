@@ -48,7 +48,11 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     async (loc: UserLocation) => {
       setLoc(loc);
       setHasChosen(true);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(loc));
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(loc));
+      } catch {
+        /* storage blocked or full: the choice still applies for this visit */
+      }
       if (profile) {
         const { error } = await supabase
           .from('profiles')

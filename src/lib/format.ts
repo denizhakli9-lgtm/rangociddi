@@ -1,9 +1,18 @@
 export const TZ = 'Europe/Istanbul';
 
-const currency = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 2, minimumFractionDigits: 0 });
+const currencyWhole = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', minimumFractionDigits: 0, maximumFractionDigits: 0 });
+const currencyKurus = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+/** ₺150 for whole lira amounts, ₺150,50 when there are kuruş (never ₺150,5). */
 export function formatTRY(value: number | string | null | undefined): string {
-  return currency.format(Number(value ?? 0));
+  const kurus = toKurus(value);
+  return (kurus % 100 === 0 ? currencyWhole : currencyKurus).format(kurus / 100 || 0);
+}
+
+/** Converts a lira amount to integer kuruş (avoids floating-point drift in money maths). */
+export function toKurus(value: number | string | null | undefined): number {
+  const n = Number(value ?? 0);
+  return Number.isFinite(n) ? Math.round(n * 100) : 0;
 }
 
 export function formatDate(iso: string, opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' }): string {
@@ -91,7 +100,16 @@ export function slugify(text: string): string {
     .slice(0, 60);
 }
 
+/**
+ * Deposit preview with the same result as the server (create_appointment):
+ * percentage → round(price * value / 100, 2), fixed → least(value, price).
+ * Integer kuruş and basis points keep half-up rounding identical to Postgres numeric.
+ */
 export function depositFor(price: number, type: 'percentage' | 'fixed', value: number): number {
-  if (type === 'percentage') return Math.round(price * value) / 100;
-  return Math.min(value, price);
+  const cents = toKurus(price);
+  if (type === 'percentage') {
+    const bp = Math.round(Number(value) * 100);
+    return Math.round((cents * bp) / 10000) / 100;
+  }
+  return Math.min(toKurus(value), cents) / 100;
 }

@@ -1,6 +1,7 @@
 import { supabase, MEDIA_BUCKET } from '@/lib/supabase';
 import type { Business, Category, Employee, PlatformSettings, Review, Service, Slot, WorkingHours } from '@/lib/types';
 
+/** Keep owner_id: isDemoBusiness() (src/lib/demo.ts) uses owner_id === null to mark seeded sample businesses. */
 export const BUSINESS_LIST_COLUMNS =
   'id, owner_id, category_id, name, slug, description, address, district, city, latitude, longitude, logo_url, cover_url, gallery, gender_focus, deposit_type, deposit_value, cancellation_hours, auto_confirm, status, is_verified, is_featured, rating_avg, review_count, booking_count, min_price, created_at, phone, email, categories(name, slug, icon)';
 
@@ -116,16 +117,22 @@ export async function fetchBusinessDetail(slug: string): Promise<BusinessDetail 
   };
 }
 
+/**
+ * Public review columns. customer_id is deliberately left out: the list is read by guests, and a
+ * later column-level REVOKE on reviews.customer_id must not break /i/<slug>.
+ */
+const PUBLIC_REVIEW_COLUMNS = 'id, appointment_id, business_id, employee_id, rating, comment, reviewer_name, service_name, owner_reply, is_hidden, created_at';
+
 export async function fetchBusinessReviews(businessId: string, limit = 20): Promise<Review[]> {
   const { data, error } = await supabase
     .from('reviews')
-    .select('*')
+    .select(PUBLIC_REVIEW_COLUMNS)
     .eq('business_id', businessId)
     .eq('is_hidden', false)
     .order('created_at', { ascending: false })
     .limit(limit);
   if (error) throw error;
-  return (data ?? []) as Review[];
+  return (data ?? []) as unknown as Review[];
 }
 
 export async function fetchSlots(serviceId: string, employeeId: string | null, date: string, excludeAppointment?: string): Promise<Slot[]> {

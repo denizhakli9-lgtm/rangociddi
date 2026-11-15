@@ -72,18 +72,19 @@ export default function SearchPage() {
           e.preventDefault();
           update({ q: text.trim() || null });
         }}
+        role="search"
         className="flex items-center gap-2"
       >
         <div className="relative flex-1">
           <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-mist-2" />
-          <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Hizmet, salon veya semt" className="h-12 w-full rounded-full border border-line bg-coal pl-11 pr-10 text-sm text-white placeholder:text-mist-3 focus:border-gold-500/60 focus:outline-none" />
+          <input aria-label="İşletme, hizmet veya semt ara" value={text} onChange={(e) => setText(e.target.value)} placeholder="Hizmet, salon veya semt" className="h-12 w-full rounded-full border border-line bg-coal pl-11 pr-10 text-sm text-white placeholder:text-mist-3 focus:border-gold-500/60 focus:outline-none" />
           {text && (
             <button type="button" onClick={() => { setText(''); update({ q: null }); }} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-mist-2 hover:text-white" aria-label="Temizle">
               <X className="h-4 w-4" />
             </button>
           )}
         </div>
-        <button type="button" onClick={() => setFiltersOpen(true)} className="relative flex h-12 items-center gap-2 rounded-full border border-line bg-coal px-4 text-sm text-white transition hover:border-gold-500/40">
+        <button type="button" onClick={() => setFiltersOpen(true)} aria-label={activeFilters > 0 ? `Filtreler (${activeFilters} etkin)` : 'Filtreler'} className="relative flex h-12 items-center gap-2 rounded-full border border-line bg-coal px-4 text-sm text-white transition hover:border-gold-500/40">
           <SlidersHorizontal className="h-4 w-4 text-gold-400" />
           <span className="hidden sm:inline">Filtreler</span>
           {activeFilters > 0 && <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gold-500 text-[10px] font-bold text-ink">{activeFilters}</span>}
@@ -100,18 +101,18 @@ export default function SearchPage() {
       <div className="mb-5 mt-6 flex items-center justify-between gap-3">
         <p className="text-sm text-mist">{loading ? 'Yükleniyor...' : `${total} işletme`}</p>
         <div className="flex items-center gap-2">
-          <select value={sort} onChange={(e) => update({ sirala: e.target.value })} className="h-9 rounded-full border border-line bg-coal px-3 text-xs text-white focus:border-gold-500/60 focus:outline-none">
+          <select aria-label="Sıralama" value={sort} onChange={(e) => update({ sirala: e.target.value })} className="h-9 rounded-full border border-line bg-coal px-3 text-xs text-white focus:border-gold-500/60 focus:outline-none">
             {SORTS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
           <div className="hidden rounded-full border border-line bg-coal p-0.5 sm:flex">
-            <button onClick={() => setView('grid')} className={`rounded-full p-1.5 ${view === 'grid' ? 'bg-gold-500 text-ink' : 'text-mist'}`} aria-label="Izgara görünümü"><LayoutGrid className="h-4 w-4" /></button>
-            <button onClick={() => setView('row')} className={`rounded-full p-1.5 ${view === 'row' ? 'bg-gold-500 text-ink' : 'text-mist'}`} aria-label="Liste görünümü"><List className="h-4 w-4" /></button>
+            <button type="button" onClick={() => setView('grid')} className={`rounded-full p-1.5 ${view === 'grid' ? 'bg-gold-500 text-ink' : 'text-mist'}`} aria-label="Izgara görünümü" aria-pressed={view === 'grid'}><LayoutGrid className="h-4 w-4" /></button>
+            <button type="button" onClick={() => setView('row')} className={`rounded-full p-1.5 ${view === 'row' ? 'bg-gold-500 text-ink' : 'text-mist'}`} aria-label="Liste görünümü" aria-pressed={view === 'row'}><List className="h-4 w-4" /></button>
           </div>
         </div>
       </div>
 
       {error ? (
-        <ErrorState onRetry={reload} error={error} />
+        <ErrorState onRetry={reload} error={import.meta.env.DEV ? error : undefined} />
       ) : loading ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{Array.from({ length: 6 }).map((_, i) => <div key={i} className="skeleton aspect-[4/3]" />)}</div>
       ) : results.length === 0 ? (
@@ -185,6 +186,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={active}
       className={`shrink-0 rounded-full border px-4 py-2 text-xs font-medium transition ${active ? 'border-gold-500 bg-gold-500 text-ink' : 'border-line bg-coal text-mist hover:border-gold-500/40 hover:text-white'}`}
     >
       {children}

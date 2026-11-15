@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { MapPin, Star } from 'lucide-react';
 import { initials } from '@/lib/format';
+import { safeImageUrl } from '@/lib/safeUrl';
 
 export function Logo({ size = 'md', withMark = true }: { size?: 'sm' | 'md' | 'lg'; withMark?: boolean }) {
   const text = { sm: 'text-xl', md: 'text-2xl', lg: 'text-5xl' }[size];
@@ -56,10 +57,12 @@ export function Stars({ value, size = 'h-3.5 w-3.5', onChange }: { value: number
 }
 
 export function Avatar({ name, src, size = 'h-10 w-10 text-sm' }: { name: string; src?: string | null; size?: string }) {
-  if (src) return <img src={src} alt={name} loading="lazy" decoding="async" className={`${size} shrink-0 rounded-full object-cover`} />;
+  // Avatar URLs are user-writable; only trusted storage/seed hosts are rendered, anything else falls back to initials.
+  const safe = safeImageUrl(src);
+  if (safe) return <img src={safe} alt={name} loading="lazy" decoding="async" className={`${size} shrink-0 rounded-full object-cover`} />;
   return (
     <span className={`${size} flex shrink-0 items-center justify-center rounded-full border border-gold-500/40 bg-gradient-to-br from-gold-500/20 to-coal-3 font-display font-semibold text-gold-300`}>
-      {initials(name) || 'H'}
+      {initials(name) || 'R'}
     </span>
   );
 }

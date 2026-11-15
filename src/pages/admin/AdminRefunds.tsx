@@ -8,16 +8,22 @@ import { useToast } from '@/contexts/ToastContext';
 import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Field';
 import { Modal } from '@/components/ui/Modal';
-import { Badge } from '@/components/ui/Badge';
+import { Badge, TestBadge } from '@/components/ui/Badge';
 import { Segmented } from '@/components/ui/Brand';
 import { EmptyState, ErrorState, SkeletonList } from '@/components/ui/Feedback';
 import { PageHeader } from '@/components/layout/PageHeader';
 import type { RefundRequest, RefundStatus } from '@/lib/types';
+import { isTestPayment } from '@/pages/owner/ownerApi';
 
-type Row = RefundRequest & { businesses: { name: string } | null; profiles: { full_name: string; email: string | null } | null; appointments: { booking_code: string; service_name: string; starts_at: string } | null };
+type Row = RefundRequest & {
+  businesses: { name: string } | null;
+  profiles: { full_name: string; email: string | null } | null;
+  appointments: { booking_code: string; service_name: string; starts_at: string } | null;
+  payment?: { provider_payment_id: string | null; status: string } | null;
+};
 
 const TONE = { pending: 'warning', approved: 'success', rejected: 'error' } as const;
-const LABEL: Record<RefundStatus, string> = { pending: 'Bekliyor', approved: 'İade edildi', rejected: 'Reddedildi' };
+const LABEL: Record<RefundStatus, string> = { pending: 'Bekliyor', approved: 'Onaylandı', rejected: 'Reddedildi' };
 
 export default function AdminRefunds() {
   const { toast } = useToast();
@@ -27,16 +33,30 @@ export default function AdminRefunds() {
   const [busy, setBusy] = useState(false);
 
   const { data, loading, error, reload } = useAsync(async () => {
-    const { data: rows, error: err } = await supabase
-      .from('refund_requests')
-      .select('*, businesses(name), profiles!refund_requests_customer_id_fkey(full_name, email), appointments(booking_code, service_name, starts_at)')
-      .order('created_at', { ascending: false });
+    const [{ data: rows, error: err }, settings] = await Promise.all([
+      supabase
+        .from('refund_requests')
+        .select(
+          '*, businesses(name), profiles!refund_requests_customer_id_fkey(full_name, email), appointments(booking_code, service_name, starts_at), payment:payments(provider_payment_id, status)',
+        )
+        .order('created_at', { ascending: false }),
+      // Only used to label test payments; the page still works if it cannot be read.
+      supabase.from('platform_settings').select('payment_mode').eq('id', 1).maybeSingle(),
+    ]);
     if (err) throw err;
-    return (rows ?? []) as Row[];
+    const paymentMode = settings.error ? null : ((settings.data as { payment_mode?: string } | null)?.payment_mode ?? null);
+    return { rows: (rows ?? []) as Row[], paymentMode };
   }, []);
 
-  const list = (data ?? []).filter((r) => r.status === tab);
-  const count = (s: RefundStatus) => (data ?? []).filter((r) => r.status === s).length;
+  const rows = data?.rows ?? [];
+  const list = rows.filter((r) => r.status === tab);
+  const count = (s: RefundStatus) => rows.filter((r) => r.status === s).length;
+  const isTest = (r: Row) => isTestPayment(r.payment, data?.paymentMode);
+
+  const closeModal = () => {
+    setOpen(null);
+    setNote('');
+  };
 
   const resolve = async () => {
     if (!open) return;
@@ -44,15 +64,25 @@ export default function AdminRefunds() {
     const { error: err } = await supabase.rpc('admin_resolve_refund', { p_request: open.row.id, p_approve: open.approve, p_note: note.trim() });
     setBusy(false);
     if (err) return toast(friendlyError(err), 'error');
-    toast(open.approve ? 'İade onaylandı ve müşteriye bildirildi.' : 'İade talebi reddedildi.', 'success');
-    setOpen(null);
-    setNote('');
+    toast(
+      !open.approve
+        ? 'İade talebi reddedildi.'
+        : isTest(open.row)
+          ? 'İade kaydı tamamlandı. Test ödemesi olduğu için karta para gönderilmedi.'
+          : 'İade onaylandı; ödeme kuruluşu onayı bekleniyor.',
+      'success',
+    );
+    closeModal();
     reload();
   };
 
   return (
     <div>
-      <PageHeader eyebrow="İadeler" title="İade talepleri" text="Politika kapsamındaki iptaller ve işletme kaynaklı iptaller otomatik olarak iade talebi oluşturur. Onaylanan iadeler test modunda anında tamamlanır." />
+      <PageHeader
+        eyebrow="İadeler"
+        title="İade talepleri"
+        text="Politika kapsamındaki iptaller ve işletme kaynaklı iptaller otomatik olarak iade talebi oluşturur. Test ödemelerinde karttan tahsilat yapılmadığı için iade yalnızca kayıtta tamamlanır; karta para gönderilmez."
+      />
       <div className="mb-6">
         <Segmented<RefundStatus>
           value={tab}
@@ -78,6 +108,7 @@ export default function AdminRefunds() {
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="font-medium text-white">{r.profiles?.full_name ?? 'Müşteri'}</p>
                   <Badge tone={TONE[r.status]}>{LABEL[r.status]}</Badge>
+                  {isTest(r) && <TestBadge />}
                 </div>
                 <p className="mt-1 text-xs text-mist-2">
                   {r.businesses?.name} · {r.appointments?.service_name} · <span className="font-mono text-gold-300">{r.appointments?.booking_code}</span>
@@ -106,12 +137,12 @@ export default function AdminRefunds() {
 
       <Modal
         open={!!open}
-        onClose={() => setOpen(null)}
+        onClose={closeModal}
         title={open?.approve ? 'İadeyi onayla' : 'İade talebini reddet'}
         subtitle={open ? `${formatTRY(open.row.amount)} · ${open.row.profiles?.full_name ?? ''}` : ''}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setOpen(null)}>
+            <Button variant="ghost" onClick={closeModal}>
               Vazgeç
             </Button>
             <Button variant={open?.approve ? 'gold' : 'danger'} loading={busy} onClick={resolve}>
@@ -120,7 +151,15 @@ export default function AdminRefunds() {
           </>
         }
       >
-        <Textarea label="Not (isteğe bağlı)" value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} hint="Müşteriye iletilen bildirimde yer alır." />
+        <div className="space-y-4">
+          {open?.approve && isTest(open.row) && (
+            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-warning-500/30 bg-warning-900/40 p-3 text-xs leading-relaxed text-warning-300">
+              <TestBadge />
+              <span>Bu bir test ödemesi. Müşterinin kartından tahsilat yapılmadığı için karta para gönderilmez; iade yalnızca kayıtta tamamlanır.</span>
+            </div>
+          )}
+          <Textarea id="refund-note" label="Not (isteğe bağlı)" value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} hint="Müşteriye iletilen bildirimde yer alır." />
+        </div>
       </Modal>
     </div>
   );

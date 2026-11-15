@@ -23,7 +23,12 @@ export default function OwnerAppointments() {
   const [open, setOpen] = useState<Appointment | null>(null);
 
   const { data, loading, error, reload } = useAsync(
-    () => fetchOwnerAppointments(business.id, { from: istanbulDayStart(addDays(dateKey(), -120)), to: istanbulDayStart(addDays(dateKey(), 120)) }),
+    () =>
+      fetchOwnerAppointments(
+        business.id,
+        { from: istanbulDayStart(addDays(dateKey(), -120)), to: istanbulDayStart(addDays(dateKey(), 120)) },
+        { includeAllPending: true },
+      ),
     [business.id],
   );
 
@@ -76,8 +81,14 @@ export default function OwnerAppointments() {
       </div>
 
       <div className="mb-6 grid gap-3 sm:grid-cols-[1fr_220px]">
-        <Input placeholder="Müşteri, hizmet veya rezervasyon kodu" value={query} onChange={(e) => setQuery(e.target.value)} icon={<Search className="h-4 w-4" />} />
-        <Select value={employee} onChange={(e) => setEmployee(e.target.value)} aria-label="Uzman">
+        <Input
+          aria-label="Randevu ara"
+          placeholder="Müşteri, hizmet veya rezervasyon kodu"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          icon={<Search className="h-4 w-4" />}
+        />
+        <Select value={employee} onChange={(e) => setEmployee(e.target.value)} aria-label="Uzmana göre filtrele">
           <option value="">Tüm uzmanlar</option>
           {employees.map((n) => (
             <option key={n} value={n}>

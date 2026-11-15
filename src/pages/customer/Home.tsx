@@ -30,12 +30,15 @@ export default function Home() {
   const upcomingQ = useAsync(() => fetchUpcomingAppointment(profile?.role === 'customer' ? profile.id : undefined), [profile?.id, profile?.role]);
   const [availabilityVersion, setAvailabilityVersion] = useState(0);
   useEffect(() => {
-    const timer = window.setInterval(() => setAvailabilityVersion((v) => v + 1), 60000);
+    // Refresh "free today" every 5 minutes, and only while the tab is visible (each refresh costs slot RPCs).
     const refresh = () => { if (document.visibilityState === 'visible') setAvailabilityVersion((v) => v + 1); };
+    const timer = window.setInterval(refresh, 300000);
     document.addEventListener('visibilitychange', refresh);
     return () => { window.clearInterval(timer); document.removeEventListener('visibilitychange', refresh); };
   }, []);
-  const availabilityQ = useAsync(() => checkTodayAvailability(todayQ.items), [todayQ.items, availabilityVersion]);
+  // Wait for the "today" list before checking slots: running on the initial empty list would
+  // resolve to an empty Map and show the empty state instead of skeletons during the real check.
+  const availabilityQ = useAsync(async () => (todayQ.loading ? null : checkTodayAvailability(todayQ.items)), [todayQ.items, todayQ.loading, availabilityVersion]);
   const { ids, toggle } = useFavorites();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
@@ -84,7 +87,7 @@ export default function Home() {
       </section>
       <HomeBusinessSection {...shared} {...featuredQ} title="Özenle seçilen adresler" description="Öne çıkan işletmeleri keşfet. Sana iyi gelecek bir yer bul." href="/ara?sirala=populer" />
       <HomeBusinessSection {...shared} {...nearbyQ} title="Yakınında keşfet" description={hasChosen ? `${location.label} çevresindeki adresler · Mesafeler yaklaşık olarak gösterilir.` : 'Şimdilik İzmir merkezine göre sıralanıyor. Konumunu seçerek kişiselleştir.'} href="/ara?sirala=mesafe" />
-      <HomeBusinessSection {...shared} title="Bugün kendine zaman ayır" description="Kontrol edilen boş saatler · Aynı gün randevuları işletme onayı gerektirir." href="/ara?bugun=1" items={todayQ.items.filter((i) => availabilityQ.data?.has(i.business.id))} loading={todayQ.loading || availabilityQ.loading} error={todayQ.error || availabilityQ.error} reload={() => { todayQ.reload(); availabilityQ.reload(); }} availability={availabilityQ.data ?? undefined} />
+      <HomeBusinessSection {...shared} title="Bugün kendine zaman ayır" description="Kontrol edilen boş saatler · Aynı gün randevuları işletme onayı gerektirir." href="/ara?bugun=1" items={todayQ.items.filter((i) => availabilityQ.data?.has(i.business.id))} loading={todayQ.loading || (!availabilityQ.data && !availabilityQ.error)} error={todayQ.error || availabilityQ.error} reload={() => { todayQ.reload(); availabilityQ.reload(); }} availability={availabilityQ.data ?? undefined} />
       <HomeBusinessSection {...shared} {...popularQ} title="Çok tercih edilenler" description="Randevu sayısına göre popüler adresler. Varsa gerçek müşteri puanlarını görebilirsin." href="/ara?sirala=populer" />
       <HomeBusinessSection {...shared} {...ratedQ} items={ratedQ.items.filter((i) => i.business.review_count > 0)} title="Deneyimiyle öne çıkanlar" description="Gerçek müşteri değerlendirmelerinde 4 ve üzeri puan alan işletmeler." href="/ara?sirala=puan" />
       <HomeBusinessSection {...shared} {...recommendationsQ} title={gender ? 'Senin için seçtiklerimiz' : 'Keşfetmeye devam et'} description={gender ? 'Profil tercihin ve seçilen konuma göre önerilen adresler.' : 'Seçilen konumun çevresinde yeni bir bakım deneyimi keşfet.'} href="/ara?sirala=mesafe" />

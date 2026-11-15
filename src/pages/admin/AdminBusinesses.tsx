@@ -4,14 +4,15 @@ import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAsync } from '@/lib/useAsync';
 import { BUSINESS_LIST_COLUMNS } from '@/lib/api';
-import { formatDate } from '@/lib/format';
+import { formatDate, formatTRY } from '@/lib/format';
 import { friendlyError } from '@/lib/errors';
+import { safeImageUrl } from '@/lib/safeUrl';
 import { useToast } from '@/contexts/ToastContext';
 import { Button } from '@/components/ui/Button';
 import { Input, Toggle } from '@/components/ui/Field';
 import { Modal } from '@/components/ui/Modal';
 import { Segmented } from '@/components/ui/Brand';
-import { BusinessStatusBadge } from '@/components/ui/Badge';
+import { Badge, BusinessStatusBadge } from '@/components/ui/Badge';
 import { EmptyState, ErrorState, SkeletonList } from '@/components/ui/Feedback';
 import { PageHeader } from '@/components/layout/PageHeader';
 import type { Business, BusinessStatus, Profile } from '@/lib/types';
@@ -52,7 +53,7 @@ export default function AdminBusinesses() {
         />
       </div>
       <div className="mb-6 max-w-md">
-        <Input placeholder="İşletme adı veya ilçe" value={query} onChange={(e) => setQuery(e.target.value)} icon={<Search className="h-4 w-4" />} />
+        <Input aria-label="İşletme ara" placeholder="İşletme adı veya ilçe" value={query} onChange={(e) => setQuery(e.target.value)} icon={<Search className="h-4 w-4" />} />
       </div>
 
       {loading && !data ? (
@@ -63,22 +64,26 @@ export default function AdminBusinesses() {
         <EmptyState icon={<Store className="h-6 w-6" />} title="Bu listede işletme yok" />
       ) : (
         <div className="card divide-y divide-line-soft overflow-hidden">
-          {list.map((b) => (
-            <button key={b.id} type="button" onClick={() => setOpen(b)} className="flex w-full items-center gap-4 px-5 py-4 text-left transition hover:bg-white/[0.03]">
-              <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-line bg-coal-3">{(b.logo_url || b.cover_url) && <img src={b.logo_url || b.cover_url || ''} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />}</div>
-              <div className="min-w-0 flex-1">
-                <p className="flex items-center gap-1.5 truncate font-medium text-white">
-                  {b.name}
-                  {b.is_verified && <BadgeCheck className="h-4 w-4 shrink-0 text-gold-400" />}
-                  {b.is_featured && <Sparkles className="h-3.5 w-3.5 shrink-0 text-gold-300" />}
-                </p>
-                <p className="truncate text-xs text-mist-2">
-                  {b.categories?.name} · {b.district} · {formatDate(b.created_at, { day: 'numeric', month: 'short', year: 'numeric' })}
-                </p>
-              </div>
-              <BusinessStatusBadge status={b.status} />
-            </button>
-          ))}
+          {list.map((b) => {
+            const thumb = safeImageUrl(b.logo_url) ?? safeImageUrl(b.cover_url);
+            return (
+              <button key={b.id} type="button" onClick={() => setOpen(b)} className="flex w-full items-center gap-4 px-5 py-4 text-left transition hover:bg-white/[0.03]">
+                <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-line bg-coal-3">{thumb && <img src={thumb} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />}</div>
+                <div className="min-w-0 flex-1">
+                  <p className="flex items-center gap-1.5 truncate font-medium text-white">
+                    {b.name}
+                    {b.is_verified && <BadgeCheck className="h-4 w-4 shrink-0 text-gold-400" />}
+                    {b.is_featured && <Sparkles className="h-3.5 w-3.5 shrink-0 text-gold-300" />}
+                    {!b.owner_id && <Badge>Örnek işletme</Badge>}
+                  </p>
+                  <p className="truncate text-xs text-mist-2">
+                    {b.categories?.name} · {b.district} · {formatDate(b.created_at, { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </p>
+                </div>
+                <BusinessStatusBadge status={b.status} />
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -102,6 +107,7 @@ function BusinessModal({ business, onClose, onSaved }: { business: Business; onC
   const [verified, setVerified] = useState(business.is_verified);
   const [featured, setFeatured] = useState(business.is_featured);
   const [busy, setBusy] = useState<string | null>(null);
+  const cover = safeImageUrl(business.cover_url);
   const { data: owner } = useAsync(async () => {
     if (!business.owner_id) return null;
     const { data } = await supabase.from('profiles').select('full_name, email, phone').eq('id', business.owner_id).maybeSingle();
@@ -157,13 +163,13 @@ function BusinessModal({ business, onClose, onSaved }: { business: Business; onC
             </Link>
           )}
         </div>
-        {business.cover_url && <img src={business.cover_url} alt="" className="aspect-[16/6] w-full rounded-xl object-cover" />}
+        {cover && <img src={cover} alt="" className="aspect-[16/6] w-full rounded-xl object-cover" />}
         <dl className="grid gap-4 text-sm sm:grid-cols-2">
-          <Item label="İşletme sahibi" value={business.owner_id ? owner?.full_name || '—' : 'Platform (pilot kayıt)'} />
+          <Item label="İşletme sahibi" value={business.owner_id ? owner?.full_name || '—' : 'Örnek işletme (sahibi yok, randevuya kapalı)'} />
           <Item label="Sahip iletişim" value={owner ? [owner.email, owner.phone].filter(Boolean).join(' · ') : '—'} />
           <Item label="İşletme telefonu" value={business.phone || '—'} />
           <Item label="Adres" value={business.address} />
-          <Item label="Kapora" value={business.deposit_type === 'percentage' ? `%${business.deposit_value}` : `${business.deposit_value} ₺`} />
+          <Item label="Kapora" value={business.deposit_type === 'percentage' ? `%${String(Number(business.deposit_value)).replace('.', ',')}` : formatTRY(business.deposit_value)} />
           <Item label="Ücretsiz iptal" value={`${business.cancellation_hours} saat öncesine kadar`} />
           <Item label="Puan" value={`${Number(business.rating_avg).toFixed(1)} (${business.review_count})`} />
           <Item label="Randevu sayısı" value={String(business.booking_count)} />

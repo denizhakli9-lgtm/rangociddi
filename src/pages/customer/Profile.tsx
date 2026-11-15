@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/Button';
 import { ThemeSelect } from '@/components/ui/ThemeSelect';
 import { Input, Select } from '@/components/ui/Field';
 import type { Gender } from '@/lib/types';
+import { PrivacyPanel } from './PrivacyPanel';
 
 export default function Profile() {
   const t = useT();
@@ -64,7 +65,7 @@ export default function Profile() {
     <div className="mx-auto grid max-w-4xl gap-8 lg:grid-cols-[300px_1fr]">
       <aside className="space-y-4">
         <div className="card-gold flex flex-col items-center p-6 text-center">
-          <Avatar name={profile.full_name || 'H'} src={profile.avatar_url} size="h-20 w-20 text-2xl" />
+          <Avatar name={profile.full_name || 'R'} src={profile.avatar_url} size="h-20 w-20 text-2xl" />
           <p className="mt-4 font-display text-2xl text-white">{profile.full_name}</p>
           <p className="text-xs text-mist-2">{profile.email}</p>
           <span className="mt-3 rounded-full border border-gold-500/40 px-3 py-1 text-[11px] text-gold-300">{t.role[profile.role]}</span>
@@ -107,6 +108,7 @@ export default function Profile() {
             <Button type="submit" loading={saving}>{t.common.save}</Button>
           </div>
         </form>
+        <PrivacyPanel profile={profile} />
       </section>
     </div>
   );

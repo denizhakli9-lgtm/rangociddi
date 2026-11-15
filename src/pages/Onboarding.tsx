@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, CalendarCheck, ShieldCheck, Sparkles } from 'lucide-react';
 import { Logo } from '@/components/ui/Brand';
 import { Button } from '@/components/ui/Button';
-import { ONBOARDED_KEY } from '@/pages/Splash';
+import { markOnboarded } from '@/pages/Splash';
 
 const slides = [
   {
@@ -36,7 +36,7 @@ export default function Onboarding() {
   const last = index === slides.length - 1;
 
   const finish = (to: string) => {
-    localStorage.setItem(ONBOARDED_KEY, '1');
+    markOnboarded();
     navigate(to);
   };
 
@@ -97,7 +97,7 @@ export default function Onboarding() {
           )}
           <p className="mt-6 text-center text-xs text-mist-2 sm:text-left">
             İşletme sahibi misiniz?{' '}
-            <Link to="/kayit?tip=isletme" onClick={() => localStorage.setItem(ONBOARDED_KEY, '1')} className="text-gold-400 hover:text-gold-300">
+            <Link to="/kayit?tip=isletme" onClick={markOnboarded} className="text-gold-400 hover:text-gold-300">
               İşletmenizi Rango’ya ekleyin
             </Link>
           </p>

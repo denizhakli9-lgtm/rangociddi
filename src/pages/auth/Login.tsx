@@ -1,12 +1,14 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { Lock, Mail } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { friendlyError } from '@/lib/errors';
 import { isEmail } from '@/lib/validation';
-import { homePathFor } from '@/contexts/AuthContext';
+import { safeInternalPath } from '@/lib/safeRedirect';
+import { homePathFor, useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/Field';
 import { Button } from '@/components/ui/Button';
+import { PageLoader } from '@/components/ui/Feedback';
 import { useT } from '@/i18n/I18nProvider';
 import type { Profile } from '@/lib/types';
 import { AuthShell } from './AuthShell';
@@ -15,11 +17,13 @@ export default function Login() {
   const t = useT();
   const navigate = useNavigate();
   const [params] = useSearchParams();
+  const redirect = safeInternalPath(params.get('sonra'));
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(false);
+  const { session, profile: authProfile, loading: authLoading } = useAuth();
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -39,10 +43,17 @@ export default function Login() {
     }
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).maybeSingle();
     setLoading(false);
-    const redirect = params.get('sonra');
-    const safeRedirect = redirect && redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : null;
-    navigate(safeRedirect ?? homePathFor(profile as Profile | null), { replace: true });
+    navigate(redirect ?? homePathFor(profile as Profile | null), { replace: true });
   };
+
+  // Already signed in (e.g. arriving from an e-mail confirmation link, which
+  // auth-js turns into a session): skip the form. `!loading` keeps this from
+  // racing the navigate in submit().
+  if (!loading) {
+    if (!authLoading && session && authProfile) return <Navigate to={redirect ?? homePathFor(authProfile)} replace />;
+    // The stored session is still being read; avoid flashing the form at a signed-in user.
+    if (authLoading) return <PageLoader />;
+  }
 
   return (
     <AuthShell eyebrow="Tekrar hoş geldiniz" title="Giriş Yap" subtitle="Randevularınızı yönetmek için hesabınıza giriş yapın.">
@@ -63,7 +74,7 @@ export default function Login() {
       </form>
       <p className="mt-8 text-center text-sm text-mist">
         Hesabınız yok mu?{' '}
-        <Link to={`/kayit${params.get('sonra') ? `?sonra=${encodeURIComponent(params.get('sonra')!)}` : ''}`} className="font-semibold text-gold-400 hover:text-gold-300">
+        <Link to={`/kayit${redirect ? `?sonra=${encodeURIComponent(redirect)}` : ''}`} className="font-semibold text-gold-400 hover:text-gold-300">
           Hemen kaydolun
         </Link>
       </p>

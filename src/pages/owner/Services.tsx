@@ -13,6 +13,7 @@ import { EmptyState, ErrorState, SkeletonList } from '@/components/ui/Feedback';
 import { PageHeader } from '@/components/layout/PageHeader';
 import type { Service } from '@/lib/types';
 import { useOwnerBusiness } from './OwnerContext';
+import { parseTrNumber } from './number';
 
 interface Draft {
   id?: string;
@@ -151,10 +152,11 @@ function ServiceModal({ draft, businessId, sortOrder, onClose, onSaved }: { draf
   const [form, setForm] = useState<Draft>(draft);
   const [errors, setErrors] = useState<Partial<Record<keyof Draft, string>>>({});
   const [saving, setSaving] = useState(false);
+  const parsedPrice = parseTrNumber(form.price);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    const price = Number(form.price.replace(',', '.'));
+    const price = parseTrNumber(form.price) ?? NaN;
     const duration = Number(form.duration_minutes);
     const v: typeof errors = {};
     if (form.name.trim().length < 2) v.name = 'Hizmet adı en az 2 karakter olmalıdır.';
@@ -193,7 +195,15 @@ function ServiceModal({ draft, businessId, sortOrder, onClose, onSaved }: { draf
         <div className="sm:col-span-2">
           <Input label="Hizmet adı" value={form.name} error={errors.name} maxLength={120} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="ör. Fön & Şekillendirme" />
         </div>
-        <Input label="Fiyat (₺)" inputMode="decimal" value={form.price} error={errors.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="750" />
+        <Input
+          label="Fiyat (₺)"
+          inputMode="decimal"
+          value={form.price}
+          error={errors.price}
+          hint={parsedPrice != null ? `Kaydedilecek: ${formatTRY(parsedPrice)}` : 'ör. 750 veya 1.250,50'}
+          onChange={(e) => setForm({ ...form, price: e.target.value })}
+          placeholder="750"
+        />
         <Input label="Süre (dakika)" inputMode="numeric" value={form.duration_minutes} error={errors.duration_minutes} onChange={(e) => setForm({ ...form, duration_minutes: e.target.value.replace(/\D/g, '') })} />
         <div className="sm:col-span-2">
           <Textarea label="Açıklama" value={form.description} maxLength={1000} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Hizmetin içeriği, kullanılan ürünler vb." />

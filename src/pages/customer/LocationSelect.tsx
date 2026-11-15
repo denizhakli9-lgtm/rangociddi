@@ -16,7 +16,9 @@ export default function LocationSelect() {
   const choose = async (label: string, lat: number, lng: number) => {
     await setLocation({ label, lat, lng });
     toast(`Konum ${label} olarak ayarlandı`, 'success');
-    navigate(-1);
+    // Opened directly (shared link, new tab): there is no in-app page to go back to.
+    if ((window.history.state?.idx ?? 0) > 0) navigate(-1);
+    else navigate('/kesfet', { replace: true });
   };
 
   const useDevice = () => {
@@ -58,17 +60,18 @@ export default function LocationSelect() {
       <Button variant="outline" full size="lg" className="mt-8" loading={locating} icon={<LocateFixed className="h-4 w-4" />} onClick={useDevice}>
         Mevcut konumumu kullan
       </Button>
+      <p className="mt-2 text-xs leading-relaxed text-mist-2">Konumunuz yalnızca size en yakın semti bulmak için cihazınızda kullanılır; tam konumunuz saklanmaz, yalnızca seçilen semt kaydedilir.</p>
 
       <div className="relative mt-6">
         <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-mist-2" />
-        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Semt ara" className="h-12 w-full rounded-xl border border-line bg-coal pl-11 pr-4 text-sm text-white placeholder:text-mist-3 focus:border-gold-500/60 focus:outline-none" />
+        <input aria-label="Semt ara" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Semt ara" className="h-12 w-full rounded-xl border border-line bg-coal pl-11 pr-4 text-sm text-white placeholder:text-mist-3 focus:border-gold-500/60 focus:outline-none" />
       </div>
 
       <div className="mt-4 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-coal">
         {list.map((d) => {
           const active = location.label === d.name;
           return (
-            <button key={d.name} onClick={() => choose(d.name, d.lat, d.lng)} className="flex w-full items-center gap-3 px-5 py-4 text-left transition hover:bg-white/[0.03]">
+            <button key={d.name} type="button" aria-current={active ? 'true' : undefined} onClick={() => choose(d.name, d.lat, d.lng)} className="flex w-full items-center gap-3 px-5 py-4 text-left transition hover:bg-white/[0.03]">
               <MapPin className={`h-4 w-4 ${active ? 'text-gold-400' : 'text-mist-2'}`} />
               <span className="flex-1">
                 <span className="block text-sm text-white">{d.name}</span>

@@ -28,7 +28,7 @@ export default function Overview() {
 
   const { data, loading, error, reload } = useAsync(async () => {
     const [appts, services, employees, hours, commissions] = await Promise.all([
-      fetchOwnerAppointments(business.id, { from: istanbulDayStart(monthStart), to: istanbulDayStart(addDays(today, 60)) }),
+      fetchOwnerAppointments(business.id, { from: istanbulDayStart(monthStart), to: istanbulDayStart(addDays(today, 60)) }, { includeAllPending: true }),
       supabase.from('services').select('id', { count: 'exact', head: true }).eq('business_id', business.id),
       supabase.from('employees').select('id', { count: 'exact', head: true }).eq('business_id', business.id),
       supabase.from('working_hours').select('id', { count: 'exact', head: true }).eq('business_id', business.id).eq('is_closed', false),

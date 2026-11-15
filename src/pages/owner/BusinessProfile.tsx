@@ -6,6 +6,7 @@ import { useAsync } from '@/lib/useAsync';
 import { fetchCategories } from '@/lib/api';
 import { depositFor, formatTRY } from '@/lib/format';
 import { friendlyError } from '@/lib/errors';
+import { safeImageUrl } from '@/lib/safeUrl';
 import { tr } from '@/i18n/tr';
 import { useToast } from '@/contexts/ToastContext';
 import { Button } from '@/components/ui/Button';
@@ -19,6 +20,7 @@ import { hasExactPin, type Coords } from '@/lib/maps';
 import { BasicsFields, districtCoords, validateBasics, type BasicsErrors, type BasicsForm } from './BusinessFields';
 import { LocationField } from './LocationField';
 import { PayoutAccountCard } from './PayoutAccountCard';
+import { parseTrNumber } from './number';
 
 const MAX_GALLERY = 8;
 
@@ -59,7 +61,7 @@ export default function BusinessProfile() {
 
   const save = async () => {
     const v = validateBasics(basics);
-    const depositValue = Number(policy.deposit_value.replace(',', '.'));
+    const depositValue = parseTrNumber(policy.deposit_value || '0') ?? NaN;
     const hours = Number(policy.cancellation_hours);
     const p: typeof policyErr = {};
     if (!(depositValue >= 0) || (policy.deposit_type === 'percentage' && depositValue > 100)) p.deposit = policy.deposit_type === 'percentage' ? tr.validation.percentage : 'Geçerli bir tutar girin.';
@@ -99,8 +101,14 @@ export default function BusinessProfile() {
     reload();
   };
 
+  // Media URLs are writable through the REST API; only trusted storage/seed hosts are rendered.
+  const coverSrc = safeImageUrl(media.cover_url);
+  const logoSrc = safeImageUrl(media.logo_url);
+
   const sample = 1000;
-  const sampleDeposit = depositFor(sample, policy.deposit_type, Number(policy.deposit_value.replace(',', '.')) || 0);
+  const parsedDeposit = parseTrNumber(policy.deposit_value);
+  const sampleDeposit = depositFor(sample, policy.deposit_type, parsedDeposit ?? 0);
+  const depositHint = `${parsedDeposit != null ? `Kaydedilecek: ${policy.deposit_type === 'percentage' ? `%${String(parsedDeposit).replace('.', ',')}` : formatTRY(parsedDeposit)} · ` : ''}Örnek: ${formatTRY(sample)} hizmette kapora ${formatTRY(sampleDeposit)}`;
 
   return (
     <div className="pb-24">
@@ -122,26 +130,33 @@ export default function BusinessProfile() {
           <h2 className="mb-1 font-display text-xl text-white">Görseller</h2>
           <p className="mb-5 text-xs text-mist-2">JPG, PNG veya WebP · en fazla 5 MB</p>
           <div className="relative mb-6 overflow-hidden rounded-2xl border border-line bg-ink/60">
-            <div className="aspect-[16/6] w-full">{media.cover_url ? <img src={media.cover_url} alt="Kapak" className="h-full w-full object-cover" /> : <div className="grid h-full place-items-center text-sm text-mist-3">Kapak görseli yok</div>}</div>
+            <div className="aspect-[16/6] w-full">{coverSrc ? <img src={coverSrc} alt="Kapak" className="h-full w-full object-cover" /> : <div className="grid h-full place-items-center text-sm text-mist-3">Kapak görseli yok</div>}</div>
             <label className="absolute bottom-3 right-3 inline-flex cursor-pointer items-center gap-2 rounded-xl bg-ink/80 px-3 py-2 text-xs text-white backdrop-blur transition hover:bg-ink">
               {uploading === 'cover' ? <Spinner className="h-3.5 w-3.5" /> : <ImagePlus className="h-3.5 w-3.5" />} Kapak değiştir
               <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={async (e) => { const url = await upload(e.target.files?.[0], 'cover'); if (url) setMedia((m) => ({ ...m, cover_url: url })); e.target.value = ''; }} />
             </label>
             <label className="absolute -bottom-0 left-4 mb-3 grid h-20 w-20 cursor-pointer place-items-center overflow-hidden rounded-2xl border-2 border-gold-500/50 bg-coal shadow-xl">
-              {uploading === 'logo' ? <Spinner className="h-5 w-5" /> : media.logo_url ? <img src={media.logo_url} alt="Logo" className="h-full w-full object-cover" /> : <span className="text-center text-[10px] text-mist-2">Logo ekle</span>}
+              {uploading === 'logo' ? <Spinner className="h-5 w-5" /> : logoSrc ? <img src={logoSrc} alt="Logo" className="h-full w-full object-cover" /> : <span className="text-center text-[10px] text-mist-2">Logo ekle</span>}
               <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={async (e) => { const url = await upload(e.target.files?.[0], 'logo'); if (url) setMedia((m) => ({ ...m, logo_url: url })); e.target.value = ''; }} />
             </label>
           </div>
           <p className="mb-3 text-xs font-medium tracking-wide text-mist">Galeri ({media.gallery.length}/{MAX_GALLERY})</p>
           <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
-            {media.gallery.map((url) => (
-              <div key={url} className="group relative aspect-square overflow-hidden rounded-xl border border-line">
-                <img src={url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
-                <button type="button" aria-label="Görseli kaldır" onClick={() => setMedia((m) => ({ ...m, gallery: m.gallery.filter((g) => g !== url) }))} className="absolute right-1.5 top-1.5 grid h-7 w-7 place-items-center rounded-full bg-ink/80 text-white opacity-0 transition group-hover:opacity-100">
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ))}
+            {media.gallery.map((url) => {
+              const src = safeImageUrl(url);
+              return (
+                <div key={url} className="group relative aspect-square overflow-hidden rounded-xl border border-line">
+                  {src ? (
+                    <img src={src} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="grid h-full place-items-center bg-coal-3 p-2 text-center text-[10px] text-mist-3">Görsel gösterilemiyor</div>
+                  )}
+                  <button type="button" aria-label="Görseli kaldır" onClick={() => setMedia((m) => ({ ...m, gallery: m.gallery.filter((g) => g !== url) }))} className="absolute right-1.5 top-1.5 grid h-7 w-7 place-items-center rounded-full bg-ink/80 text-white opacity-0 transition group-hover:opacity-100">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              );
+            })}
             {media.gallery.length < MAX_GALLERY && (
               <label className="grid aspect-square cursor-pointer place-items-center rounded-xl border border-dashed border-line text-mist-2 transition hover:border-gold-500/50 hover:text-gold-300">
                 {uploading === 'gallery' ? <Spinner className="h-5 w-5" /> : <ImagePlus className="h-5 w-5" />}
@@ -183,7 +198,7 @@ export default function BusinessProfile() {
                 inputMode="decimal"
                 value={policy.deposit_value}
                 error={policyErr.deposit}
-                hint={`Örnek: ${formatTRY(sample)} hizmette kapora ${formatTRY(sampleDeposit)}`}
+                hint={depositHint}
                 onChange={(e) => setPolicy({ ...policy, deposit_value: e.target.value })}
               />
               <Input

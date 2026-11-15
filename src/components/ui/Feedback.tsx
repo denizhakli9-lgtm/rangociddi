@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { tr } from '@/i18n/tr';
@@ -26,20 +26,19 @@ export function EmptyState({ icon, title, text, action }: { icon: ReactNode; tit
   );
 }
 
-function errorDetail(err: unknown): string | null {
-  if (!err || typeof err !== 'object') return null;
-  const e = err as { code?: unknown; message?: unknown };
-  const parts = [e.code, e.message].filter((p) => typeof p === 'string' && p).map(String);
-  return parts.length ? parts.join(' · ').slice(0, 120) : null;
-}
-
+/**
+ * Friendly Turkish error block. Raw backend details (Postgres/PostgREST codes and messages)
+ * are never rendered; when `error` is passed they are only written to the console, and only
+ * in development builds (import.meta.env.DEV), so production users never see them.
+ */
 export function ErrorState({ message = tr.errors.load, onRetry, error }: { message?: string; onRetry?: () => void; error?: unknown }) {
-  const detail = errorDetail(error);
+  useEffect(() => {
+    if (error && import.meta.env.DEV) console.error(error);
+  }, [error]);
   return (
-    <div className="flex flex-col items-center rounded-3xl border border-error-500/30 bg-error-900/30 px-6 py-10 text-center">
+    <div role="alert" className="flex flex-col items-center rounded-3xl border border-error-500/30 bg-error-900/30 px-6 py-10 text-center">
       <AlertTriangle className="mb-3 h-8 w-8 text-error-300" />
       <p className="text-sm text-error-300">{message}</p>
-      {detail && <p className="mt-2 max-w-md break-words font-mono text-[11px] text-error-300/70">{detail}</p>}
       {onRetry && (
         <Button variant="dark" size="sm" className="mt-4" onClick={onRetry}>
           {tr.common.retry}

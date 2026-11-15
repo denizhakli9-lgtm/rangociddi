@@ -6,7 +6,7 @@ import { fetchSettings } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
 import { useToast } from '@/contexts/ToastContext';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Field';
+import { Input, Select } from '@/components/ui/Field';
 import { Badge } from '@/components/ui/Badge';
 import { ErrorState, SkeletonList } from '@/components/ui/Feedback';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -14,10 +14,15 @@ import type { PlatformSettings } from '@/lib/types';
 
 type Key = 'commission_rate' | 'pending_payment_minutes' | 'slot_interval_minutes' | 'min_lead_minutes' | 'max_booking_days' | 'max_reschedules';
 
-const FIELDS: { key: Key; label: string; hint: string; min: number; max: number; step?: number }[] = [
+/** platform_settings CHECK: slot_interval_minutes IN (10,15,20,30,45,60). */
+const SLOT_INTERVALS = [10, 15, 20, 30, 45, 60] as const;
+
+// Every range below stays inside both the platform_settings table CHECKs and the limits of
+// private.admin_update_settings, so the UI never sends a value the database rejects.
+const FIELDS: { key: Key; label: string; hint: string; min: number; max: number; step?: number; options?: readonly number[] }[] = [
   { key: 'commission_rate', label: 'Komisyon oranı (%)', hint: 'Tamamlanan her randevunun toplam tutarı üzerinden alınır.', min: 0, max: 50, step: 0.1 },
   { key: 'pending_payment_minutes', label: 'Ödeme bekleme süresi (dk)', hint: 'Kapora ödenmezse randevu bu sürenin sonunda serbest bırakılır.', min: 5, max: 60 },
-  { key: 'slot_interval_minutes', label: 'Saat aralığı (dk)', hint: 'Müşterilere gösterilen başlangıç saatlerinin sıklığı.', min: 5, max: 60 },
+  { key: 'slot_interval_minutes', label: 'Saat aralığı (dk)', hint: 'Müşterilere gösterilen başlangıç saatlerinin sıklığı.', min: 10, max: 60, options: SLOT_INTERVALS },
   { key: 'min_lead_minutes', label: 'En erken rezervasyon (dk)', hint: 'Şu andan itibaren en az bu kadar sonrası seçilebilir.', min: 0, max: 1440 },
   { key: 'max_booking_days', label: 'En ileri rezervasyon (gün)', hint: 'Takvimin kaç gün ileriye açık olacağı.', min: 1, max: 180 },
   { key: 'max_reschedules', label: 'Erteleme hakkı', hint: 'Bir randevunun en fazla kaç kez ertelenebileceği.', min: 0, max: 5 },
@@ -34,7 +39,11 @@ function SettingsForm({ initial, onSaved }: { initial: PlatformSettings; onSaved
     const n = {} as Record<Key, number>;
     for (const f of FIELDS) {
       const v = Number(values[f.key]);
-      if (values[f.key].trim() === '' || !Number.isFinite(v) || v < f.min || v > f.max || (!f.step && !Number.isInteger(v))) e[f.key] = `${f.min}-${f.max} arası ${f.step ? 'bir değer' : 'tam sayı'} girin.`;
+      if (f.options) {
+        if (!f.options.includes(v)) e[f.key] = `Şu değerlerden birini seçin: ${f.options.join(', ')} dk.`;
+      } else if (values[f.key].trim() === '' || !Number.isFinite(v) || v < f.min || v > f.max || (!f.step && !Number.isInteger(v))) {
+        e[f.key] = `${f.min}-${f.max} arası ${f.step ? 'bir değer' : 'tam sayı'} girin.`;
+      }
       n[f.key] = v;
     }
     setErrors(e);
@@ -57,20 +66,39 @@ function SettingsForm({ initial, onSaved }: { initial: PlatformSettings; onSaved
   return (
     <div className="card p-6">
       <div className="grid gap-5 sm:grid-cols-2">
-        {FIELDS.map((f) => (
-          <Input
-            key={f.key}
-            label={f.label}
-            type="number"
-            min={f.min}
-            max={f.max}
-            step={f.step ?? 1}
-            value={values[f.key]}
-            error={errors[f.key]}
-            hint={f.hint}
-            onChange={(ev) => setValues((s) => ({ ...s, [f.key]: ev.target.value }))}
-          />
-        ))}
+        {FIELDS.map((f) =>
+          f.options ? (
+            <Select
+              key={f.key}
+              id={`setting-${f.key}`}
+              label={f.label}
+              value={values[f.key]}
+              error={errors[f.key]}
+              hint={f.hint}
+              onChange={(ev) => setValues((s) => ({ ...s, [f.key]: ev.target.value }))}
+            >
+              {f.options.map((o) => (
+                <option key={o} value={String(o)}>
+                  {o} dk
+                </option>
+              ))}
+            </Select>
+          ) : (
+            <Input
+              key={f.key}
+              id={`setting-${f.key}`}
+              label={f.label}
+              type="number"
+              min={f.min}
+              max={f.max}
+              step={f.step ?? 1}
+              value={values[f.key]}
+              error={errors[f.key]}
+              hint={f.hint}
+              onChange={(ev) => setValues((s) => ({ ...s, [f.key]: ev.target.value }))}
+            />
+          ),
+        )}
       </div>
       <div className="mt-6 flex justify-end border-t border-line-soft pt-5">
         <Button loading={saving} onClick={save}>
@@ -98,8 +126,12 @@ export default function AdminSettings() {
               <ShieldCheck className="h-5 w-5" />
             </div>
             <div className="flex-1">
-              <p className="font-medium text-white">Ödeme altyapısı: {data.payment_provider}</p>
-              <p className="text-xs text-mist-2">Kart bilgileri sağlayıcıda işlenir, Rango'da saklanmaz.</p>
+              <p className="font-medium text-white">Ödeme altyapısı: {data.payment_mode === 'live' ? data.payment_provider : 'test modu (sağlayıcı bağlı değil)'}</p>
+              <p className="text-xs text-mist-2">
+                {data.payment_mode === 'live'
+                  ? "Kart bilgileri sağlayıcıda işlenir, Rango'da saklanmaz."
+                  : 'Test modunda kartlardan gerçek tahsilat veya iade yapılmaz; test ödemeleri raporlarda “Test” olarak işaretlenir.'}
+              </p>
             </div>
             <Badge tone={data.payment_mode === 'live' ? 'success' : 'warning'}>{data.payment_mode === 'live' ? 'Canlı mod' : 'Test modu'}</Badge>
           </div>

@@ -25,6 +25,14 @@ const BLOCK_TONE: Record<string, string> = {
   no_show: 'border-error-500/40 bg-error-900/60 text-error-300',
 };
 
+interface CalendarColumn {
+  key: string;
+  employee: Employee | null;
+  title: string;
+  subtitle: string;
+  inactive: boolean;
+}
+
 function minutesOf(iso: string): number {
   return timeToMinutes(formatTime(iso));
 }
@@ -38,7 +46,8 @@ export default function OwnerCalendar() {
   const { data, loading, error, reload } = useAsync(async () => {
     const [appts, employees, hours, blocks] = await Promise.all([
       fetchOwnerAppointments(business.id, { from: istanbulDayStart(day), to: istanbulDayStart(addDays(day, 1)) }),
-      supabase.from('employees').select('*').eq('business_id', business.id).eq('is_active', true).order('sort_order'),
+      // Inactive employees are loaded too, so their remaining appointments stay visible (see `columns`).
+      supabase.from('employees').select('*').eq('business_id', business.id).order('sort_order'),
       supabase.from('working_hours').select('*').eq('business_id', business.id),
       supabase.from('time_slots').select('*').eq('business_id', business.id).lt('starts_at', istanbulDayStart(addDays(day, 1))).gt('ends_at', istanbulDayStart(day)),
     ]);
@@ -60,6 +69,27 @@ export default function OwnerCalendar() {
     }
     return { start: 9 * 60, end: 20 * 60 };
   }, [todayHours]);
+
+  const activeEmployees = useMemo(() => (data?.employees ?? []).filter((e) => e.is_active), [data]);
+  const columns = useMemo<CalendarColumn[]>(() => {
+    if (!data) return [];
+    const known = new Set(data.employees.map((e) => e.id));
+    const cols: CalendarColumn[] = data.employees
+      .filter((e) => e.is_active || data.appts.some((a) => a.employee_id === e.id))
+      .map((e) => ({ key: e.id, employee: e, title: e.full_name, subtitle: e.is_active ? e.title || 'Uzman' : 'Pasif çalışan', inactive: !e.is_active }));
+    // Appointments whose employee is not in the list at all still need a place on the board.
+    if (data.appts.some((a) => !known.has(a.employee_id))) {
+      cols.push({ key: '__other', employee: null, title: 'Diğer', subtitle: 'Listede olmayan uzman', inactive: true });
+    }
+    return cols;
+  }, [data]);
+  const apptsFor = (col: CalendarColumn) => {
+    if (!data) return [];
+    const emp = col.employee;
+    if (emp) return data.appts.filter((a) => a.employee_id === emp.id);
+    const known = new Set(data.employees.map((e) => e.id));
+    return data.appts.filter((a) => !known.has(a.employee_id));
+  };
 
   const clampTop = (iso: string, dayStartIso: string) => (iso < dayStartIso ? range.start : minutesOf(iso));
   const hoursList = Array.from({ length: (range.end - range.start) / 60 }, (_, i) => range.start + i * 60);
@@ -116,7 +146,7 @@ export default function OwnerCalendar() {
         <SkeletonList count={1} className="h-96" />
       ) : error ? (
         <ErrorState onRetry={reload} />
-      ) : !data?.employees.length ? (
+      ) : !data || !columns.length ? (
         <p className="card p-6 text-sm text-mist-2">Takvimi görmek için önce bir çalışan ekleyin.</p>
       ) : (
         <div className="card overflow-x-auto">
@@ -129,11 +159,11 @@ export default function OwnerCalendar() {
                 </div>
               ))}
             </div>
-            {data.employees.map((emp) => (
-              <div key={emp.id} className="w-48 shrink-0 border-r border-line-soft last:border-r-0">
+            {columns.map((col) => (
+              <div key={col.key} className={`w-48 shrink-0 border-r border-line-soft last:border-r-0 ${col.inactive ? 'bg-coal-3/30' : ''}`}>
                 <div className="flex h-14 flex-col justify-center border-b border-line px-3">
-                  <p className="truncate text-sm font-medium text-white">{emp.full_name}</p>
-                  <p className="truncate text-[11px] text-mist-2">{emp.title || 'Uzman'}</p>
+                  <p className={`truncate text-sm font-medium ${col.inactive ? 'text-mist' : 'text-white'}`}>{col.title}</p>
+                  <p className={`truncate text-[11px] ${col.inactive ? 'text-warning-300' : 'text-mist-2'}`}>{col.subtitle}</p>
                 </div>
                 <div className="relative" style={{ height: (range.end - range.start) * PX }}>
                   {hoursList.map((m) => (
@@ -146,7 +176,7 @@ export default function OwnerCalendar() {
                     />
                   )}
                   {data.blocks
-                    .filter((b) => !b.employee_id || b.employee_id === emp.id)
+                    .filter((b) => !b.employee_id || b.employee_id === col.employee?.id)
                     .map((b) => {
                       const top = clampTop(b.starts_at, dayStartIso);
                       const end = b.ends_at >= istanbulDayStart(addDays(day, 1)) ? range.end : minutesOf(b.ends_at);
@@ -154,8 +184,7 @@ export default function OwnerCalendar() {
                         <BlockChip key={b.id} block={b} top={(top - range.start) * PX} height={Math.max(20, (end - top) * PX)} onRemove={removeBlock} />
                       );
                     })}
-                  {data.appts
-                    .filter((a) => a.employee_id === emp.id)
+                  {apptsFor(col)
                     .map((a) => {
                       const top = minutesOf(a.starts_at);
                       return (
@@ -188,7 +217,7 @@ export default function OwnerCalendar() {
           reload();
         }}
       />
-      <BlockModal key={`${day}-${blockOpen}`} open={blockOpen} day={day} employees={data?.employees ?? []} onClose={() => setBlockOpen(false)} onSaved={() => { setBlockOpen(false); reload(); }} />
+      <BlockModal key={`${day}-${blockOpen}`} open={blockOpen} day={day} employees={activeEmployees} onClose={() => setBlockOpen(false)} onSaved={() => { setBlockOpen(false); reload(); }} />
     </div>
   );
 }

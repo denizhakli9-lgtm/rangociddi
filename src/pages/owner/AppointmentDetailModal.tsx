@@ -3,13 +3,13 @@ import { Ban, CalendarClock, Check, CheckCircle2, Mail, Phone, UserX, X } from '
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Field';
-import { AppointmentStatusBadge, PaymentStatusBadge } from '@/components/ui/Badge';
+import { AppointmentStatusBadge, PaymentStatusBadge, TestBadge } from '@/components/ui/Badge';
 import { Avatar } from '@/components/ui/Brand';
 import { formatDate, formatDuration, formatTime, formatTRY } from '@/lib/format';
 import { friendlyError } from '@/lib/errors';
 import { useToast } from '@/contexts/ToastContext';
 import type { Appointment } from '@/lib/types';
-import { ownerCancel, runOwnerAction, type OwnerAction } from './ownerApi';
+import { isTestPayment, ownerCancel, runOwnerAction, type OwnerAction } from './ownerApi';
 
 const ACTION_DONE: Record<OwnerAction, string> = {
   approve: 'Randevu onaylandı.',
@@ -32,12 +32,13 @@ export function AppointmentDetailModal({ appt, onClose, onDone }: { appt: Appoin
   if (!appt) return null;
   const started = new Date(appt.starts_at).getTime() <= Date.now();
   const payment = appt.payments?.[0];
+  const testPayment = isTestPayment(payment);
 
   const act = async (action: OwnerAction) => {
     setBusy(action);
     try {
       await runOwnerAction(appt.id, action);
-      toast(ACTION_DONE[action], 'success');
+      toast(action === 'reject' && testPayment ? 'Randevu reddedildi. Kapora test ödemesi olduğu için müşterinin kartından tahsilat yapılmamıştı.' : ACTION_DONE[action], 'success');
       onDone();
     } catch (e) {
       toast(friendlyError(e), 'error');
@@ -63,7 +64,9 @@ export function AppointmentDetailModal({ appt, onClose, onDone }: { appt: Appoin
     }
   };
 
-  const canCancel = ['pending_payment', 'pending_approval', 'confirmed'].includes(appt.status);
+  // Once the start time has passed, a confirmed visit is closed with "Tamamlandı"/"Gelmedi" and a
+  // pending request with "Reddet" (which refunds); the server refuses cancel/approve after the start.
+  const canCancel = ['pending_payment', 'pending_approval', 'confirmed'].includes(appt.status) && !started;
 
   const footer = cancelMode ? (
     <>
@@ -86,9 +89,11 @@ export function AppointmentDetailModal({ appt, onClose, onDone }: { appt: Appoin
           <Button variant="danger" loading={busy === 'reject'} onClick={() => act('reject')} icon={<X className="h-4 w-4" />}>
             Reddet
           </Button>
-          <Button loading={busy === 'approve'} onClick={() => act('approve')} icon={<Check className="h-4 w-4" />}>
-            Onayla
-          </Button>
+          {!started && (
+            <Button loading={busy === 'approve'} onClick={() => act('approve')} icon={<Check className="h-4 w-4" />}>
+              Onayla
+            </Button>
+          )}
         </>
       )}
       {appt.status === 'confirmed' && started && (
@@ -109,8 +114,19 @@ export function AppointmentDetailModal({ appt, onClose, onDone }: { appt: Appoin
       <div className="space-y-5">
         <div className="flex items-center justify-between gap-3">
           <AppointmentStatusBadge status={appt.status} />
-          {payment && <PaymentStatusBadge status={payment.status} />}
+          {payment && (
+            <span className="flex items-center gap-1.5">
+              {testPayment && <TestBadge />}
+              <PaymentStatusBadge status={payment.status} />
+            </span>
+          )}
         </div>
+        {appt.status === 'pending_approval' && started && (
+          <p className="text-xs text-warning-300">
+            Başlangıç saati geçtiği için bu talep onaylanamaz;{' '}
+            {!testPayment && Number(appt.deposit_amount) > 0 ? 'reddederek kaporayı iade edebilirsiniz.' : 'talebi reddedebilirsiniz.'}
+          </p>
+        )}
 
         <div className="card flex items-center gap-4 p-4">
           <Avatar name={appt.profiles?.full_name ?? 'Müşteri'} />
@@ -137,10 +153,16 @@ export function AppointmentDetailModal({ appt, onClose, onDone }: { appt: Appoin
           <Item label="Uzman" value={appt.employee_name} />
           <Item label="Süre" value={formatDuration(appt.duration_minutes)} />
           <Item label="Hizmet bedeli" value={formatTRY(appt.total_price)} />
-          <Item label="Ödenen kapora" value={formatTRY(payment?.status === 'paid' ? appt.deposit_amount : 0)} />
+          <Item label={testPayment ? 'Kapora (test ödemesi)' : 'Ödenen kapora'} value={formatTRY(payment?.status === 'paid' ? appt.deposit_amount : 0)} />
           <Item label="İşletmede tahsil" value={formatTRY(appt.remaining_amount)} strong />
           {appt.reschedule_count > 0 && <Item label="Erteleme" value={`${appt.reschedule_count} kez`} />}
         </dl>
+
+        {testPayment && (
+          <p className="rounded-xl border border-warning-500/30 bg-warning-900/40 p-3 text-xs leading-relaxed text-warning-300">
+            Bu kapora test modunda kaydedildi; müşterinin kartından gerçek bir tahsilat yapılmadı ve tutar hesabınıza aktarılmaz.
+          </p>
+        )}
 
         {appt.customer_note && (
           <div className="rounded-xl border border-line bg-ink/40 p-4">
@@ -159,7 +181,9 @@ export function AppointmentDetailModal({ appt, onClose, onDone }: { appt: Appoin
         {cancelMode && (
           <div className="animate-fade-in space-y-2">
             <Textarea label="İptal nedeni" value={reason} maxLength={500} onChange={(e) => setReason(e.target.value)} placeholder="Müşteriye iletilecek kısa açıklama" />
-            <p className="text-xs text-mist-2">İşletme kaynaklı iptallerde ödenen kapora müşteriye tam olarak iade edilir.</p>
+            <p className="text-xs text-mist-2">
+              {testPayment ? 'Kapora test ödemesi olduğu için karta iade yapılmaz; iade yalnızca kayıtta tamamlanır.' : 'İşletme kaynaklı iptallerde ödenen kapora müşteriye tam olarak iade edilir.'}
+            </p>
           </div>
         )}
       </div>

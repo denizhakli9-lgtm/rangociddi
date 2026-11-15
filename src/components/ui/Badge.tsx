@@ -49,6 +49,15 @@ export function PaymentStatusBadge({ status }: { status: PaymentStatus }) {
   return <Badge tone={payTone[status]}>{tr.paymentStatus[status]}</Badge>;
 }
 
+/** Marks a payment made in test mode: no money was charged to (or refunded to) a card. */
+export function TestBadge({ label = 'Test' }: { label?: string }) {
+  return (
+    <span title="Test ödemesi: karttan gerçek tahsilat yapılmadı." className="inline-flex">
+      <Badge tone="warning">{label}</Badge>
+    </span>
+  );
+}
+
 const bizTone: Record<BusinessStatus, Tone> = { pending: 'warning', approved: 'success', rejected: 'error', suspended: 'neutral' };
 
 export function BusinessStatusBadge({ status }: { status: BusinessStatus }) {

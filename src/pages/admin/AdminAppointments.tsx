@@ -9,10 +9,11 @@ import { useToast } from '@/contexts/ToastContext';
 import { Button } from '@/components/ui/Button';
 import { Input, Select, Textarea } from '@/components/ui/Field';
 import { Modal } from '@/components/ui/Modal';
-import { AppointmentStatusBadge, PaymentStatusBadge } from '@/components/ui/Badge';
+import { AppointmentStatusBadge, PaymentStatusBadge, TestBadge } from '@/components/ui/Badge';
 import { EmptyState, ErrorState, SkeletonList } from '@/components/ui/Feedback';
 import { PageHeader } from '@/components/layout/PageHeader';
 import type { Appointment, AppointmentStatus } from '@/lib/types';
+import { isTestPayment } from '@/pages/owner/ownerApi';
 
 const STATUSES = Object.keys(tr.appointmentStatus) as AppointmentStatus[];
 const ACTIVE = ['pending_payment', 'pending_approval', 'confirmed'];
@@ -28,7 +29,7 @@ export default function AdminAppointments() {
   const { data, loading, error, reload } = useAsync(async () => {
     const { data: rows, error: err } = await supabase
       .from('appointments')
-      .select('*, businesses(id, name, slug, cover_url, address, district, city, latitude, longitude, cancellation_hours, phone), profiles(full_name, phone, email, gender), payments(id, status, amount, card_last4)')
+      .select('*, businesses(id, name, slug, cover_url, address, district, city, latitude, longitude, cancellation_hours, phone), profiles(full_name, phone, email), payments(id, status, amount, card_last4, provider_payment_id)')
       .order('starts_at', { ascending: false })
       .limit(500);
     if (err) throw err;
@@ -47,6 +48,11 @@ export default function AdminAppointments() {
     );
   }, [data, status, query]);
 
+  const closeCancel = () => {
+    setCancelling(null);
+    setReason('');
+  };
+
   const cancel = async () => {
     if (!cancelling) return;
     if (reason.trim().length < 3) return toast('Bir iptal nedeni yazın.', 'error');
@@ -64,8 +70,8 @@ export default function AdminAppointments() {
     <div>
       <PageHeader eyebrow="Randevular" title="Randevu izleme" text="Son 500 randevu. Gerektiğinde müşteri lehine iptal edebilirsiniz; ödenen kapora iade sürecine alınır." />
       <div className="mb-6 grid gap-3 sm:grid-cols-[1fr_240px]">
-        <Input placeholder="Kod, işletme veya müşteri" value={query} onChange={(e) => setQuery(e.target.value)} icon={<Search className="h-4 w-4" />} />
-        <Select value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Durum">
+        <Input aria-label="Randevu ara" placeholder="Kod, işletme veya müşteri" value={query} onChange={(e) => setQuery(e.target.value)} icon={<Search className="h-4 w-4" />} />
+        <Select value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Duruma göre filtrele">
           <option value="">Tüm durumlar</option>
           {STATUSES.map((s) => (
             <option key={s} value={s}>
@@ -113,14 +119,23 @@ export default function AdminAppointments() {
                   <td className="space-y-1 px-4 py-3">
                     <AppointmentStatusBadge status={a.status} />
                     {a.payments?.[0] && (
-                      <div>
+                      <div className="flex flex-wrap gap-1">
                         <PaymentStatusBadge status={a.payments[0].status} />
+                        {isTestPayment(a.payments[0]) && <TestBadge />}
                       </div>
                     )}
                   </td>
                   <td className="px-4 py-3 text-right">
                     {ACTIVE.includes(a.status) && (
-                      <Button size="sm" variant="ghost" className="text-error-300" onClick={() => setCancelling(a)}>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-error-300"
+                        onClick={() => {
+                          setReason('');
+                          setCancelling(a);
+                        }}
+                      >
                         İptal
                       </Button>
                     )}
@@ -134,12 +149,12 @@ export default function AdminAppointments() {
 
       <Modal
         open={!!cancelling}
-        onClose={() => setCancelling(null)}
+        onClose={closeCancel}
         title="Randevuyu iptal et"
         subtitle={cancelling ? `${cancelling.booking_code} · ${cancelling.businesses?.name ?? ''}` : ''}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setCancelling(null)}>
+            <Button variant="ghost" onClick={closeCancel}>
               Vazgeç
             </Button>
             <Button variant="danger" loading={busy} onClick={cancel}>
@@ -148,7 +163,7 @@ export default function AdminAppointments() {
           </>
         }
       >
-        <Textarea label="İptal nedeni" value={reason} maxLength={500} onChange={(e) => setReason(e.target.value)} hint="Müşteri ve işletmeye bildirilir." />
+        <Textarea label="İptal nedeni" value={reason} maxLength={500} onChange={(e) => setReason(e.target.value)} hint="Müşteriye bildirilir." />
       </Modal>
     </div>
   );

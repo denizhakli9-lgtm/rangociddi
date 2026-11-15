@@ -64,7 +64,7 @@ export default function AdminUsers() {
         />
       </div>
       <div className="mb-6 max-w-md">
-        <Input placeholder="İsim, e-posta veya telefon" value={query} onChange={(e) => setQuery(e.target.value)} icon={<Search className="h-4 w-4" />} />
+        <Input aria-label="Kullanıcı ara" placeholder="İsim, e-posta veya telefon" value={query} onChange={(e) => setQuery(e.target.value)} icon={<Search className="h-4 w-4" />} />
       </div>
       {loading && !data ? (
         <SkeletonList count={6} className="h-16" />

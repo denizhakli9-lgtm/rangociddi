@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { checkImage, uploadBusinessImage } from '@/lib/api';
-import { compressImage } from '@/lib/image';
+import { compressImage, ImageProcessingError } from '@/lib/image';
 import { friendlyError } from '@/lib/errors';
 import { tr } from '@/i18n/tr';
 import { useToast } from '@/contexts/ToastContext';
@@ -24,8 +24,15 @@ export function useImageUpload(businessId: string) {
     }
     setUploading(kind);
     try {
+      // compressImage never falls back to the original bytes, so EXIF/GPS data cannot reach the public bucket.
       return await uploadBusinessImage(businessId, await compressImage(file, kind), kind);
     } catch (e) {
+      if (e instanceof ImageProcessingError) {
+        if (import.meta.env.DEV) console.error(e);
+        // The file type was already accepted above, so a failure here means the image could not be read or encoded.
+        toast(e.reason === 'size' ? tr.errors.uploadSize : tr.errors.VEYRA_INVALID_IMAGE, 'error');
+        return null;
+      }
       toast(friendlyError(e), 'error');
       return null;
     } finally {

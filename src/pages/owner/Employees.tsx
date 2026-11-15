@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 import { Camera, Check, Pencil, Plus, Trash2, Users } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAsync } from '@/lib/useAsync';
@@ -166,6 +166,9 @@ function EmployeeModal({ draft, services, sortOrder, onClose, onSaved }: { draft
   const [form, setForm] = useState<Draft>(draft);
   const [nameErr, setNameErr] = useState('');
   const [saving, setSaving] = useState(false);
+  // Service links already stored in the database. A new employee starts with none; the ref is
+  // updated after every successful write so a retry after a partial failure only sends what is missing.
+  const persistedServices = useRef<string[]>(draft.id ? draft.services : []);
 
   const toggleService = (id: string) =>
     setForm((f) => ({ ...f, services: f.services.includes(id) ? f.services.filter((x) => x !== id) : [...f.services, id] }));
@@ -188,21 +191,28 @@ function EmployeeModal({ draft, services, sortOrder, onClose, onSaved }: { draft
         const { data, error } = await supabase.from('employees').insert({ ...payload, business_id: business.id, sort_order: sortOrder }).select('id').maybeSingle();
         if (error) throw error;
         if (!data) throw new Error('insert returned nothing');
-        id = data.id as string;
+        const newId = data.id as string;
+        id = newId;
+        // Remember the created row at once: if a later step fails, "Kaydet" updates it instead of inserting a duplicate.
+        setForm((f) => ({ ...f, id: newId }));
       }
-      const before = new Set(draft.services);
+      const before = new Set(persistedServices.current);
       const after = new Set(form.services);
       const added = form.services.filter((s) => !before.has(s));
-      const removed = draft.services.filter((s) => !after.has(s));
+      const removed = persistedServices.current.filter((s) => !after.has(s));
       if (added.length) {
-        const { error } = await supabase.from('employee_services').insert(added.map((service_id) => ({ employee_id: id, service_id })));
+        const { error } = await supabase
+          .from('employee_services')
+          .upsert(added.map((service_id) => ({ employee_id: id, service_id })), { onConflict: 'employee_id,service_id', ignoreDuplicates: true });
         if (error) throw error;
+        persistedServices.current = [...persistedServices.current, ...added];
       }
-      if (removed.length && form.id) {
+      if (removed.length) {
         const { error } = await supabase.from('employee_services').delete().eq('employee_id', id).in('service_id', removed);
         if (error) throw error;
+        persistedServices.current = persistedServices.current.filter((s) => !removed.includes(s));
       }
-      toast(form.id ? 'Çalışan güncellendi.' : 'Çalışan eklendi.', 'success');
+      toast(draft.id ? 'Çalışan güncellendi.' : 'Çalışan eklendi.', 'success');
       onSaved();
     } catch (err) {
       toast(friendlyError(err), 'error');

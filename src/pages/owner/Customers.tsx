@@ -35,7 +35,7 @@ export default function Customers() {
     const map = new Map<string, CustomerSummary>();
     const now = new Date().toISOString();
     (data ?? [])
-      .filter((a) => a.status !== 'pending_payment')
+      .filter(isRealBooking)
       .forEach((a) => {
         const c = map.get(a.customer_id) ?? {
           id: a.customer_id,
@@ -72,7 +72,7 @@ export default function Customers() {
     <div>
       <PageHeader eyebrow="Müşteriler" title="Müşteri defteri" text="Size randevu almış müşterilerin iletişim bilgileri ve ziyaret geçmişi. Yalnızca işletmenizle paylaşılan bilgiler gösterilir." />
       <div className="mb-6 max-w-md">
-        <Input placeholder="İsim, telefon veya e-posta ara" value={query} onChange={(e) => setQuery(e.target.value)} icon={<Search className="h-4 w-4" />} />
+        <Input aria-label="Müşteri ara" placeholder="İsim, telefon veya e-posta ara" value={query} onChange={(e) => setQuery(e.target.value)} icon={<Search className="h-4 w-4" />} />
       </div>
 
       {loading && !data ? (
@@ -142,6 +142,17 @@ export default function Customers() {
       </Modal>
     </div>
   );
+}
+
+/**
+ * Mirrors the business_customer_contacts rule: abandoned payment holds, rejected requests and
+ * bookings cancelled before their start are not real visits, and their contact is not shared.
+ * Rows whose contact the server did not return are left out instead of showing a nameless card.
+ */
+function isRealBooking(a: Appointment): boolean {
+  if (a.status === 'pending_payment' || a.status === 'rejected') return false;
+  if (a.status === 'cancelled' && (!a.cancelled_at || Date.parse(a.cancelled_at) < Date.parse(a.starts_at))) return false;
+  return a.profiles != null;
 }
 
 function Mini({ label, value }: { label: string; value: string }) {

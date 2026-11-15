@@ -4,6 +4,9 @@ import type { Business } from '@/lib/types';
 import { formatTime, formatTRY } from '@/lib/format';
 import { useState } from 'react';
 import { formatDistance } from '@/lib/geo';
+import { isDemoBusiness } from '@/lib/demo';
+import { safeImageUrl } from '@/lib/safeUrl';
+import { tr } from '@/i18n/tr';
 
 interface Props {
   business: Business;
@@ -16,6 +19,9 @@ interface Props {
 }
 
 export function BusinessCard({ business: b, distance, favorite, onToggleFavorite, openNow, variant = 'grid', availableAt }: Props) {
+  const demo = isDemoBusiness(b);
+  const verified = b.is_verified && !demo;
+  const cover = safeImageUrl(b.cover_url);
   const heart = onToggleFavorite && (
     <button
       onClick={(e) => {
@@ -49,14 +55,17 @@ export function BusinessCard({ business: b, distance, favorite, onToggleFavorite
     return (
       <Link to={`/i/${b.slug}`} className="card group relative flex gap-4 p-3 transition hover:border-gold-500/40">
         <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-xl sm:h-32 sm:w-36">
-          <BusinessCover src={b.cover_url} name={b.name} />
+          <BusinessCover src={cover} name={b.name} />
         </div>
         <div className="flex min-w-0 flex-1 flex-col justify-between py-1 pr-10">
           <div>
-            <p className="text-[11px] uppercase tracking-[0.18em] text-gold-500">{b.categories?.name}</p>
+            <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] uppercase tracking-[0.18em] text-gold-500">
+              {b.categories?.name}
+              {demo && <DemoBadge />}
+            </p>
             <h3 className="mt-1 flex items-center gap-1.5 truncate font-display text-xl text-white">
               <span className="truncate">{b.name}</span>
-              {b.is_verified && <BadgeCheck className="h-4 w-4 shrink-0 text-gold-400" />}
+              {verified && <BadgeCheck className="h-4 w-4 shrink-0 text-gold-400" aria-label={tr.common.verified} />}
             </h3>
             <div className="mt-1.5">{meta}</div>
           </div>
@@ -77,8 +86,9 @@ export function BusinessCard({ business: b, distance, favorite, onToggleFavorite
   return (
     <Link to={`/i/${b.slug}`} className="card group block overflow-hidden transition hover:border-gold-500/40 hover:shadow-card active:scale-[0.99]">
       <div className="relative aspect-[4/3] overflow-hidden">
-        <BusinessCover src={b.cover_url} name={b.name} />
-        <div className="absolute left-3 top-3 flex gap-1.5">
+        <BusinessCover src={cover} name={b.name} />
+        <div className="absolute left-3 right-16 top-3 flex flex-wrap gap-1.5">
+          {demo && <span className="rounded-full border border-warning-500/40 bg-ink/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-warning-300 backdrop-blur">{tr.demo.badge}</span>}
           {b.is_featured && <span className="rounded-full bg-gold-500 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-ink">Öne Çıkan</span>}
           {openNow && <span className="rounded-full bg-ink/70 px-2.5 py-1 text-[10px] font-semibold text-success-300 backdrop-blur">Açık</span>}
         </div>
@@ -89,11 +99,13 @@ export function BusinessCard({ business: b, distance, favorite, onToggleFavorite
           <p className="text-[10px] uppercase tracking-[0.2em] text-gold-400">{b.categories?.name}</p>
           <h3 className="mt-1 flex items-center gap-1.5 font-display text-2xl leading-tight text-white">
             <span className="truncate">{b.name}</span>
-            {b.is_verified && <BadgeCheck className="h-4 w-4 shrink-0 text-gold-400" />}
+            {verified && <BadgeCheck className="h-4 w-4 shrink-0 text-gold-400" aria-label={tr.common.verified} />}
           </h3>
         </div>
       <div className="mt-2">{meta}</div>
-      {availableAt && <p className="mt-3 text-xs font-medium text-success-300">Bugün {formatTime(availableAt)} · Uygun saat bulundu</p>}
+      {demo ? (
+        <p className="mt-3 text-xs text-mist-2">{tr.demo.notBookable}</p>
+      ) : availableAt && <p className="mt-3 text-xs font-medium text-success-300">Bugün {formatTime(availableAt)} · Uygun saat bulundu</p>}
       <div className="mt-4 flex items-center justify-between gap-2 border-t border-line-soft pt-3">
         <span className="text-xs font-semibold text-gold-500">İncele →</span>
         <span className="shrink-0 text-xs text-mist-2">
@@ -103,6 +115,10 @@ export function BusinessCard({ business: b, distance, favorite, onToggleFavorite
       </div>
     </Link>
   );
+}
+
+function DemoBadge() {
+  return <span className="rounded-full border border-warning-500/40 bg-warning-900/60 px-2 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-warning-300">{tr.demo.badge}</span>;
 }
 
 function BusinessCover({ src, name }: { src: string | null; name: string }) {

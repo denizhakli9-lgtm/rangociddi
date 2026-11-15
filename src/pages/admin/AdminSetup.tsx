@@ -10,14 +10,34 @@ import { AuthShell } from '@/pages/auth/AuthShell';
 import { Button } from '@/components/ui/Button';
 import { ErrorState, PageLoader } from '@/components/ui/Feedback';
 
+/**
+ * The first-admin RPCs are meant to be revoked or dropped once the platform is
+ * set up. "Function not found" or "permission denied" therefore means the setup
+ * step is closed, not that something is broken.
+ */
+function isSetupClosed(err: unknown): boolean {
+  const o = (err ?? {}) as { code?: unknown; message?: unknown };
+  const code = String(o.code ?? '');
+  const message = String(o.message ?? '');
+  return (
+    code === 'PGRST202' ||
+    code === '42501' ||
+    code === '42883' ||
+    /permission denied|could not find the function|does not exist/i.test(message)
+  );
+}
+
 export default function AdminSetup() {
   const { profile, refreshProfile } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
-  const { data: exists, loading, error, reload } = useAsync(async () => {
+  const { data: exists, loading, error, reload, setData } = useAsync(async () => {
     const { data, error: err } = await supabase.rpc('admin_exists');
-    if (err) throw err;
+    if (err) {
+      if (isSetupClosed(err)) return true;
+      throw err;
+    }
     return Boolean(data);
   }, []);
 
@@ -28,9 +48,13 @@ export default function AdminSetup() {
     setBusy(true);
     const { data, error: err } = await supabase.rpc('claim_first_admin');
     setBusy(false);
-    if (err || !data) {
-      toast(err ? friendlyError(err) : 'Yönetici hesabı zaten tanımlanmış.', 'error');
-      reload();
+    // `false` means an admin already exists; a revoked/dropped RPC means the same.
+    if (err ? isSetupClosed(err) : !data) {
+      setData(true);
+      return;
+    }
+    if (err) {
+      toast(friendlyError(err), 'error');
       return;
     }
     await refreshProfile();
@@ -44,7 +68,7 @@ export default function AdminSetup() {
         <ErrorState onRetry={reload} />
       ) : exists ? (
         <div className="card space-y-4 p-6">
-          <p className="text-sm leading-relaxed text-mist">Bu platform için bir yönetici zaten tanımlı. Yönetim yetkisi gerekiyorsa mevcut yöneticiyle iletişime geçin.</p>
+          <p className="text-sm leading-relaxed text-mist">Platform kurulumu tamamlanmış. Bu sayfada yapılacak bir işlem bulunmuyor.</p>
           <Link to="/kesfet" className="text-sm text-gold-400 hover:text-gold-300">
             Ana sayfaya dön
           </Link>

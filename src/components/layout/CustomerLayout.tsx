@@ -3,6 +3,8 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import { Bell, CalendarDays, Compass, Heart, MapPin, Search, User } from 'lucide-react';
 import { Logo } from '@/components/ui/Brand';
 import { PageLoader } from '@/components/ui/Feedback';
+import { LegalFooter } from '@/components/legal/LegalFooter';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserLocation } from '@/contexts/LocationContext';
 import { useUnreadCount } from '@/lib/useUnreadCount';
@@ -47,11 +49,12 @@ export function CustomerLayout() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => navigate('/konum')}
-              className="flex min-h-11 max-w-[150px] items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs text-mist transition hover:border-gold-500/40 hover:text-white"
+              className="flex min-h-11 min-w-0 max-w-[112px] items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs text-mist transition hover:border-gold-500/40 hover:text-white sm:max-w-[150px]"
             >
               <MapPin className="h-3.5 w-3.5 shrink-0 text-gold-500" />
               <span className="truncate">{location.label}</span>
             </button>
+            <ThemeToggle />
             {session ? (
               <>
                 <Link to="/bildirimler" className="relative flex h-11 w-11 items-center justify-center rounded-full p-2 text-mist transition hover:bg-white/5 hover:text-white" aria-label={t.nav.notifications}>
@@ -79,6 +82,7 @@ export function CustomerLayout() {
         <Suspense fallback={<PageLoader />}>
           <Outlet />
         </Suspense>
+        <LegalFooter className="mt-16" />
       </main>
 
       <nav className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-line-soft bg-ink/95 backdrop-blur-xl md:hidden">

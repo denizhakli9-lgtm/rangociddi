@@ -8,11 +8,14 @@ import { depositFor, formatDuration, formatRelative, formatTRY, isoWeekday, date
 import { isOpenNow } from '@/lib/hours';
 import { distanceKm, formatDistance } from '@/lib/geo';
 import { fullAddress, hasExactPin } from '@/lib/maps';
+import { isDemoBusiness } from '@/lib/demo';
+import { safeImageUrl } from '@/lib/safeUrl';
 import { useUserLocation } from '@/contexts/LocationContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useT } from '@/i18n/I18nProvider';
 import { DirectionsButton } from '@/components/DirectionsSheet';
 import { Avatar, Segmented, Stars } from '@/components/ui/Brand';
+import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, ErrorState, PageLoader } from '@/components/ui/Feedback';
 
@@ -36,21 +39,28 @@ export default function BusinessDetail() {
   }, [slug]);
 
   if (loading) return <PageLoader />;
-  if (error) return <ErrorState onRetry={reload} error={error} />;
+  // Raw backend details only in development; visitors see the Turkish message.
+  if (error) return <ErrorState onRetry={reload} error={import.meta.env.DEV ? error : undefined} />;
   if (!data) {
     return <EmptyState icon={<Store className="h-6 w-6" />} title="İşletme bulunamadı" text="Aradığınız işletme yayından kaldırılmış olabilir." action={<Button onClick={() => navigate('/ara')}>İşletmeleri keşfet</Button>} />;
   }
 
   const { business: b, services, employees, hours, reviews } = data;
-  const photos = [b.cover_url, ...(b.gallery ?? [])].filter(Boolean) as string[];
+  const demo = isDemoBusiness(b);
+  const photos = [b.cover_url, ...(b.gallery ?? [])].map(safeImageUrl).filter((src): src is string => !!src);
   const todayWd = isoWeekday(dateKey());
   const open = isOpenNow(hours.find((h) => h.weekday === todayWd));
   const fav = ids.has(b.id);
-  const book = (serviceId?: string) => navigate(`/i/${b.slug}/randevu${serviceId ? `?hizmet=${serviceId}` : ''}`);
+  const book = (serviceId?: string) => {
+    if (demo) return;
+    navigate(`/i/${b.slug}/randevu${serviceId ? `?hizmet=${serviceId}` : ''}`);
+  };
+  const goBack = () => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/kesfet', { replace: true }));
   const depositLabel = b.deposit_type === 'percentage' ? `%${Number(b.deposit_value)}` : formatTRY(b.deposit_value);
   const address = fullAddress(b);
   const distance = hasChosen && b.latitude != null && b.longitude != null ? formatDistance(distanceKm(location.lat, location.lng, b.latitude, b.longitude)) : null;
-  const tel = b.phone ? `tel:${b.phone.replace(/\s/g, '')}` : null;
+  // Demo businesses have invented numbers that may belong to real people: never show or dial them.
+  const tel = !demo && b.phone ? `tel:${b.phone.replace(/\s/g, '')}` : null;
 
   const share = async () => {
     const url = window.location.href;
@@ -74,7 +84,7 @@ export default function BusinessDetail() {
           ))}
           <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/20 to-ink/40" />
           <div className="absolute inset-x-4 top-4 flex justify-between">
-            <button onClick={() => navigate(-1)} className="flex h-10 w-10 items-center justify-center rounded-full bg-ink/60 text-white backdrop-blur transition hover:bg-ink" aria-label="Geri">
+            <button onClick={goBack} className="flex h-10 w-10 items-center justify-center rounded-full bg-ink/60 text-white backdrop-blur transition hover:bg-ink" aria-label="Geri">
               <ArrowLeft className="h-5 w-5" />
             </button>
             <div className="flex gap-2">
@@ -106,8 +116,14 @@ export default function BusinessDetail() {
             </div>
             <h1 className="mt-2 flex items-center gap-2 font-display text-4xl text-white sm:text-5xl">
               {b.name}
-              {b.is_verified && <BadgeCheck className="h-6 w-6 shrink-0 text-gold-400" />}
+              {b.is_verified && !demo && <BadgeCheck className="h-6 w-6 shrink-0 text-gold-400" aria-label={t.common.verified} />}
             </h1>
+            {demo && (
+              <div className="mt-3 flex max-w-2xl flex-col items-start gap-2 rounded-2xl border border-warning-500/40 bg-warning-900/40 px-4 py-3 text-sm text-warning-300 sm:flex-row sm:items-center sm:gap-3">
+                <Badge tone="warning">{t.demo.badge}</Badge>
+                <span>{t.demo.explanation}</span>
+              </div>
+            )}
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-mist">
               <span className="flex items-center gap-1.5">
                 <Star className="h-4 w-4 fill-gold-500 text-gold-500" />
@@ -166,7 +182,7 @@ export default function BusinessDetail() {
                         <p className="font-semibold text-white">{formatTRY(s.price)}</p>
                         <p className="text-[11px] text-mist-2">Kapora {formatTRY(depositFor(Number(s.price), b.deposit_type, Number(b.deposit_value)))}</p>
                       </div>
-                      <Button size="sm" variant="outline" onClick={() => book(s.id)}>Seç</Button>
+                      <Button size="sm" variant="outline" disabled={demo} title={demo ? t.demo.notBookable : undefined} onClick={() => book(s.id)}>Seç</Button>
                     </div>
                   ))}
                 </div>
@@ -179,7 +195,7 @@ export default function BusinessDetail() {
               <div className="grid gap-3 sm:grid-cols-2">
                 {employees.map((e) => (
                   <div key={e.id} className="card flex items-center gap-4 p-4">
-                    <Avatar name={e.full_name} src={e.avatar_url} size="h-14 w-14 text-base" />
+                    <Avatar name={e.full_name} src={safeImageUrl(e.avatar_url)} size="h-14 w-14 text-base" />
                     <div className="min-w-0">
                       <p className="font-medium text-white">{e.full_name}</p>
                       <p className="text-xs text-gold-400">{e.title}</p>
@@ -264,9 +280,10 @@ export default function BusinessDetail() {
             <ul className="mt-5 space-y-3 text-sm text-mist">
               <li className="flex gap-2.5"><ShieldCheck className="h-4 w-4 shrink-0 text-gold-400" />{depositLabel} kapora ile yeriniz garanti</li>
               <li className="flex gap-2.5"><CalendarClock className="h-4 w-4 shrink-0 text-gold-400" />{b.cancellation_hours} saat öncesine kadar ücretsiz iptal</li>
-              <li className="flex gap-2.5"><BadgeCheck className="h-4 w-4 shrink-0 text-gold-400" />{b.auto_confirm ? 'Anında onay' : 'İşletme onaylı randevu'}</li>
+              <li className="flex gap-2.5"><BadgeCheck className="h-4 w-4 shrink-0 text-gold-400" />{b.auto_confirm ? 'Anında onay (aynı gün randevuları hariç)' : 'İşletme onaylı randevu'}</li>
             </ul>
-            <Button full size="lg" className="mt-6" onClick={() => book()}>Randevu Al</Button>
+            <Button full size="lg" className="mt-6" disabled={demo} onClick={() => book()}>{demo ? 'Randevu alınamaz' : 'Randevu Al'}</Button>
+            {demo && <p className="mt-2 text-center text-xs text-mist-2">{t.demo.notBookable}</p>}
             <DirectionsButton target={b} className="mt-3 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-line text-sm text-white transition hover:border-gold-500/40">
               <Navigation className="h-4 w-4 text-gold-400" /> Yol tarifi al
             </DirectionsButton>
@@ -277,15 +294,24 @@ export default function BusinessDetail() {
 
       <div className="safe-bottom fixed inset-x-0 bottom-[60px] z-30 border-t border-line bg-ink/95 px-4 py-3 backdrop-blur-xl md:bottom-0 lg:hidden">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
-          <div>
-            <p className="text-[11px] text-mist-2">Başlayan fiyatlarla</p>
-            <p className="font-semibold text-white">{formatTRY(b.min_price)}</p>
+          <div className="min-w-0">
+            {demo ? (
+              <>
+                <p className="text-[11px] text-warning-300">{t.demo.badge}</p>
+                <p className="text-xs text-mist">{t.demo.notBookable}</p>
+              </>
+            ) : (
+              <>
+                <p className="text-[11px] text-mist-2">Başlayan fiyatlarla</p>
+                <p className="font-semibold text-white">{formatTRY(b.min_price)}</p>
+              </>
+            )}
           </div>
           <div className="flex flex-1 items-center justify-end gap-2 sm:flex-none">
             <DirectionsButton target={b} ariaLabel="Yol tarifi al" className="grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-line text-gold-400 transition hover:border-gold-500/40">
               <Navigation className="h-5 w-5" />
             </DirectionsButton>
-            <Button size="lg" onClick={() => book()} className="flex-1 sm:flex-none">Randevu Al</Button>
+            <Button size="lg" disabled={demo} onClick={() => book()} className="flex-1 sm:flex-none">{demo ? 'Randevu alınamaz' : 'Randevu Al'}</Button>
           </div>
         </div>
       </div>

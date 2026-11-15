@@ -1,10 +1,28 @@
-import { forwardRef, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
+import { forwardRef, useId, type AriaAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
 
 const base =
   'w-full rounded-xl border bg-ink/60 px-4 text-sm text-white placeholder:text-mist-3 transition focus:outline-none focus:ring-2 focus:ring-gold-500/30 disabled:opacity-60';
 
 function borderCls(error?: string) {
   return error ? 'border-error-500/60 focus:border-error-500' : 'border-line focus:border-gold-500/70';
+}
+
+/** id of the error/hint paragraph that FieldWrap renders for the control with id `fid`. */
+function messageId(fid?: string) {
+  return fid ? `${fid}-msg` : undefined;
+}
+
+/**
+ * aria-describedby / aria-invalid for a control: links the error (or hint) paragraph and keeps any
+ * aria-describedby the caller passed. Spread after `rest` so the link is not overwritten.
+ */
+function describe(fid: string, error: string | undefined, hint: string | undefined, rest: AriaAttributes): AriaAttributes {
+  const own = error || hint ? messageId(fid) : undefined;
+  const describedBy = [rest['aria-describedby'], own].filter(Boolean).join(' ');
+  return {
+    'aria-describedby': describedBy || undefined,
+    'aria-invalid': error ? true : rest['aria-invalid'],
+  };
 }
 
 interface WrapProps {
@@ -16,6 +34,7 @@ interface WrapProps {
 }
 
 export function FieldWrap({ label, error, hint, children, htmlFor }: WrapProps) {
+  const msgId = messageId(htmlFor);
   return (
     <div className="space-y-1.5">
       {label && (
@@ -24,7 +43,7 @@ export function FieldWrap({ label, error, hint, children, htmlFor }: WrapProps) 
         </label>
       )}
       {children}
-      {error ? <p className="text-xs text-error-300">{error}</p> : hint ? <p className="text-xs text-mist-2">{hint}</p> : null}
+      {error ? <p id={msgId} className="text-xs text-error-300">{error}</p> : hint ? <p id={msgId} className="text-xs text-mist-2">{hint}</p> : null}
     </div>
   );
 }
@@ -37,12 +56,13 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input({ label, error, hint, icon, id, className = '', ...rest }, ref) {
-  const fid = id ?? rest.name;
+  const autoId = useId();
+  const fid = id ?? rest.name ?? autoId;
   return (
     <FieldWrap label={label} error={error} hint={hint} htmlFor={fid}>
       <div className="relative">
         {icon && <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-mist-2">{icon}</span>}
-        <input ref={ref} id={fid} className={`${base} h-12 ${borderCls(error)} ${icon ? 'pl-11' : ''} ${className}`} {...rest} />
+        <input ref={ref} id={fid} className={`${base} h-12 ${borderCls(error)} ${icon ? 'pl-11' : ''} ${className}`} {...rest} {...describe(fid, error, hint, rest)} />
       </div>
     </FieldWrap>
   );
@@ -55,10 +75,11 @@ interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
 }
 
 export function Textarea({ label, error, hint, id, className = '', ...rest }: TextareaProps) {
-  const fid = id ?? rest.name;
+  const autoId = useId();
+  const fid = id ?? rest.name ?? autoId;
   return (
     <FieldWrap label={label} error={error} hint={hint} htmlFor={fid}>
-      <textarea id={fid} className={`${base} min-h-[96px] py-3 ${borderCls(error)} ${className}`} {...rest} />
+      <textarea id={fid} className={`${base} min-h-[96px] py-3 ${borderCls(error)} ${className}`} {...rest} {...describe(fid, error, hint, rest)} />
     </FieldWrap>
   );
 }
@@ -70,10 +91,11 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
 }
 
 export function Select({ label, error, hint, id, className = '', children, ...rest }: SelectProps) {
-  const fid = id ?? rest.name;
+  const autoId = useId();
+  const fid = id ?? rest.name ?? autoId;
   return (
     <FieldWrap label={label} error={error} hint={hint} htmlFor={fid}>
-      <select id={fid} className={`${base} h-12 appearance-none ${borderCls(error)} ${className}`} {...rest}>
+      <select id={fid} className={`${base} h-12 appearance-none ${borderCls(error)} ${className}`} {...rest} {...describe(fid, error, hint, rest)}>
         {children}
       </select>
     </FieldWrap>

@@ -4,6 +4,8 @@ import { Check, Lock, Mail, Phone, Store, User } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { friendlyError } from '@/lib/errors';
 import { isEmail, isPhone } from '@/lib/validation';
+import { safeInternalPath } from '@/lib/safeRedirect';
+import { LEGAL_VERSIONS, legalPath } from '@/lib/legal';
 import { Input, Select } from '@/components/ui/Field';
 import { Button } from '@/components/ui/Button';
 import { useT } from '@/i18n/I18nProvider';
@@ -60,7 +62,20 @@ export default function Register() {
     const { data, error } = await supabase.auth.signUp({
       email,
       password: form.password,
-      options: { data: { account_type: type, full_name: form.fullName.trim(), phone: form.phone.trim(), gender: form.gender } },
+      options: {
+        // Confirmation links return to this site (the origin must be in Supabase's Redirect URLs).
+        emailRedirectTo: `${window.location.origin}/giris`,
+        data: {
+          account_type: type,
+          full_name: form.fullName.trim(),
+          phone: form.phone.trim(),
+          gender: form.gender,
+          // Record of what the person accepted / was informed with, at sign-up time.
+          terms_version: LEGAL_VERSIONS.terms,
+          privacy_notice_version: LEGAL_VERSIONS.privacy,
+          terms_accepted_at: new Date().toISOString(),
+        },
+      },
     });
 
     if (error) {
@@ -80,7 +95,7 @@ export default function Register() {
           return;
         }
         setLoading(false);
-        setFormError('Bu e-posta ile zaten bir hesap var. Şifreniz farklıysa giriş ekranından devam edin.');
+        setFormError('Kayıt tamamlanamadı. Bu e-posta ile hesabınız varsa giriş yapın veya şifrenizi sıfırlayın.');
         return;
       }
       setLoading(false);
@@ -97,8 +112,7 @@ export default function Register() {
   };
 
   const go = (role: AccountType | 'admin') => {
-    const redirect = params.get('sonra');
-    const safe = redirect && redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : null;
+    const safe = safeInternalPath(params.get('sonra'));
     if (role === 'business') navigate('/isletme', { replace: true });
     else if (role === 'admin') navigate('/yonetim', { replace: true });
     else navigate(safe ?? '/kesfet', { replace: true });
@@ -156,12 +170,28 @@ export default function Register() {
           <Input label="Şifre Tekrar" name="password2" type="password" autoComplete="new-password" autoCapitalize="none" autoCorrect="off" value={form.password2} onChange={(e) => set('password2', e.target.value)} error={errors.password2} icon={<Lock className="h-4 w-4" />} />
         </div>
         <label className="flex cursor-pointer items-start gap-3 pt-1 text-xs text-mist">
-          <input type="checkbox" checked={form.terms} onChange={(e) => set('terms', e.target.checked)} className="mt-0.5 h-4 w-4 accent-[#D4AF37]" />
+          <input
+            type="checkbox"
+            name="terms"
+            checked={form.terms}
+            onChange={(e) => set('terms', e.target.checked)}
+            aria-invalid={!!errors.terms}
+            aria-describedby={errors.terms ? 'terms-error' : undefined}
+            className="mt-0.5 h-4 w-4 shrink-0 accent-[#D4AF37]"
+          />
           <span>
-            Kullanım koşullarını ve KVKK aydınlatma metnini okudum, kabul ediyorum.
-            {errors.terms && <span className="mt-1 block text-error-300">{errors.terms}</span>}
+            <Link to={legalPath('kullanim-kosullari')} target="_blank" rel="noopener noreferrer" className="font-semibold text-gold-400 hover:text-gold-300">Kullanım Koşulları ve Üyelik Sözleşmesi</Link>
+            ’ni ve{' '}
+            <Link to={legalPath('iptal-iade')} target="_blank" rel="noopener noreferrer" className="font-semibold text-gold-400 hover:text-gold-300">İptal ve İade Koşulları</Link>
+            ’nı okudum, kabul ediyorum.
+            {errors.terms && <span id="terms-error" className="mt-1 block text-error-300">{errors.terms}</span>}
           </span>
         </label>
+        <p className="text-xs leading-relaxed text-mist-2">
+          Kişisel verileriniz, üyeliğinizin ve randevularınızın yürütülmesi amacıyla{' '}
+          <Link to={legalPath('aydinlatma-metni')} target="_blank" rel="noopener noreferrer" className="font-semibold text-gold-400 hover:text-gold-300">KVKK Aydınlatma Metni</Link>
+          {' '}kapsamında işlenir.
+        </p>
         {formError && <p className="rounded-xl border border-error-500/30 bg-error-900/40 px-4 py-3 text-sm text-error-300">{formError}</p>}
         <Button type="submit" size="lg" full loading={loading}>
           {type === 'business' ? 'İşletme Hesabı Oluştur' : 'Hesap Oluştur'}

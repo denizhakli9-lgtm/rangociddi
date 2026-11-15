@@ -65,7 +65,9 @@ export function SlotPicker({ serviceId, employeeId, hours, days = 30, excludeApp
           return (
             <button
               key={d}
+              type="button"
               disabled={closed}
+              aria-pressed={active}
               onClick={() => setDate(d)}
               className={`flex w-16 shrink-0 flex-col items-center rounded-2xl border py-3 transition ${
                 active ? 'border-gold-500 bg-gold-500 text-ink shadow-gold' : closed ? 'cursor-not-allowed border-line-soft text-mist-3' : 'border-line bg-coal text-white hover:border-gold-500/40'
@@ -101,6 +103,8 @@ export function SlotPicker({ serviceId, employeeId, hours, days = 30, excludeApp
                     return (
                       <button
                         key={s.slot_start}
+                        type="button"
+                        aria-pressed={active}
                         onClick={() => onChange(s)}
                         className={`h-11 rounded-xl border text-sm font-medium transition ${active ? 'border-gold-500 bg-gold-500 text-ink' : 'border-line bg-coal text-white hover:border-gold-500/50'}`}
                       >

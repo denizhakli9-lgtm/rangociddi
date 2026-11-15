@@ -3,8 +3,27 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth, homePathFor } from '@/contexts/AuthContext';
 import { useT } from '@/i18n/I18nProvider';
 import { BrandMark, WordMark } from '@/components/ui/Brand';
+import { ProfileLoadError } from '@/components/layout/RequireAuth';
 
 export const ONBOARDED_KEY = 'veyra.onboarded';
+
+// Storage can throw when site data is blocked (Safari Lockdown, strict
+// enterprise policies); the app must keep navigating either way.
+export function hasOnboarded(): boolean {
+  try {
+    return !!localStorage.getItem(ONBOARDED_KEY);
+  } catch {
+    return false;
+  }
+}
+
+export function markOnboarded(): void {
+  try {
+    localStorage.setItem(ONBOARDED_KEY, '1');
+  } catch {
+    /* storage unavailable: onboarding is simply shown again next time */
+  }
+}
 
 export default function Splash() {
   const t = useT();
@@ -20,10 +39,14 @@ export default function Splash() {
     if (isRecovery || loading || (session && !profile)) return;
     const timer = setTimeout(() => {
       if (session) navigate(homePathFor(profile), { replace: true });
-      else navigate(localStorage.getItem(ONBOARDED_KEY) ? '/kesfet' : '/hosgeldin', { replace: true });
+      else navigate(hasOnboarded() ? '/kesfet' : '/hosgeldin', { replace: true });
     }, 2200);
     return () => clearTimeout(timer);
   }, [isRecovery, loading, session, profile, navigate]);
+
+  // Signed in, but the profile could not be read: offer retry / sign-out
+  // instead of leaving the logo animating forever.
+  if (!isRecovery && !loading && session && !profile) return <ProfileLoadError />;
 
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-ink">

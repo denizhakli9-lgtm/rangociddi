@@ -27,11 +27,17 @@ interface Stats {
 
 export default function AdminOverview() {
   const { data, loading, error, reload } = useAsync(async () => {
-    const { data: s, error: err } = await supabase.rpc('admin_stats');
+    const [{ data: s, error: err }, settings] = await Promise.all([
+      supabase.rpc('admin_stats'),
+      // Only used to label test-mode money figures; the page still works if it cannot be read.
+      supabase.from('platform_settings').select('payment_mode').eq('id', 1).maybeSingle(),
+    ]);
     if (err) throw err;
     if (!s || typeof s !== 'object') throw new Error('invalid stats');
-    return s as Stats;
+    const paymentMode = settings.error ? null : ((settings.data as { payment_mode?: string } | null)?.payment_mode ?? null);
+    return { ...(s as Stats), paymentMode };
   }, []);
+  const testMode = data?.paymentMode === 'test';
 
   const monthly = data?.monthly ?? [];
   const max = Math.max(1, ...monthly.map((m) => Number(m.appointments)));
@@ -56,8 +62,18 @@ export default function AdminOverview() {
             <StatCard label="İşletmeler" value={String(data.businesses)} sub={`${data.businesses_pending} onay bekliyor`} icon={<Store className="h-4 w-4" />} />
             <StatCard label="Randevular" value={String(data.appointments)} sub={`${data.appointments_upcoming} yaklaşan · ${data.appointments_completed} tamamlanan`} icon={<CalendarCheck className="h-4 w-4" />} />
             <StatCard label="İşlem hacmi" value={formatTRY(data.gross_volume)} sub="Tamamlanan randevular" icon={<Wallet className="h-4 w-4" />} />
-            <StatCard label="Toplanan kapora" value={formatTRY(data.deposits_collected)} icon={<Banknote className="h-4 w-4" />} />
-            <StatCard label="İade edilen" value={formatTRY(data.refunded_total)} sub={`${data.refunds_pending} bekleyen talep`} icon={<Undo2 className="h-4 w-4" />} />
+            <StatCard
+              label={testMode ? 'Kapora (test ödemeleri)' : 'Toplanan kapora'}
+              value={formatTRY(data.deposits_collected)}
+              sub={testMode ? 'Test modu: kartlardan tahsilat yapılmadı' : undefined}
+              icon={<Banknote className="h-4 w-4" />}
+            />
+            <StatCard
+              label={testMode ? 'İade kaydı (test)' : 'İade edilen'}
+              value={formatTRY(data.refunded_total)}
+              sub={testMode ? `Karta para gönderilmedi · ${data.refunds_pending} bekleyen talep` : `${data.refunds_pending} bekleyen talep`}
+              icon={<Undo2 className="h-4 w-4" />}
+            />
             <StatCard label="Komisyon geliri" value={formatTRY(data.commission_total)} icon={<Percent className="h-4 w-4" />} />
             <StatCard label="Tahsil edilecek komisyon" value={formatTRY(data.commission_pending)} icon={<Clock className="h-4 w-4" />} />
           </div>

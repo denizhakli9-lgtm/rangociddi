@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useAsync } from '@/lib/useAsync';
 import { friendlyError } from '@/lib/errors';
 import { formatRelative } from '@/lib/format';
+import { safeInternalPath } from '@/lib/safeRedirect';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { Button } from '@/components/ui/Button';
@@ -58,7 +59,8 @@ export default function Notifications() {
       await supabase.from('notifications').update({ is_read: true }).eq('id', n.id);
       setData(list.map((x) => (x.id === n.id ? { ...x, is_read: true } : x)));
     }
-    if (n.link && n.link.startsWith('/')) navigate(n.link);
+    const to = safeInternalPath(n.link);
+    if (to) navigate(to);
   };
 
   const remove = async (id: string) => {

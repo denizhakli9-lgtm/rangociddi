@@ -5,6 +5,7 @@ import { IZMIR_DISTRICTS, distanceKm } from '@/lib/geo';
 import { useUserLocation } from '@/contexts/LocationContext';
 import { useToast } from '@/contexts/ToastContext';
 import { Button } from '@/components/ui/Button';
+import { getDevicePosition } from '@/lib/platform';
 
 export default function LocationSelect() {
   const { location, setLocation } = useUserLocation();
@@ -22,15 +23,10 @@ export default function LocationSelect() {
   };
 
   const useDevice = () => {
-    if (!('geolocation' in navigator)) {
-      toast('Tarayıcınız konum özelliğini desteklemiyor.', 'error');
-      return;
-    }
     setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
+    getDevicePosition({ highAccuracy: false, timeout: 10000 }).then(
+      ({ latitude, longitude }) => {
         setLocating(false);
-        const { latitude, longitude } = pos.coords;
         const nearest = [...IZMIR_DISTRICTS].sort((a, b) => distanceKm(latitude, longitude, a.lat, a.lng) - distanceKm(latitude, longitude, b.lat, b.lng))[0];
         const km = distanceKm(latitude, longitude, nearest.lat, nearest.lng);
         // Only the matched district centre is kept, never the exact device fix,
@@ -41,11 +37,10 @@ export default function LocationSelect() {
           toast('Konumunuz İzmir servis alanının dışında görünüyor. Lütfen listeden bir semt seçin.', 'error');
         }
       },
-      () => {
+      (err) => {
         setLocating(false);
-        toast('Konum izni alınamadı. Lütfen listeden bir semt seçin.', 'error');
+        toast(err === 'unsupported' ? 'Tarayıcınız konum özelliğini desteklemiyor.' : 'Konum izni alınamadı. Lütfen listeden bir semt seçin.', 'error');
       },
-      { enableHighAccuracy: false, timeout: 10000 },
     );
   };
 

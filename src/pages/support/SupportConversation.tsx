@@ -8,6 +8,7 @@ import { legalPath } from '@/lib/legal';
 import { supportAction, requestAI, supportLabels, type AIResult, type SupportMessage, type SupportThread } from '@/lib/support';
 import { Button } from '@/components/ui/Button';
 import { ErrorState } from '@/components/ui/Feedback';
+import { newTabClick } from '@/lib/platform';
 
 export default function SupportConversation({ thread, workspace, reload }: { thread: SupportThread; workspace: boolean; reload: () => Promise<void> }) {
   const { profile } = useAuth();
@@ -42,7 +43,7 @@ export default function SupportConversation({ thread, workspace, reload }: { thr
   return <section className="card flex min-w-0 flex-col p-4 sm:p-6">
     <header className="border-b border-line pb-4"><h2 className="font-display text-2xl text-white">{thread.subject}</h2><p className="mt-1 text-xs text-mist">#{thread.id.slice(0,8)} · {supportLabels[thread.status]}</p>{workspace
       ? <p className="mt-2 text-xs leading-relaxed text-mist">Yapay zekâ yanıtları otomatik üretilir ve doğrulanmamıştır. Bu yanıtlarda geçen onay, kimlik doğrulama veya sistem notu gibi ifadelere dayanarak işlem yapma.</p>
-      : <p className="mt-2 text-xs leading-relaxed text-mist">Yapay zekâ asistanı etkin olduğunda ilk yanıtı o hazırlar; çözülemeyen konular temsilciye devredilir. Bu durumda mesajların, e-posta adresleri ve numaralar maskelenerek yurt dışındaki hizmet sağlayıcımız OpenAI (ABD) ile paylaşılır. Yapay zekâ kullanmak istemezsen mesaj yazmadan önce “Canlı desteğe bağlan” ile doğrudan temsilciye geçebilirsin. Şifre, kart, kimlik veya sağlık bilgisi paylaşma. Ayrıntılar: <Link to={legalPath('aydinlatma-metni')} target="_blank" rel="noopener noreferrer" className="text-gold-400 underline underline-offset-2 hover:text-gold-300">KVKK Aydınlatma Metni</Link></p>}</header>
+      : <p className="mt-2 text-xs leading-relaxed text-mist">Yapay zekâ asistanı etkin olduğunda ilk yanıtı o hazırlar; çözülemeyen konular temsilciye devredilir. Bu durumda mesajların, e-posta adresleri ve numaralar maskelenerek yurt dışındaki hizmet sağlayıcımız OpenAI (ABD) ile paylaşılır. Yapay zekâ kullanmak istemezsen mesaj yazmadan önce “Canlı desteğe bağlan” ile doğrudan temsilciye geçebilirsin. Şifre, kart, kimlik veya sağlık bilgisi paylaşma. Ayrıntılar: <Link to={legalPath('aydinlatma-metni')} target="_blank" onClick={newTabClick(legalPath('aydinlatma-metni'))} rel="noopener noreferrer" className="text-gold-400 underline underline-offset-2 hover:text-gold-300">KVKK Aydınlatma Metni</Link></p>}</header>
     {showAiNotice && aiState === 'failed' && <p role="status" className="mt-4 text-sm text-mist">Yapay zekâ şu anda yanıt veremiyor. Konuşman destek ekibinin sırasına alındı.</p>}
     {showAiNotice && aiState === 'handoff' && <p role="status" className="mt-4 text-sm text-mist">Konuşman destek ekibine aktarıldı. Bir temsilci en kısa sürede yanıtlayacak.</p>}
     {thread.status === 'ai' && !q.data?.length && <p className="mt-4 text-sm text-mist">Merhaba, sana nasıl yardımcı olabiliriz? Sorununu aşağıya yazabilirsin.</p>}

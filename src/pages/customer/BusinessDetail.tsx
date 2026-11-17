@@ -10,6 +10,7 @@ import { distanceKm, formatDistance } from '@/lib/geo';
 import { fullAddress, hasExactPin } from '@/lib/maps';
 import { isDemoBusiness } from '@/lib/demo';
 import { safeImageUrl } from '@/lib/safeUrl';
+import { publicUrl, shareLink } from '@/lib/platform';
 import { useUserLocation } from '@/contexts/LocationContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useT } from '@/i18n/I18nProvider';
@@ -63,13 +64,10 @@ export default function BusinessDetail() {
   const tel = !demo && b.phone ? `tel:${b.phone.replace(/\s/g, '')}` : null;
 
   const share = async () => {
-    const url = window.location.href;
+    // In the app window.location is https://localhost, so share the public site address.
+    const url = publicUrl(window.location.pathname + window.location.search);
     try {
-      if (navigator.share) await navigator.share({ title: b.name, url });
-      else {
-        await navigator.clipboard.writeText(url);
-        toast('Bağlantı kopyalandı', 'success');
-      }
+      if ((await shareLink(b.name, url)) === 'copied') toast('Bağlantı kopyalandı', 'success');
     } catch {
       /* user dismissed share sheet */
     }

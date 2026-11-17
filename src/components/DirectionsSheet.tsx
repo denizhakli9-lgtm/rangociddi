@@ -3,6 +3,7 @@ import { Check, ChevronRight, Copy, Map, MapPin, Navigation } from 'lucide-react
 import { Modal } from '@/components/ui/Modal';
 import { directionsUrl, fullAddress, hasExactPin, type MapApp, type MapTarget } from '@/lib/maps';
 import { useToast } from '@/contexts/ToastContext';
+import { systemLinkClick } from '@/lib/platform';
 
 const APPS: { id: MapApp; label: string; hint: string; tone: string }[] = [
   { id: 'google', label: 'Google Haritalar', hint: 'Android ve web', tone: 'from-sky-400/25 to-sky-600/10 text-sky-300' },
@@ -49,7 +50,10 @@ export function DirectionsSheet({ open, onClose, target }: SheetProps) {
               href={directionsUrl(app.id, target)}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={onClose}
+              onClick={(e) => {
+                systemLinkClick(directionsUrl(app.id, target))(e);
+                onClose();
+              }}
               className="group flex items-center gap-4 rounded-2xl border border-line bg-coal-2 px-4 py-3.5 transition hover:border-gold-500/40 hover:bg-white/[0.03]"
             >
               <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br ${app.tone}`}>

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Field';
 import { Button } from '@/components/ui/Button';
 import { useT } from '@/i18n/I18nProvider';
 import { AuthShell } from './AuthShell';
+import { publicUrl } from '@/lib/platform';
 
 export default function ForgotPassword() {
   const t = useT();
@@ -29,7 +30,7 @@ export default function ForgotPassword() {
     setLoading(true);
     const address = email.trim().toLowerCase();
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(address, {
-      redirectTo: `${window.location.origin}/sifre-yenile`,
+      redirectTo: publicUrl('/sifre-yenile'),
     });
     setLoading(false);
     if (resetError) {

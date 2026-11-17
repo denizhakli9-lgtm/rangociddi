@@ -17,6 +17,7 @@ import { EmptyState, ErrorState, SkeletonList } from '@/components/ui/Feedback';
 import { PageHeader } from '@/components/layout/PageHeader';
 import type { Business, BusinessStatus, Profile } from '@/lib/types';
 import { PayoutReview } from './PayoutReview';
+import { newTabClick } from '@/lib/platform';
 
 type Tab = 'all' | BusinessStatus;
 
@@ -158,7 +159,7 @@ function BusinessModal({ business, onClose, onSaved }: { business: Business; onC
         <div className="flex items-center justify-between">
           <BusinessStatusBadge status={business.status} />
           {business.status === 'approved' && (
-            <Link to={`/i/${business.slug}`} target="_blank" className="inline-flex items-center gap-1 text-xs text-gold-400 hover:text-gold-300">
+            <Link to={`/i/${business.slug}`} target="_blank" onClick={newTabClick(`/i/${business.slug}`)} className="inline-flex items-center gap-1 text-xs text-gold-400 hover:text-gold-300">
               Profili aç <ExternalLink className="h-3 w-3" />
             </Link>
           )}

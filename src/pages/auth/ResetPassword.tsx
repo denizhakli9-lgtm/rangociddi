@@ -11,6 +11,7 @@ import { PageLoader } from '@/components/ui/Feedback';
 import { useT } from '@/i18n/I18nProvider';
 import type { Profile } from '@/lib/types';
 import { AuthShell } from './AuthShell';
+import { publicUrl } from '@/lib/platform';
 
 // 'signed-in': an ordinary session without a recovery link. Setting a new
 // password from it would skip any proof of account ownership, so the person is
@@ -116,7 +117,7 @@ export default function ResetPassword() {
     setSending(true);
     setFormError('');
     const { error } = await supabase.auth.resetPasswordForEmail(address, {
-      redirectTo: `${window.location.origin}/sifre-yenile`,
+      redirectTo: publicUrl('/sifre-yenile'),
     });
     setSending(false);
     if (error) {

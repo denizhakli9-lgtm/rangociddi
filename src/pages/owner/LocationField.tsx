@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AlertTriangle, CheckCircle2, Crosshair, ExternalLink, Link2, MapPin, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { isInIzmir, parseLocationInput, viewUrl, type Coords } from '@/lib/maps';
+import { getDevicePosition, systemLinkClick } from '@/lib/platform';
 
 interface Props {
   value: Coords | null;
@@ -27,22 +28,23 @@ export function LocationField({ value, district, onChange }: Props) {
   };
 
   const useMyLocation = () => {
-    if (!navigator.geolocation) {
-      setError('Tarayıcınız konum özelliğini desteklemiyor. Harita linki ile ekleyebilirsiniz.');
-      return;
-    }
     setLocating(true);
     setError(null);
-    navigator.geolocation.getCurrentPosition(
+    getDevicePosition({ highAccuracy: true, timeout: 15000 }).then(
       (pos) => {
         setLocating(false);
-        accept({ latitude: Math.round(pos.coords.latitude * 1e6) / 1e6, longitude: Math.round(pos.coords.longitude * 1e6) / 1e6 });
+        accept({ latitude: Math.round(pos.latitude * 1e6) / 1e6, longitude: Math.round(pos.longitude * 1e6) / 1e6 });
       },
       (err) => {
         setLocating(false);
-        setError(err.code === err.PERMISSION_DENIED ? 'Konum izni verilmedi. Tarayıcı ayarlarından izin verin ya da harita linki yapıştırın.' : 'Konumunuz alınamadı. Biraz sonra tekrar deneyin ya da harita linki yapıştırın.');
+        setError(
+          err === 'unsupported'
+            ? 'Tarayıcınız konum özelliğini desteklemiyor. Harita linki ile ekleyebilirsiniz.'
+            : err === 'denied'
+              ? 'Konum izni verilmedi. Tarayıcı veya telefon ayarlarından izin verin ya da harita linki yapıştırın.'
+              : 'Konumunuz alınamadı. Biraz sonra tekrar deneyin ya da harita linki yapıştırın.',
+        );
       },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
     );
   };
 
@@ -66,7 +68,7 @@ export function LocationField({ value, district, onChange }: Props) {
           </p>
           {value && (
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
-              <a href={viewUrl(value)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-gold-400 hover:text-gold-300">
+              <a href={viewUrl(value)} target="_blank" onClick={systemLinkClick(viewUrl(value))} rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-gold-400 hover:text-gold-300">
                 Haritada kontrol et <ExternalLink className="h-3 w-3" />
               </a>
               <button type="button" onClick={() => onChange(null)} className="inline-flex items-center gap-1 text-xs text-mist-2 hover:text-error-300">

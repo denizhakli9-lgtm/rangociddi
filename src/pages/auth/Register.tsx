@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { useT } from '@/i18n/I18nProvider';
 import type { Gender } from '@/lib/types';
 import { AuthShell } from './AuthShell';
+import { newTabClick, publicUrl } from '@/lib/platform';
 
 type AccountType = 'customer' | 'business';
 
@@ -64,7 +65,7 @@ export default function Register() {
       password: form.password,
       options: {
         // Confirmation links return to this site (the origin must be in Supabase's Redirect URLs).
-        emailRedirectTo: `${window.location.origin}/giris`,
+        emailRedirectTo: publicUrl('/giris'),
         data: {
           account_type: type,
           full_name: form.fullName.trim(),
@@ -180,16 +181,16 @@ export default function Register() {
             className="mt-0.5 h-4 w-4 shrink-0 accent-[#D4AF37]"
           />
           <span>
-            <Link to={legalPath('kullanim-kosullari')} target="_blank" rel="noopener noreferrer" className="font-semibold text-gold-400 hover:text-gold-300">Kullanım Koşulları ve Üyelik Sözleşmesi</Link>
+            <Link to={legalPath('kullanim-kosullari')} target="_blank" onClick={newTabClick(legalPath('kullanim-kosullari'))} rel="noopener noreferrer" className="font-semibold text-gold-400 hover:text-gold-300">Kullanım Koşulları ve Üyelik Sözleşmesi</Link>
             ’ni ve{' '}
-            <Link to={legalPath('iptal-iade')} target="_blank" rel="noopener noreferrer" className="font-semibold text-gold-400 hover:text-gold-300">İptal ve İade Koşulları</Link>
+            <Link to={legalPath('iptal-iade')} target="_blank" onClick={newTabClick(legalPath('iptal-iade'))} rel="noopener noreferrer" className="font-semibold text-gold-400 hover:text-gold-300">İptal ve İade Koşulları</Link>
             ’nı okudum, kabul ediyorum.
             {errors.terms && <span id="terms-error" className="mt-1 block text-error-300">{errors.terms}</span>}
           </span>
         </label>
         <p className="text-xs leading-relaxed text-mist-2">
           Kişisel verileriniz, üyeliğinizin ve randevularınızın yürütülmesi amacıyla{' '}
-          <Link to={legalPath('aydinlatma-metni')} target="_blank" rel="noopener noreferrer" className="font-semibold text-gold-400 hover:text-gold-300">KVKK Aydınlatma Metni</Link>
+          <Link to={legalPath('aydinlatma-metni')} target="_blank" onClick={newTabClick(legalPath('aydinlatma-metni'))} rel="noopener noreferrer" className="font-semibold text-gold-400 hover:text-gold-300">KVKK Aydınlatma Metni</Link>
           {' '}kapsamında işlenir.
         </p>
         {formError && <p className="rounded-xl border border-error-500/30 bg-error-900/40 px-4 py-3 text-sm text-error-300">{formError}</p>}

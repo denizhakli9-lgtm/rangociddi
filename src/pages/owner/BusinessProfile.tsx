@@ -21,6 +21,7 @@ import { BasicsFields, districtCoords, validateBasics, type BasicsErrors, type B
 import { LocationField } from './LocationField';
 import { PayoutAccountCard } from './PayoutAccountCard';
 import { parseTrNumber } from './number';
+import { newTabClick } from '@/lib/platform';
 
 const MAX_GALLERY = 8;
 
@@ -118,7 +119,7 @@ export default function BusinessProfile() {
         text="Müşterilerin gördüğü bilgiler, görseller ve randevu politikanız."
         action={
           business.status === 'approved' ? (
-            <Link to={`/i/${business.slug}`} target="_blank" className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-line px-4 text-xs text-mist transition hover:border-gold-500/40 hover:text-white">
+            <Link to={`/i/${business.slug}`} target="_blank" onClick={newTabClick(`/i/${business.slug}`)} className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-line px-4 text-xs text-mist transition hover:border-gold-500/40 hover:text-white">
               Profili görüntüle <ExternalLink className="h-3.5 w-3.5" />
             </Link>
           ) : undefined

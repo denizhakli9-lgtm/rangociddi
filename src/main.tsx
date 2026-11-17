@@ -15,6 +15,9 @@ import '@fontsource/manrope/500.css';
 import '@fontsource/manrope/600.css';
 import './index.css';
 import { nextVisitSlogan } from '@/lib/brand';
+import { initNative } from '@/lib/native';
+
+initNative();
 
 const visitSlogan = nextVisitSlogan();
 

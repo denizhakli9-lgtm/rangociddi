@@ -148,7 +148,7 @@ export interface Appointment {
    */
   cancellation_hours?: number | null;
   created_at: string;
-  businesses?: Pick<Business, 'id' | 'name' | 'slug' | 'cover_url' | 'address' | 'district' | 'city' | 'latitude' | 'longitude' | 'cancellation_hours' | 'phone'> & Partial<Pick<Business, 'owner_id'>> | null;
+  businesses?: Pick<Business, 'id' | 'name' | 'slug' | 'cover_url' | 'address' | 'district' | 'city' | 'latitude' | 'longitude' | 'cancellation_hours'> & Partial<Pick<Business, 'owner_id' | 'phone'>> | null;
   profiles?: Pick<Profile, 'full_name' | 'phone' | 'email' | 'gender'> | null;
   payments?: Pick<Payment, 'id' | 'status' | 'amount' | 'card_last4' | 'provider_payment_id'>[];
   reviews?: { id: string }[];

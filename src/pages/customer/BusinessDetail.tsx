@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, BadgeCheck, CalendarClock, Clock, Heart, MapPin, MessageSquare, Navigation, Phone, Share2, ShieldCheck, Star, Store } from 'lucide-react';
+import { ArrowLeft, BadgeCheck, CalendarClock, Clock, Heart, MapPin, MessageSquare, Navigation, Share2, ShieldCheck, Star, Store } from 'lucide-react';
 import { fetchBusinessDetail, fetchBusinessReviews } from '@/lib/api';
 import { useAsync } from '@/lib/useAsync';
 import { useFavorites } from '@/lib/useFavorites';
@@ -67,8 +67,6 @@ export default function BusinessDetail() {
   const depositLabel = b.deposit_type === 'percentage' ? `%${Number(b.deposit_value)}` : formatTRY(b.deposit_value);
   const address = fullAddress(b);
   const distance = hasChosen && b.latitude != null && b.longitude != null ? formatDistance(distanceKm(location.lat, location.lng, b.latitude, b.longitude)) : null;
-  // Demo businesses have invented numbers that may belong to real people: never show or dial them.
-  const tel = !demo && b.phone ? `tel:${b.phone.replace(/\s/g, '')}` : null;
 
   const share = async () => {
     // In the app window.location is https://localhost, so share the public site address.
@@ -150,11 +148,6 @@ export default function BusinessDetail() {
                 <DirectionsButton target={b} className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-gold-500 px-4 text-sm font-medium text-ink transition hover:bg-gold-400 sm:flex-none">
                   <Navigation className="h-4 w-4" /> {tx('Yol tarifi al', 'Get directions')}
                 </DirectionsButton>
-                {tel && (
-                  <a href={tel} className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-line px-4 text-sm text-white transition hover:border-gold-500/40">
-                    <Phone className="h-4 w-4" /> {tx('Ara', 'Call')}
-                  </a>
-                )}
               </div>
             </div>
             {b.description && <p className="mt-5 max-w-2xl text-[15px] leading-relaxed text-mist">{b.description}</p>}
@@ -262,11 +255,6 @@ export default function BusinessDetail() {
                     <p className="eyebrow mb-3">{tx('Adres', 'Address')}</p>
                     <p className="text-sm text-mist">{address}</p>
                     <DirectionsButton target={b} className="mt-3 inline-flex items-center gap-1.5 text-xs text-gold-400 hover:text-gold-300" />
-                    {tel && (
-                      <a href={tel} className="mt-3 flex items-center gap-1.5 text-xs text-mist hover:text-white">
-                        <Phone className="h-3.5 w-3.5" /> {b.phone}
-                      </a>
-                    )}
                   </div>
                   <div className="card p-5">
                     <p className="eyebrow mb-3">{tx('Randevu politikası', 'Booking policy')}</p>

@@ -72,7 +72,7 @@ export default function Confirmation() {
     const [{ data: row, error: err }, settings] = await Promise.all([
       supabase
         .from('appointments')
-        .select('*, businesses(id, name, slug, cover_url, address, district, city, latitude, longitude, cancellation_hours, phone), payments(id, status, amount, provider_payment_id)')
+        .select('*, businesses(id, name, slug, cover_url, address, district, city, latitude, longitude, cancellation_hours), payments(id, status, amount, provider_payment_id)')
         .eq('id', id)
         .maybeSingle(),
       fetchSettings().catch(() => null),

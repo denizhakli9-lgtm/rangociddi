@@ -33,7 +33,7 @@ export default function Appointments() {
       supabase
         .from('appointments')
         // owner_id marks seeded demo businesses (isDemoBusiness), which must not be re-booked or rescheduled.
-        .select('*, businesses(id, owner_id, name, slug, cover_url, address, district, city, latitude, longitude, cancellation_hours, phone), payments(id, status, amount, card_last4, provider_payment_id), reviews(id)')
+        .select('*, businesses(id, owner_id, name, slug, cover_url, address, district, city, latitude, longitude, cancellation_hours), payments(id, status, amount, card_last4, provider_payment_id), reviews(id)')
         .eq('customer_id', profile!.id)
         .order('starts_at', { ascending: false }),
       fetchSettings().catch(() => null),

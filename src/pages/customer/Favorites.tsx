@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { BUSINESS_LIST_COLUMNS } from '@/lib/api';
+import { PUBLIC_BUSINESS_COLUMNS } from '@/lib/api';
 import { useAsync } from '@/lib/useAsync';
 import { useFavorites } from '@/lib/useFavorites';
 import { distanceKm } from '@/lib/geo';
@@ -17,7 +17,7 @@ export default function Favorites() {
   const { location } = useUserLocation();
   const { ids, toggle } = useFavorites();
   const { data, loading, error, reload } = useAsync(async () => {
-    const { data: rows, error: err } = await supabase.from('favorites').select(`created_at, businesses(${BUSINESS_LIST_COLUMNS})`).order('created_at', { ascending: false });
+    const { data: rows, error: err } = await supabase.from('favorites').select(`created_at, businesses(${PUBLIC_BUSINESS_COLUMNS})`).order('created_at', { ascending: false });
     if (err) throw err;
     return (rows ?? []).map((r) => (r as unknown as { businesses: Business | null }).businesses).filter((b): b is Business => !!b);
   }, []);

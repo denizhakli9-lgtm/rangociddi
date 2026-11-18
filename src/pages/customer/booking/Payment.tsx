@@ -85,7 +85,7 @@ export default function Payment() {
   const { toast } = useToast();
   const { data, loading, error, reload } = useAsync(async () => {
     const [{ data: appt, error: err }, settings] = await Promise.all([
-      supabase.from('appointments').select('*, businesses(id, name, slug, cover_url, address, district, city, latitude, longitude, cancellation_hours, phone, categories(name, slug))').eq('id', id).maybeSingle(),
+      supabase.from('appointments').select('*, businesses(id, name, slug, cover_url, address, district, city, latitude, longitude, cancellation_hours, categories(name, slug))').eq('id', id).maybeSingle(),
       fetchSettings(),
     ]);
     if (err) throw err;

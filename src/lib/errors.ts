@@ -1,10 +1,13 @@
-import { tr } from '@/i18n/tr';
+import { dict } from '@/i18n/locale';
+import type { tr as trDictionary } from '@/i18n/tr';
 
-type ErrorKey = keyof typeof tr.errors;
+type ErrorKey = keyof typeof trDictionary.errors;
 
-/** Maps backend errors to safe, user-facing Turkish messages. Raw details stay in the console. */
-export function friendlyError(err: unknown, fallback: string = tr.errors.generic): string {
+/** Maps backend errors to safe, user-facing messages in the current language. Raw details stay in the console. */
+export function friendlyError(err: unknown, fallback?: string): string {
   console.error(err);
+  const tr = dict();
+  fallback ??= tr.errors.generic;
   const message = typeof err === 'object' && err && 'message' in err ? String((err as { message: unknown }).message) : '';
   const code = typeof err === 'object' && err && 'code' in err ? String((err as { code: unknown }).code) : '';
   const match = message.match(/VEYRA_[A-Z0-9_]+/);

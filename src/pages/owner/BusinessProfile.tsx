@@ -7,6 +7,8 @@ import { fetchCategories } from '@/lib/api';
 import { depositFor, formatTRY } from '@/lib/format';
 import { friendlyError } from '@/lib/errors';
 import { safeImageUrl } from '@/lib/safeUrl';
+import { placeholderCover } from '@/lib/placeholderImages';
+import { PlaceholderTag } from '@/components/ui/PlaceholderTag';
 import { tr } from '@/i18n/tr';
 import { useToast } from '@/contexts/ToastContext';
 import { Button } from '@/components/ui/Button';
@@ -21,6 +23,7 @@ import { BasicsFields, districtCoords, validateBasics, type BasicsErrors, type B
 import { LocationField } from './LocationField';
 import { PayoutAccountCard } from './PayoutAccountCard';
 import { parseTrNumber } from './number';
+import { newTabClick } from '@/lib/platform';
 
 const MAX_GALLERY = 8;
 
@@ -103,6 +106,8 @@ export default function BusinessProfile() {
 
   // Media URLs are writable through the REST API; only trusted storage/seed hosts are rendered.
   const coverSrc = safeImageUrl(media.cover_url);
+  // Until the owner uploads a cover, customers see a labelled photo from the business's sector.
+  const sectorCover = placeholderCover(business.id, categories?.find((c) => c.id === basics.category_id));
   const logoSrc = safeImageUrl(media.logo_url);
 
   const sample = 1000;
@@ -118,7 +123,7 @@ export default function BusinessProfile() {
         text="Müşterilerin gördüğü bilgiler, görseller ve randevu politikanız."
         action={
           business.status === 'approved' ? (
-            <Link to={`/i/${business.slug}`} target="_blank" className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-line px-4 text-xs text-mist transition hover:border-gold-500/40 hover:text-white">
+            <Link to={`/i/${business.slug}`} target="_blank" onClick={newTabClick(`/i/${business.slug}`)} className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-line px-4 text-xs text-mist transition hover:border-gold-500/40 hover:text-white">
               Profili görüntüle <ExternalLink className="h-3.5 w-3.5" />
             </Link>
           ) : undefined
@@ -130,7 +135,16 @@ export default function BusinessProfile() {
           <h2 className="mb-1 font-display text-xl text-white">Görseller</h2>
           <p className="mb-5 text-xs text-mist-2">JPG, PNG veya WebP · en fazla 5 MB</p>
           <div className="relative mb-6 overflow-hidden rounded-2xl border border-line bg-ink/60">
-            <div className="aspect-[16/6] w-full">{coverSrc ? <img src={coverSrc} alt="Kapak" className="h-full w-full object-cover" /> : <div className="grid h-full place-items-center text-sm text-mist-3">Kapak görseli yok</div>}</div>
+            <div className="relative aspect-[16/6] w-full">
+              {coverSrc ? (
+                <img src={coverSrc} alt="Kapak" className="h-full w-full object-cover" />
+              ) : (
+                <>
+                  <img src={sectorCover} alt="" className="h-full w-full object-cover opacity-70" />
+                  <PlaceholderTag className="left-auto right-3 top-3" />
+                </>
+              )}
+            </div>
             <label className="absolute bottom-3 right-3 inline-flex cursor-pointer items-center gap-2 rounded-xl bg-ink/80 px-3 py-2 text-xs text-white backdrop-blur transition hover:bg-ink">
               {uploading === 'cover' ? <Spinner className="h-3.5 w-3.5" /> : <ImagePlus className="h-3.5 w-3.5" />} Kapak değiştir
               <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={async (e) => { const url = await upload(e.target.files?.[0], 'cover'); if (url) setMedia((m) => ({ ...m, cover_url: url })); e.target.value = ''; }} />
@@ -140,6 +154,11 @@ export default function BusinessProfile() {
               <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={async (e) => { const url = await upload(e.target.files?.[0], 'logo'); if (url) setMedia((m) => ({ ...m, logo_url: url })); e.target.value = ''; }} />
             </label>
           </div>
+          {!coverSrc && (
+            <p className="-mt-2 mb-5 rounded-xl border border-gold-500/30 bg-gold-500/5 px-4 py-3 text-xs leading-relaxed text-mist">
+              Kendi kapak fotoğrafınızı yükleyene kadar müşterilerinize sektörünüze uygun bu temsili görsel, “Temsili görsel” etiketiyle gösterilir. Gerçek salon fotoğrafı olan işletmeler çok daha fazla randevu alır; “Kapak değiştir” ile kendi fotoğrafınızı ekleyin.
+            </p>
+          )}
           <p className="mb-3 text-xs font-medium tracking-wide text-mist">Galeri ({media.gallery.length}/{MAX_GALLERY})</p>
           <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
             {media.gallery.map((url) => {

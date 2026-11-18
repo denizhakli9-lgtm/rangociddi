@@ -3,6 +3,7 @@ import { ArrowUpRight, Search } from 'lucide-react';
 import { BusinessCard } from '@/components/BusinessCard';
 import { ErrorState } from '@/components/ui/Feedback';
 import type { DiscoveryItem } from '@/lib/useDiscovery';
+import { tx } from '@/i18n/locale';
 
 interface Props {
   title: string;
@@ -26,16 +27,16 @@ export function HomeBusinessSection({ title, description, href, items, loading, 
           <h2 className="font-display text-3xl text-white">{title}</h2>
           <p className="mt-1 text-xs leading-relaxed text-mist sm:text-sm">{description}</p>
         </div>
-        <Link to={href} className="flex min-h-11 shrink-0 items-center gap-1 text-xs font-semibold text-gold-500">Tümü <ArrowUpRight className="h-4 w-4" /></Link>
+        <Link to={href} className="flex min-h-11 shrink-0 items-center gap-1 text-xs font-semibold text-gold-500">{tx('Tümü', 'All')} <ArrowUpRight className="h-4 w-4" /></Link>
       </div>
       {error ? <ErrorState onRetry={reload} /> : loading ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3" aria-label="İşletmeler yükleniyor" aria-busy="true">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3" aria-label={tx('İşletmeler yükleniyor', 'Loading businesses')} aria-busy="true">
           {[0, 1, 2].map((i) => <div key={i} className={`skeleton h-72 ${i === 2 ? 'hidden sm:block' : ''}`} />)}
         </div>
       ) : !items.length ? (
         <div className="flex items-center gap-3 rounded-2xl border border-dashed border-line p-5 text-sm text-mist">
           <Search className="h-5 w-5 shrink-0 text-gold-500" />
-          <p>Bu bölümde henüz uygun işletme bulunamadı. Farklı bir konum veya kategori deneyebilirsin.</p>
+          <p>{tx('Bu bölümde henüz uygun işletme bulunamadı. Farklı bir konum veya kategori deneyebilirsin.', 'No matching businesses here yet. Try a different location or category.')}</p>
         </div>
       ) : (
         <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:px-0 lg:grid-cols-3">

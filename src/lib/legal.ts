@@ -62,12 +62,12 @@ export function filled(value: string): boolean {
 }
 
 export const LEGAL_LINKS = [
-  { slug: 'aydinlatma-metni', label: 'KVKK Aydınlatma Metni' },
-  { slug: 'kullanim-kosullari', label: 'Kullanım Koşulları' },
-  { slug: 'cerez-politikasi', label: 'Çerez Politikası' },
-  { slug: 'iptal-iade', label: 'İptal ve İade Koşulları' },
-  { slug: 'kvkk-basvuru', label: 'KVKK Başvuru' },
-  { slug: 'kunye', label: 'Künye ve İletişim' },
+  { slug: 'aydinlatma-metni', label: 'KVKK Aydınlatma Metni', labelEn: 'Privacy Notice (KVKK)' },
+  { slug: 'kullanim-kosullari', label: 'Kullanım Koşulları', labelEn: 'Terms of Use' },
+  { slug: 'cerez-politikasi', label: 'Çerez Politikası', labelEn: 'Cookie Policy' },
+  { slug: 'iptal-iade', label: 'İptal ve İade Koşulları', labelEn: 'Cancellation & Refunds' },
+  { slug: 'kvkk-basvuru', label: 'KVKK Başvuru', labelEn: 'Data Request (KVKK)' },
+  { slug: 'kunye', label: 'Künye ve İletişim', labelEn: 'Company & Contact' },
 ] as const;
 
 export type LegalSlug = (typeof LEGAL_LINKS)[number]['slug'];

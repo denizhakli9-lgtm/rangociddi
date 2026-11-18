@@ -5,6 +5,15 @@ import type { Business, Category, Employee, PlatformSettings, Review, Service, S
 export const BUSINESS_LIST_COLUMNS =
   'id, owner_id, category_id, name, slug, description, address, district, city, latitude, longitude, logo_url, cover_url, gallery, gender_focus, deposit_type, deposit_value, cancellation_hours, auto_confirm, status, is_verified, is_featured, rating_avg, review_count, booking_count, min_price, created_at, phone, email, categories(name, slug, icon)';
 
+/**
+ * What customers and visitors get: the same, minus the business's phone and e-mail.
+ * Customers book through Rango, so a business's contact details are never sent to the
+ * customer side (this prevents scraping and off-platform bookings). The business and admin
+ * panels keep using BUSINESS_LIST_COLUMNS.
+ */
+export const PUBLIC_BUSINESS_COLUMNS =
+  'id, owner_id, category_id, name, slug, description, address, district, city, latitude, longitude, logo_url, cover_url, gallery, gender_focus, deposit_type, deposit_value, cancellation_hours, auto_confirm, status, is_verified, is_featured, rating_avg, review_count, booking_count, min_price, created_at, categories(name, slug, icon)';
+
 const CATEGORY_TTL_MS = 5 * 60 * 1000;
 let activeCategoriesCache: { at: number; data: Category[] } | null = null;
 
@@ -97,7 +106,7 @@ export interface BusinessDetail {
 }
 
 export async function fetchBusinessDetail(slug: string): Promise<BusinessDetail | null> {
-  const { data: business, error } = await supabase.from('businesses').select(BUSINESS_LIST_COLUMNS).eq('slug', slug).maybeSingle();
+  const { data: business, error } = await supabase.from('businesses').select(PUBLIC_BUSINESS_COLUMNS).eq('slug', slug).maybeSingle();
   if (error) throw error;
   if (!business) return null;
   const b = business as unknown as Business;

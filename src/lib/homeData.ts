@@ -30,7 +30,7 @@ export async function fetchUpcomingAppointment(customerId?: string) {
   const staleBefore = new Date(Date.now() - MAX_PENDING_PAYMENT_MINUTES * 60000).toISOString();
   const [{ data, error }, settings] = await Promise.all([
     supabase.from('appointments')
-      .select('*, businesses(id, name, slug, cover_url, address, district, city, latitude, longitude, cancellation_hours, phone)')
+      .select('*, businesses(id, name, slug, cover_url, address, district, city, latitude, longitude, cancellation_hours)')
       .eq('customer_id', customerId)
       .in('status', ['confirmed', 'pending_approval', 'pending_payment'])
       // Quoted: PostgREST treats ',', '.', ':' as reserved inside logic-tree values.

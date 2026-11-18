@@ -1,12 +1,23 @@
+import { intlLocale, tx } from '@/i18n/locale';
+
 export const TZ = 'Europe/Istanbul';
 
-const currencyWhole = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', minimumFractionDigits: 0, maximumFractionDigits: 0 });
-const currencyKurus = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const currencyCache = new Map<string, Intl.NumberFormat>();
+function currency(digits: 0 | 2): Intl.NumberFormat {
+  const loc = intlLocale();
+  const key = `${loc}:${digits}`;
+  let f = currencyCache.get(key);
+  if (!f) {
+    f = new Intl.NumberFormat(loc, { style: 'currency', currency: 'TRY', currencyDisplay: 'narrowSymbol', minimumFractionDigits: digits, maximumFractionDigits: digits });
+    currencyCache.set(key, f);
+  }
+  return f;
+}
 
-/** ₺150 for whole lira amounts, ₺150,50 when there are kuruş (never ₺150,5). */
+/** ₺150 for whole lira amounts, ₺150,50 (English: ₺150.50) when there are kuruş (never ₺150,5). */
 export function formatTRY(value: number | string | null | undefined): string {
   const kurus = toKurus(value);
-  return (kurus % 100 === 0 ? currencyWhole : currencyKurus).format(kurus / 100 || 0);
+  return currency(kurus % 100 === 0 ? 0 : 2).format(kurus / 100 || 0);
 }
 
 /** Converts a lira amount to integer kuruş (avoids floating-point drift in money maths). */
@@ -16,11 +27,11 @@ export function toKurus(value: number | string | null | undefined): number {
 }
 
 export function formatDate(iso: string, opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' }): string {
-  return new Intl.DateTimeFormat('tr-TR', { ...opts, timeZone: TZ }).format(new Date(iso));
+  return new Intl.DateTimeFormat(intlLocale(), { ...opts, timeZone: TZ }).format(new Date(iso));
 }
 
 export function formatTime(iso: string): string {
-  return new Intl.DateTimeFormat('tr-TR', { hour: '2-digit', minute: '2-digit', timeZone: TZ }).format(new Date(iso));
+  return new Intl.DateTimeFormat(intlLocale(), { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: TZ }).format(new Date(iso));
 }
 
 export function formatDateTime(iso: string): string {
@@ -29,18 +40,23 @@ export function formatDateTime(iso: string): string {
 
 export function formatRelative(iso: string): string {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
-  if (diff < 60) return 'Az önce';
-  if (diff < 3600) return `${Math.floor(diff / 60)} dk önce`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)} sa önce`;
-  if (diff < 604800) return `${Math.floor(diff / 86400)} gün önce`;
+  if (diff < 60) return tx('Az önce', 'Just now');
+  if (diff < 3600) return tx(`${Math.floor(diff / 60)} dk önce`, `${Math.floor(diff / 60)} min ago`);
+  if (diff < 86400) return tx(`${Math.floor(diff / 3600)} sa önce`, `${Math.floor(diff / 3600)} h ago`);
+  if (diff < 604800) {
+    const days = Math.floor(diff / 86400);
+    return tx(`${days} gün önce`, days === 1 ? '1 day ago' : `${days} days ago`);
+  }
   return formatDate(iso, { day: 'numeric', month: 'short' });
 }
 
 export function formatDuration(minutes: number): string {
-  if (minutes < 60) return `${minutes} dk`;
+  const min = tx('dk', 'min');
+  const hr = tx('sa', 'h');
+  if (minutes < 60) return `${minutes} ${min}`;
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  return m ? `${h} sa ${m} dk` : `${h} sa`;
+  return m ? `${h} ${hr} ${m} ${min}` : `${h} ${hr}`;
 }
 
 /** YYYY-MM-DD for the given instant in İstanbul time. */
@@ -62,7 +78,7 @@ export function isoWeekday(key: string): number {
 
 export function keyLabel(key: string, opts: Intl.DateTimeFormatOptions): string {
   const [y, m, d] = key.split('-').map(Number);
-  return new Intl.DateTimeFormat('tr-TR', { ...opts, timeZone: 'UTC' }).format(new Date(Date.UTC(y, m - 1, d, 12)));
+  return new Intl.DateTimeFormat(intlLocale(), { ...opts, timeZone: 'UTC' }).format(new Date(Date.UTC(y, m - 1, d, 12)));
 }
 
 /** Current İstanbul wall-clock time as minutes since midnight. */

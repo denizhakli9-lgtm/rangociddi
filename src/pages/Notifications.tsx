@@ -11,6 +11,8 @@ import { useToast } from '@/contexts/ToastContext';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, ErrorState, SkeletonList } from '@/components/ui/Feedback';
 import type { AppNotification } from '@/lib/types';
+import { notificationBody, notificationTitle } from '@/i18n/notifications';
+import { tx } from '@/i18n/locale';
 
 const ICONS: Record<string, LucideIcon> = {
   appointment_confirmed: CalendarCheck,
@@ -73,10 +75,10 @@ export default function Notifications() {
     <div className="mx-auto max-w-2xl">
       <div className="mb-6 flex items-end justify-between gap-4">
         <div>
-          <p className="eyebrow mb-2">Bildirimler</p>
-          <h1 className="font-display text-4xl text-white">Gelişmelerden haberdar olun</h1>
+          <p className="eyebrow mb-2">{tx('Bildirimler', 'Notifications')}</p>
+          <h1 className="font-display text-4xl text-white">{tx('Gelişmelerden haberdar olun', 'Stay up to date')}</h1>
         </div>
-        {unread > 0 && <Button size="sm" variant="ghost" icon={<CheckCheck className="h-4 w-4" />} onClick={markAll}>Tümünü okundu yap</Button>}
+        {unread > 0 && <Button size="sm" variant="ghost" icon={<CheckCheck className="h-4 w-4" />} onClick={markAll}>{tx('Tümünü okundu yap', 'Mark all as read')}</Button>}
       </div>
 
       {loading ? (
@@ -84,7 +86,7 @@ export default function Notifications() {
       ) : error ? (
         <ErrorState onRetry={reload} />
       ) : !list.length ? (
-        <EmptyState icon={<Bell className="h-6 w-6" />} title="Bildiriminiz yok" text="Randevu onayları, hatırlatmalar ve ödeme bilgileri burada görünecek." />
+        <EmptyState icon={<Bell className="h-6 w-6" />} title={tx('Bildiriminiz yok', 'No notifications')} text={tx('Randevu onayları, hatırlatmalar ve ödeme bilgileri burada görünecek.', 'Booking confirmations, reminders and payment updates will appear here.')} />
       ) : (
         <ul className="space-y-2">
           {list.map((n) => {
@@ -97,14 +99,14 @@ export default function Notifications() {
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-white">{n.title}</span>
+                      <span className="text-sm font-semibold text-white">{notificationTitle(n.title)}</span>
                       {!n.is_read && <span className="h-1.5 w-1.5 rounded-full bg-gold-500" />}
                     </span>
-                    <span className="mt-0.5 block text-sm text-mist">{n.body}</span>
+                    <span className="mt-0.5 block text-sm text-mist">{notificationBody(n.body)}</span>
                     <span className="mt-1 block text-xs text-mist-3">{formatRelative(n.created_at)}</span>
                   </span>
                 </button>
-                <button onClick={() => remove(n.id)} className="rounded-full p-2 text-mist-3 opacity-100 transition hover:bg-white/5 hover:text-error-300 sm:opacity-0 sm:group-hover:opacity-100" aria-label="Sil">
+                <button onClick={() => remove(n.id)} className="rounded-full p-2 text-mist-3 opacity-100 transition hover:bg-white/5 hover:text-error-300 sm:opacity-0 sm:group-hover:opacity-100" aria-label={tx('Sil', 'Delete')}>
                   <Trash2 className="h-4 w-4" />
                 </button>
               </li>

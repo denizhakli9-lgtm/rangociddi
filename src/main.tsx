@@ -15,12 +15,15 @@ import '@fontsource/manrope/500.css';
 import '@fontsource/manrope/600.css';
 import './index.css';
 import { nextVisitSlogan } from '@/lib/brand';
+import { initNative } from '@/lib/native';
+
+initNative();
 
 const visitSlogan = nextVisitSlogan();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <I18nProvider slogan={visitSlogan}>
+    <I18nProvider sloganIndex={visitSlogan}>
       <AuthProvider>
         <LocationProvider>
           <ToastProvider>

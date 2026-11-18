@@ -12,9 +12,11 @@ import { useT } from '@/i18n/I18nProvider';
 import { Avatar, RangoSignature } from '@/components/ui/Brand';
 import { Button } from '@/components/ui/Button';
 import { ThemeSelect } from '@/components/ui/ThemeSelect';
+import { LanguageSelect } from '@/components/ui/LanguageToggle';
 import { Input, Select } from '@/components/ui/Field';
 import type { Gender } from '@/lib/types';
 import { PrivacyPanel } from './PrivacyPanel';
+import { tx } from '@/i18n/locale';
 
 export default function Profile() {
   const t = useT();
@@ -50,15 +52,15 @@ export default function Profile() {
   const links = [
     ...(profile.role === 'customer'
       ? [
-          { to: '/randevularim', label: 'Randevularım', icon: CalendarDays },
-          { to: '/favoriler', label: 'Favorilerim', icon: Heart },
+          { to: '/randevularim', label: tx('Randevularım', 'My bookings'), icon: CalendarDays },
+          { to: '/favoriler', label: tx('Favorilerim', 'My favourites'), icon: Heart },
         ]
       : []),
-    ...(profile.role === 'business' ? [{ to: '/isletme', label: 'İşletme Paneli', icon: LayoutDashboard }] : []),
-    ...(profile.role === 'admin' ? [{ to: '/yonetim', label: 'Yönetim Paneli', icon: ShieldCheck }] : []),
-    { to: '/destek', label: 'Yardım ve Destek', icon: Phone },
-    { to: '/bildirimler', label: 'Bildirimler', icon: Bell },
-    { to: '/konum', label: `Konum · ${location.label}`, icon: MapPin },
+    ...(profile.role === 'business' ? [{ to: '/isletme', label: tx('İşletme Paneli', 'Business panel (Turkish)'), icon: LayoutDashboard }] : []),
+    ...(profile.role === 'admin' ? [{ to: '/yonetim', label: tx('Yönetim Paneli', 'Admin panel (Turkish)'), icon: ShieldCheck }] : []),
+    { to: '/destek', label: tx('Yardım ve Destek', 'Help & support'), icon: Phone },
+    { to: '/bildirimler', label: t.nav.notifications, icon: Bell },
+    { to: '/konum', label: `${tx('Konum', 'Location')} · ${location.label}`, icon: MapPin },
   ];
 
   return (
@@ -69,7 +71,7 @@ export default function Profile() {
           <p className="mt-4 font-display text-2xl text-white">{profile.full_name}</p>
           <p className="text-xs text-mist-2">{profile.email}</p>
           <span className="mt-3 rounded-full border border-gold-500/40 px-3 py-1 text-[11px] text-gold-300">{t.role[profile.role]}</span>
-          <p className="mt-3 text-[11px] text-mist-3">Üyelik: {formatDate(profile.created_at, { month: 'long', year: 'numeric' })}</p>
+          <p className="mt-3 text-[11px] text-mist-3">{tx('Üyelik:', 'Member since')} {formatDate(profile.created_at, { month: 'long', year: 'numeric' })}</p>
         </div>
         <nav className="card divide-y divide-line overflow-hidden">
           {links.map(({ to, label, icon: Icon }) => (
@@ -90,18 +92,19 @@ export default function Profile() {
             {t.nav.signOut}
           </button>
         </nav>
+        <LanguageSelect />
         <ThemeSelect />
         <RangoSignature className="pt-2 text-center" />
       </aside>
 
       <section>
-        <p className="eyebrow mb-2">Profil</p>
-        <h1 className="mb-6 font-display text-4xl text-white">Kişisel bilgiler</h1>
+        <p className="eyebrow mb-2">{t.nav.profile}</p>
+        <h1 className="mb-6 font-display text-4xl text-white">{tx('Kişisel bilgiler', 'Personal details')}</h1>
         <form onSubmit={save} className="card space-y-5 p-6" noValidate>
-          <Input label="Ad Soyad" name="full_name" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} error={errors.full_name} icon={<User className="h-4 w-4" />} />
-          <Input label="E-posta" value={profile.email ?? ''} disabled hint="E-posta adresi değiştirilemez." />
-          <Input label="Telefon" name="phone" type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} error={errors.phone} icon={<Phone className="h-4 w-4" />} />
-          <Select label="Cinsiyet" value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value as Gender })} hint="Keşfet sayfasındaki önerileri kişiselleştirir.">
+          <Input label={tx('Ad Soyad', 'Full name')} name="full_name" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} error={errors.full_name} icon={<User className="h-4 w-4" />} />
+          <Input label={tx('E-posta', 'Email')} value={profile.email ?? ''} disabled hint={tx('E-posta adresi değiştirilemez.', 'The email address cannot be changed.')} />
+          <Input label={tx('Telefon', 'Phone')} name="phone" type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} error={errors.phone} icon={<Phone className="h-4 w-4" />} />
+          <Select label={tx('Cinsiyet', 'Gender')} value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value as Gender })} hint={tx('Keşfet sayfasındaki önerileri kişiselleştirir.', 'Personalises the suggestions on the Discover page.')}>
             {(Object.keys(t.gender) as Gender[]).map((g) => <option key={g} value={g}>{t.gender[g]}</option>)}
           </Select>
           <div className="flex justify-end">

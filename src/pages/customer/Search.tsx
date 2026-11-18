@@ -12,14 +12,16 @@ import { Button } from '@/components/ui/Button';
 import { Toggle } from '@/components/ui/Field';
 import { EmptyState, ErrorState } from '@/components/ui/Feedback';
 import { useT } from '@/i18n/I18nProvider';
+import { categoryDescription, categoryName, englishQueryToCategory } from '@/i18n/categories';
 import type { GenderFocus } from '@/lib/types';
+import { tx } from '@/i18n/locale';
 
 type Sort = DiscoverySort;
-const SORTS: { value: Sort; label: string }[] = [
-  { value: 'mesafe', label: 'En yakın' },
-  { value: 'populer', label: 'En popüler' },
-  { value: 'puan', label: 'En yüksek puan' },
-  { value: 'fiyat', label: 'En uygun fiyat' },
+const SORTS: { value: Sort; label: [string, string] }[] = [
+  { value: 'mesafe', label: ['En yakın', 'Nearest'] },
+  { value: 'populer', label: ['En popüler', 'Most popular'] },
+  { value: 'puan', label: ['En yüksek puan', 'Highest rated'] },
+  { value: 'fiyat', label: ['En uygun fiyat', 'Lowest price'] },
 ];
 const PRICE_STEPS = [0, 300, 500, 800, 1200, 2000];
 const RATING_STEPS = [0, 3.5, 4, 4.5];
@@ -50,6 +52,19 @@ export default function SearchPage() {
 
   useEffect(() => setText(q), [q]);
 
+  // English visitors searching for a category ("barber", "nails") get that category, since
+  // business and service names are stored in Turkish.
+  useEffect(() => {
+    const slug = englishQueryToCategory(q);
+    if (slug) {
+      const next = new URLSearchParams(params);
+      next.delete('q');
+      next.set('kategori', slug);
+      setParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q]);
+
   const update = (patch: Record<string, string | null>) => {
     const next = new URLSearchParams(params);
     Object.entries(patch).forEach(([k, v]) => (v ? next.set(k, v) : next.delete(k)));
@@ -62,9 +77,9 @@ export default function SearchPage() {
   return (
     <div>
       <div className="mb-6">
-        <p className="eyebrow mb-2">{currentCategory ? 'Kategori' : 'Keşfet'}</p>
-        <h1 className="font-display text-4xl text-white">{currentCategory?.name ?? (q ? `“${q}” için sonuçlar` : 'Tüm işletmeler')}</h1>
-        {currentCategory?.description && <p className="mt-2 max-w-xl text-sm text-mist">{currentCategory.description}</p>}
+        <p className="eyebrow mb-2">{currentCategory ? tx('Kategori', 'Category') : tx('Keşfet', 'Discover')}</p>
+        <h1 className="font-display text-4xl text-white">{currentCategory ? categoryName(currentCategory) : q ? tx(`“${q}” için sonuçlar`, `Results for “${q}”`) : tx('Tüm işletmeler', 'All businesses')}</h1>
+        {currentCategory?.description && <p className="mt-2 max-w-xl text-sm text-mist">{categoryDescription(currentCategory)}</p>}
       </div>
 
       <form
@@ -77,16 +92,16 @@ export default function SearchPage() {
       >
         <div className="relative flex-1">
           <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-mist-2" />
-          <input aria-label="İşletme, hizmet veya semt ara" value={text} onChange={(e) => setText(e.target.value)} placeholder="Hizmet, salon veya semt" className="h-12 w-full rounded-full border border-line bg-coal pl-11 pr-10 text-sm text-white placeholder:text-mist-3 focus:border-gold-500/60 focus:outline-none" />
+          <input aria-label={tx('İşletme, hizmet veya semt ara', 'Search businesses, services or areas')} value={text} onChange={(e) => setText(e.target.value)} placeholder={tx('Hizmet, salon veya semt', 'Service, salon or area')} className="h-12 w-full rounded-full border border-line bg-coal pl-11 pr-10 text-sm text-white placeholder:text-mist-3 focus:border-gold-500/60 focus:outline-none" />
           {text && (
-            <button type="button" onClick={() => { setText(''); update({ q: null }); }} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-mist-2 hover:text-white" aria-label="Temizle">
+            <button type="button" onClick={() => { setText(''); update({ q: null }); }} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-mist-2 hover:text-white" aria-label={tx('Temizle', 'Clear')}>
               <X className="h-4 w-4" />
             </button>
           )}
         </div>
-        <button type="button" onClick={() => setFiltersOpen(true)} aria-label={activeFilters > 0 ? `Filtreler (${activeFilters} etkin)` : 'Filtreler'} className="relative flex h-12 items-center gap-2 rounded-full border border-line bg-coal px-4 text-sm text-white transition hover:border-gold-500/40">
+        <button type="button" onClick={() => setFiltersOpen(true)} aria-label={activeFilters > 0 ? tx(`Filtreler (${activeFilters} etkin)`, `Filters (${activeFilters} active)`) : tx('Filtreler', 'Filters')} className="relative flex h-12 items-center gap-2 rounded-full border border-line bg-coal px-4 text-sm text-white transition hover:border-gold-500/40">
           <SlidersHorizontal className="h-4 w-4 text-gold-400" />
-          <span className="hidden sm:inline">Filtreler</span>
+          <span className="hidden sm:inline">{tx('Filtreler', 'Filters')}</span>
           {activeFilters > 0 && <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gold-500 text-[10px] font-bold text-ink">{activeFilters}</span>}
         </button>
       </form>
@@ -94,19 +109,19 @@ export default function SearchPage() {
       <div className="no-scrollbar -mx-4 mt-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0">
         <Chip active={!category} onClick={() => update({ kategori: null })}>{t.common.all}</Chip>
         {categories.map((c) => (
-          <Chip key={c.id} active={category === c.slug} onClick={() => update({ kategori: category === c.slug ? null : c.slug })}>{c.name}</Chip>
+          <Chip key={c.id} active={category === c.slug} onClick={() => update({ kategori: category === c.slug ? null : c.slug })}>{categoryName(c)}</Chip>
         ))}
       </div>
 
       <div className="mb-5 mt-6 flex items-center justify-between gap-3">
-        <p className="text-sm text-mist">{loading ? 'Yükleniyor...' : `${total} işletme`}</p>
+        <p className="text-sm text-mist">{loading ? t.common.loading : tx(`${total} işletme`, total === 1 ? '1 business' : `${total} businesses`)}</p>
         <div className="flex items-center gap-2">
-          <select aria-label="Sıralama" value={sort} onChange={(e) => update({ sirala: e.target.value })} className="h-9 rounded-full border border-line bg-coal px-3 text-xs text-white focus:border-gold-500/60 focus:outline-none">
-            {SORTS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+          <select aria-label={tx('Sıralama', 'Sort by')} value={sort} onChange={(e) => update({ sirala: e.target.value })} className="h-9 rounded-full border border-line bg-coal px-3 text-xs text-white focus:border-gold-500/60 focus:outline-none">
+            {SORTS.map((s) => <option key={s.value} value={s.value}>{tx(...s.label)}</option>)}
           </select>
           <div className="hidden rounded-full border border-line bg-coal p-0.5 sm:flex">
-            <button type="button" onClick={() => setView('grid')} className={`rounded-full p-1.5 ${view === 'grid' ? 'bg-gold-500 text-ink' : 'text-mist'}`} aria-label="Izgara görünümü" aria-pressed={view === 'grid'}><LayoutGrid className="h-4 w-4" /></button>
-            <button type="button" onClick={() => setView('row')} className={`rounded-full p-1.5 ${view === 'row' ? 'bg-gold-500 text-ink' : 'text-mist'}`} aria-label="Liste görünümü" aria-pressed={view === 'row'}><List className="h-4 w-4" /></button>
+            <button type="button" onClick={() => setView('grid')} className={`rounded-full p-1.5 ${view === 'grid' ? 'bg-gold-500 text-ink' : 'text-mist'}`} aria-label={tx('Izgara görünümü', 'Grid view')} aria-pressed={view === 'grid'}><LayoutGrid className="h-4 w-4" /></button>
+            <button type="button" onClick={() => setView('row')} className={`rounded-full p-1.5 ${view === 'row' ? 'bg-gold-500 text-ink' : 'text-mist'}`} aria-label={tx('Liste görünümü', 'List view')} aria-pressed={view === 'row'}><List className="h-4 w-4" /></button>
           </div>
         </div>
       </div>
@@ -118,9 +133,9 @@ export default function SearchPage() {
       ) : results.length === 0 ? (
         <EmptyState
           icon={<SearchX className="h-6 w-6" />}
-          title="Sonuç bulunamadı"
-          text="Filtreleri gevşetmeyi veya farklı bir arama yapmayı deneyin."
-          action={<Button variant="outline" onClick={() => setParams({}, { replace: true })}>Filtreleri temizle</Button>}
+          title={tx('Sonuç bulunamadı', 'No results')}
+          text={tx('Filtreleri gevşetmeyi veya farklı bir arama yapmayı deneyin.', 'Try loosening the filters or searching for something else.')}
+          action={<Button variant="outline" onClick={() => setParams({}, { replace: true })}>{tx('Filtreleri temizle', 'Clear filters')}</Button>}
         />
       ) : (
         <div className={view === 'grid' ? 'grid gap-6 sm:grid-cols-2 lg:grid-cols-3' : 'grid gap-3 lg:grid-cols-2'}>
@@ -133,7 +148,7 @@ export default function SearchPage() {
       {!loading && !error && hasMore && (
         <div className="mt-8 flex justify-center">
           <Button variant="outline" onClick={loadMore} disabled={loadingMore}>
-            {loadingMore ? 'Yükleniyor...' : `Daha fazla göster (${total - results.length})`}
+            {loadingMore ? t.common.loading : tx(`Daha fazla göster (${total - results.length})`, `Show more (${total - results.length})`)}
           </Button>
         </div>
       )}
@@ -141,30 +156,30 @@ export default function SearchPage() {
       <Modal
         open={filtersOpen}
         onClose={() => setFiltersOpen(false)}
-        title="Filtreler"
+        title={tx('Filtreler', 'Filters')}
         footer={
           <div className="flex gap-3">
-            <Button variant="ghost" full onClick={() => update({ fiyat: null, puan: null, cinsiyet: null, bugun: null })}>Temizle</Button>
-            <Button full onClick={() => setFiltersOpen(false)}>{loading ? 'Yükleniyor...' : `${total} sonucu göster`}</Button>
+            <Button variant="ghost" full onClick={() => update({ fiyat: null, puan: null, cinsiyet: null, bugun: null })}>{tx('Temizle', 'Clear')}</Button>
+            <Button full onClick={() => setFiltersOpen(false)}>{loading ? t.common.loading : tx(`${total} sonucu göster`, total === 1 ? 'Show 1 result' : `Show ${total} results`)}</Button>
           </div>
         }
       >
         <div className="space-y-7">
-          <Toggle checked={today} onChange={(v) => update({ bugun: v ? '1' : null })} label="Bugün müsait" description="Bugün hâlâ randevu verebilecek işletmeler" />
-          <FilterGroup label="En düşük hizmet fiyatı">
+          <Toggle checked={today} onChange={(v) => update({ bugun: v ? '1' : null })} label={tx('Bugün müsait', 'Available today')} description={tx('Bugün hâlâ randevu verebilecek işletmeler', 'Businesses that can still take bookings today')} />
+          <FilterGroup label={tx('En düşük hizmet fiyatı', 'Starting price')}>
             {PRICE_STEPS.map((p) => (
-              <Chip key={p} active={maxPrice === p} onClick={() => update({ fiyat: p ? String(p) : null })}>{p ? `${formatTRY(p)} ve altı` : 'Fark etmez'}</Chip>
+              <Chip key={p} active={maxPrice === p} onClick={() => update({ fiyat: p ? String(p) : null })}>{p ? tx(`${formatTRY(p)} ve altı`, `${formatTRY(p)} or less`) : tx('Fark etmez', 'Any')}</Chip>
             ))}
           </FilterGroup>
-          <FilterGroup label="Minimum puan">
+          <FilterGroup label={tx('Minimum puan', 'Minimum rating')}>
             {RATING_STEPS.map((r) => (
-              <Chip key={r} active={minRating === r} onClick={() => update({ puan: r ? String(r) : null })}>{r ? `${r}+ yıldız` : 'Fark etmez'}</Chip>
+              <Chip key={r} active={minRating === r} onClick={() => update({ puan: r ? String(r) : null })}>{r ? tx(`${r}+ yıldız`, `${r}+ stars`) : tx('Fark etmez', 'Any')}</Chip>
             ))}
           </FilterGroup>
-          <FilterGroup label="Hizmet verilen">
-            <Chip active={!gender} onClick={() => update({ cinsiyet: null })}>Herkes</Chip>
-            <Chip active={gender === 'female'} onClick={() => update({ cinsiyet: 'female' })}>Kadın</Chip>
-            <Chip active={gender === 'male'} onClick={() => update({ cinsiyet: 'male' })}>Erkek</Chip>
+          <FilterGroup label={tx('Hizmet verilen', 'Serves')}>
+            <Chip active={!gender} onClick={() => update({ cinsiyet: null })}>{tx('Herkes', 'Everyone')}</Chip>
+            <Chip active={gender === 'female'} onClick={() => update({ cinsiyet: 'female' })}>{tx('Kadın', 'Women')}</Chip>
+            <Chip active={gender === 'male'} onClick={() => update({ cinsiyet: 'male' })}>{tx('Erkek', 'Men')}</Chip>
           </FilterGroup>
         </div>
       </Modal>

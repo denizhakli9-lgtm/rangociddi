@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { MapPin, Star } from 'lucide-react';
 import { initials } from '@/lib/format';
 import { safeImageUrl } from '@/lib/safeUrl';
+import { tx } from '@/i18n/locale';
 
 export function Logo({ size = 'md', withMark = true }: { size?: 'sm' | 'md' | 'lg'; withMark?: boolean }) {
   const text = { sm: 'text-xl', md: 'text-2xl', lg: 'text-5xl' }[size];
@@ -33,7 +34,7 @@ export function WordMark({ className = '' }: { className?: string }) {
 export function RangoSignature({ className = '' }: { className?: string }) {
   return (
     <p className={`text-[11px] uppercase tracking-[0.24em] text-mist-3 ${className}`}>
-      Bir <span className="font-semibold text-gold-400/80">RANGO</span> ürünü
+      {tx('Bir ', 'A ')}<span className="font-semibold text-gold-400/80">RANGO</span>{tx(' ürünü', ' product')}
     </p>
   );
 }
@@ -45,7 +46,7 @@ export function Stars({ value, size = 'h-3.5 w-3.5', onChange }: { value: number
         const filled = i <= Math.round(value);
         const icon = <Star className={`${size} ${filled ? 'fill-gold-500 text-gold-500' : 'text-mist-3'}`} />;
         return onChange ? (
-          <button key={i} type="button" onClick={() => onChange(i)} className="p-1 transition hover:scale-110" aria-label={`${i} yıldız`}>
+          <button key={i} type="button" onClick={() => onChange(i)} className="p-1 transition hover:scale-110" aria-label={tx(`${i} yıldız`, i === 1 ? '1 star' : `${i} stars`)}>
             {icon}
           </button>
         ) : (

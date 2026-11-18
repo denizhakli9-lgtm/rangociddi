@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from 'react';
 import { X } from 'lucide-react';
+import { tx } from '@/i18n/locale';
 
 interface Props {
   open: boolean;
@@ -37,7 +38,7 @@ export function Modal({ open, onClose, title, subtitle, children, footer, wide }
             <h2 className="font-display text-2xl text-white">{title}</h2>
             {subtitle && <p className="mt-1 text-sm text-mist-2">{subtitle}</p>}
           </div>
-          <button onClick={onClose} className="rounded-full p-2 text-mist-2 transition hover:bg-white/5 hover:text-white" aria-label="Kapat">
+          <button onClick={onClose} className="rounded-full p-2 text-mist-2 transition hover:bg-white/5 hover:text-white" aria-label={tx('Kapat', 'Close')}>
             <X className="h-5 w-5" />
           </button>
         </div>

@@ -18,8 +18,9 @@ import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Field';
 import { EmptyState, ErrorState, PageLoader } from '@/components/ui/Feedback';
 import type { Slot } from '@/lib/types';
+import { tx } from '@/i18n/locale';
 
-const STEPS = ['Hizmet', 'Uzman', 'Tarih & Saat', 'Özet'];
+const STEPS: [string, string][] = [['Hizmet', 'Service'], ['Uzman', 'Specialist'], ['Tarih & Saat', 'Date & time'], ['Özet', 'Summary']];
 
 export default function BookingWizard() {
   const t = useT();
@@ -48,7 +49,7 @@ export default function BookingWizard() {
 
   if (loading) return <PageLoader />;
   if (error) return <ErrorState onRetry={reload} />;
-  if (!data) return <EmptyState icon={<Store className="h-6 w-6" />} title="İşletme bulunamadı" action={<Button onClick={() => navigate('/ara')}>Keşfet</Button>} />;
+  if (!data) return <EmptyState icon={<Store className="h-6 w-6" />} title={tx('İşletme bulunamadı', 'Business not found')} action={<Button onClick={() => navigate('/ara')}>{tx('Keşfet', 'Discover')}</Button>} />;
 
   const { business: b, services, hours, settings } = data;
   if (isDemoBusiness(b)) {
@@ -57,7 +58,7 @@ export default function BookingWizard() {
         icon={<Store className="h-6 w-6" />}
         title={t.demo.notBookable}
         text={t.demo.explanation}
-        action={<Button onClick={() => navigate(`/i/${b.slug}`, { replace: true })}>İşletme sayfasına dön</Button>}
+        action={<Button onClick={() => navigate(`/i/${b.slug}`, { replace: true })}>{tx('İşletme sayfasına dön', 'Back to the business page')}</Button>}
       />
     );
   }
@@ -97,17 +98,17 @@ export default function BookingWizard() {
   return (
     <div className="mx-auto max-w-3xl">
       <button onClick={goBack} className="mb-6 flex items-center gap-2 text-sm text-mist transition hover:text-white">
-        <ArrowLeft className="h-4 w-4" /> {activeStep === 0 ? b.name : 'Geri'}
+        <ArrowLeft className="h-4 w-4" /> {activeStep === 0 ? b.name : t.common.back}
       </button>
 
       <p className="eyebrow mb-2">{b.name}</p>
-      <h1 className="font-display text-4xl text-white">Randevu oluştur</h1>
+      <h1 className="font-display text-4xl text-white">{tx('Randevu oluştur', 'Make a booking')}</h1>
 
       <ol className="mb-8 mt-6 grid grid-cols-4 gap-2">
-        {STEPS.map((label, i) => (
-          <li key={label}>
+        {STEPS.map(([trLabel, enLabel], i) => (
+          <li key={trLabel}>
             <div className={`h-1 rounded-full transition-all duration-500 ${i <= activeStep ? 'bg-gold-500' : 'bg-line'}`} />
-            <p className={`mt-2 hidden text-xs sm:block ${i === activeStep ? 'text-gold-400' : i < activeStep ? 'text-white' : 'text-mist-3'}`}>{label}</p>
+            <p className={`mt-2 hidden text-xs sm:block ${i === activeStep ? 'text-gold-400' : i < activeStep ? 'text-white' : 'text-mist-3'}`}>{tx(trLabel, enLabel)}</p>
           </li>
         ))}
       </ol>
@@ -145,8 +146,8 @@ export default function BookingWizard() {
               active={employeeId === null}
               onClick={() => { setEmployeeId(null); setSlot(null); setStep(2); }}
               avatar={<span className="flex h-12 w-12 items-center justify-center rounded-full border border-gold-500/40 bg-gold-500/10 text-gold-400"><Shuffle className="h-5 w-5" /></span>}
-              title="Fark etmez"
-              text="En erken uygun uzman"
+              title={tx('Fark etmez', 'No preference')}
+              text={tx('En erken uygun uzman', 'First available specialist')}
             />
             {staff.map((e) => (
               <StaffOption
@@ -165,7 +166,7 @@ export default function BookingWizard() {
           <>
             <SlotPicker serviceId={service.id} employeeId={employeeId} hours={hours} days={settings.max_booking_days} value={slot} onChange={setSlot} />
             <div className="mt-8 flex justify-end">
-              <Button size="lg" disabled={!slot} onClick={() => setStep(3)}>Devam Et</Button>
+              <Button size="lg" disabled={!slot} onClick={() => setStep(3)}>{t.common.next}</Button>
             </div>
           </>
         )}
@@ -173,44 +174,44 @@ export default function BookingWizard() {
         {activeStep === 3 && service && slot && (
           <div className="space-y-5">
             <div className="card-gold divide-y divide-line">
-              <SummaryRow label="İşletme" value={b.name} sub={fullAddress(b)} />
-              <SummaryRow label="Hizmet" value={service.name} sub={formatDuration(service.duration_minutes)} />
-              <SummaryRow label="Uzman" value={chosenEmployee?.full_name ?? 'Atanacak'} sub={chosenEmployee?.title} />
-              <SummaryRow label="Tarih" value={formatDate(slot.slot_start, { day: 'numeric', month: 'long', weekday: 'long' })} sub={formatTime(slot.slot_start)} />
+              <SummaryRow label={tx('İşletme', 'Business')} value={b.name} sub={fullAddress(b)} />
+              <SummaryRow label={tx('Hizmet', 'Service')} value={service.name} sub={formatDuration(service.duration_minutes)} />
+              <SummaryRow label={tx('Uzman', 'Specialist')} value={chosenEmployee?.full_name ?? tx('Atanacak', 'To be assigned')} sub={chosenEmployee?.title} />
+              <SummaryRow label={tx('Tarih', 'Date')} value={formatDate(slot.slot_start, { day: 'numeric', month: 'long', weekday: 'long' })} sub={formatTime(slot.slot_start)} />
             </div>
             {sameDay && (
               <p role="status" className="flex items-start gap-2 rounded-xl border border-warning-500/30 bg-warning-900/40 px-4 py-3 text-xs leading-relaxed text-warning-300">
                 <Hourglass className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                Aynı gün randevuları işletme onayına tabidir.
+                {tx('Aynı gün randevuları işletme onayına tabidir.', 'Same-day bookings need the business’s approval.')}
               </p>
             )}
             <div className="card space-y-3 p-5 text-sm">
-              <div className="flex justify-between gap-4 text-mist"><span>Hizmet bedeli</span><span className="text-white">{formatTRY(service.price)}</span></div>
+              <div className="flex justify-between gap-4 text-mist"><span>{tx('Hizmet bedeli', 'Service price')}</span><span className="text-white">{formatTRY(service.price)}</span></div>
               {deposit > 0 && (
                 <div className="flex justify-between gap-4 text-mist">
-                  <span>{testMode ? 'Kapora (test modu, tahsil edilmez)' : 'Şimdi ödenecek kapora'}</span>
+                  <span>{testMode ? tx('Kapora (test modu, tahsil edilmez)', 'Deposit (test mode, not charged)') : tx('Şimdi ödenecek kapora', 'Deposit to pay now')}</span>
                   <span className="font-semibold text-gold-400">{formatTRY(deposit)}</span>
                 </div>
               )}
-              <div className="flex justify-between gap-4 border-t border-line pt-3 text-mist"><span>İşletmede ödenecek</span><span className="text-white">{formatTRY(atBusiness)}</span></div>
+              <div className="flex justify-between gap-4 border-t border-line pt-3 text-mist"><span>{tx('İşletmede ödenecek', 'To pay at the business')}</span><span className="text-white">{formatTRY(atBusiness)}</span></div>
             </div>
             <div className="space-y-1.5">
-              <Textarea id="booking-note" label="İşletmeye not" hint={`${note.length}/300 · İsteğe bağlı`} maxLength={300} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Örn. saç uzunluğum omuz hizasında" />
+              <Textarea id="booking-note" label={tx('İşletmeye not', 'Note to the business')} hint={`${note.length}/300 · ${t.common.optional}`} maxLength={300} value={note} onChange={(e) => setNote(e.target.value)} placeholder={tx('Örn. saç uzunluğum omuz hizasında', 'E.g. my hair is shoulder length')} />
               <p className="text-xs leading-relaxed text-mist-2">
-                Ad soyad, telefon ve e-posta bilgileriniz ile notunuz, randevunun yürütülmesi için {b.name} ile paylaşılır. Sağlık durumunuz gibi özel nitelikli bilgileri bu alana yazmayın.{' '}
-                <Link to={legalPath('aydinlatma-metni')} className="text-gold-400 underline-offset-2 hover:underline">Aydınlatma Metni</Link>
+                {tx(`Ad soyad, telefon ve e-posta bilgileriniz ile notunuz, randevunun yürütülmesi için ${b.name} ile paylaşılır. Sağlık durumunuz gibi özel nitelikli bilgileri bu alana yazmayın.`, `Your name, phone, email and note are shared with ${b.name} to run the booking. Do not write sensitive information such as health details here.`)}{' '}
+                <Link to={legalPath('aydinlatma-metni')} className="text-gold-400 underline-offset-2 hover:underline">{tx('Aydınlatma Metni', 'Privacy Notice')}</Link>
               </p>
             </div>
             <p className="flex items-start gap-2 text-xs text-mist-2">
               <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gold-500" />
               <span>
-                Randevuya {b.cancellation_hours} saat kalaya kadar ücretsiz iptal edebilir veya erteleyebilirsiniz.
-                {deposit > 0 && !testMode && ' Bu süreden sonra kapora iade edilmez.'}{' '}
-                <Link to={legalPath('iptal-iade')} className="text-gold-400 underline-offset-2 hover:underline">İptal ve İade Koşulları</Link>
+                {tx(`Randevuya ${b.cancellation_hours} saat kalaya kadar ücretsiz iptal edebilir veya erteleyebilirsiniz.`, `You can cancel or reschedule free of charge up to ${b.cancellation_hours} hours before the appointment.`)}
+                {deposit > 0 && !testMode && tx(' Bu süreden sonra kapora iade edilmez.', ' After that, the deposit is not refunded.')}{' '}
+                <Link to={legalPath('iptal-iade')} className="text-gold-400 underline-offset-2 hover:underline">{tx('İptal ve İade Koşulları', 'Cancellation & Refund Policy')}</Link>
               </span>
             </p>
             <Button full size="lg" loading={submitting} onClick={submit}>
-              {deposit > 0 ? (testMode ? 'Test ödemesine geç' : `Kaporayı Öde · ${formatTRY(deposit)}`) : 'Randevuyu Onayla'}
+              {deposit > 0 ? (testMode ? tx('Test ödemesine geç', 'Continue to test payment') : tx(`Kaporayı Öde · ${formatTRY(deposit)}`, `Pay deposit · ${formatTRY(deposit)}`)) : tx('Randevuyu Onayla', 'Confirm booking')}
             </Button>
           </div>
         )}

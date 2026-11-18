@@ -12,6 +12,7 @@ import { PageLoader } from '@/components/ui/Feedback';
 import { useT } from '@/i18n/I18nProvider';
 import type { Profile } from '@/lib/types';
 import { AuthShell } from './AuthShell';
+import { tx } from '@/i18n/locale';
 
 export default function Login() {
   const t = useT();
@@ -56,30 +57,30 @@ export default function Login() {
   }
 
   return (
-    <AuthShell eyebrow="Tekrar hoş geldiniz" title="Giriş Yap" subtitle="Randevularınızı yönetmek için hesabınıza giriş yapın.">
+    <AuthShell eyebrow={tx('Tekrar hoş geldiniz', 'Welcome back')} title={tx('Giriş Yap', 'Sign in')} subtitle={tx('Randevularınızı yönetmek için hesabınıza giriş yapın.', 'Sign in to your account to manage your bookings.')}>
       <form onSubmit={submit} className="space-y-5" noValidate>
-        <Input label="E-posta" name="email" type="email" autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={email} onChange={(e) => setEmail(e.target.value)} error={errors.email} icon={<Mail className="h-4 w-4" />} placeholder="ornek@eposta.com" />
+        <Input label={tx('E-posta', 'Email')} name="email" type="email" autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={email} onChange={(e) => setEmail(e.target.value)} error={errors.email} icon={<Mail className="h-4 w-4" />} placeholder={tx('ornek@eposta.com', 'you@example.com')} />
         <div>
-          <Input label="Şifre" name="password" type="password" autoComplete="current-password" autoCapitalize="none" autoCorrect="off" value={password} onChange={(e) => setPassword(e.target.value)} error={errors.password} icon={<Lock className="h-4 w-4" />} placeholder="••••••••" />
+          <Input label={tx('Şifre', 'Password')} name="password" type="password" autoComplete="current-password" autoCapitalize="none" autoCorrect="off" value={password} onChange={(e) => setPassword(e.target.value)} error={errors.password} icon={<Lock className="h-4 w-4" />} placeholder="••••••••" />
           <div className="mt-2 text-right">
             <Link to="/sifremi-unuttum" className="text-xs font-medium text-mist transition hover:text-gold-300">
-              Şifremi unuttum
+              {tx('Şifremi unuttum', 'Forgot password')}
             </Link>
           </div>
         </div>
         {formError && <p className="rounded-xl border border-error-500/30 bg-error-900/40 px-4 py-3 text-sm text-error-300">{formError}</p>}
         <Button type="submit" size="lg" full loading={loading}>
-          Giriş Yap
+          {tx('Giriş Yap', 'Sign in')}
         </Button>
       </form>
       <p className="mt-8 text-center text-sm text-mist">
-        Hesabınız yok mu?{' '}
+        {tx('Hesabınız yok mu?', 'No account yet?')}{' '}
         <Link to={`/kayit${redirect ? `?sonra=${encodeURIComponent(redirect)}` : ''}`} className="font-semibold text-gold-400 hover:text-gold-300">
-          Hemen kaydolun
+          {tx('Hemen kaydolun', 'Sign up now')}
         </Link>
       </p>
       <p className="mt-3 text-center text-xs text-mist-2">
-        <Link to="/kesfet" className="hover:text-white">Giriş yapmadan keşfetmeye devam et</Link>
+        <Link to="/kesfet" className="hover:text-white">{tx('Giriş yapmadan keşfetmeye devam et', 'Continue browsing without signing in')}</Link>
       </p>
     </AuthShell>
   );

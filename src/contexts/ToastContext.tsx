@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
 import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
+import { tx } from '@/i18n/locale';
 
 type ToastKind = 'success' | 'error' | 'info';
 interface Toast {
@@ -45,7 +46,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             >
               <Icon className="mt-0.5 h-5 w-5 shrink-0" />
               <p className="flex-1 text-sm text-white/90">{t.message}</p>
-              <button onClick={() => dismiss(t.id)} className="text-mist-2 transition hover:text-white" aria-label="Kapat">
+              <button onClick={() => dismiss(t.id)} className="text-mist-2 transition hover:text-white" aria-label={tx('Kapat', 'Close')}>
                 <X className="h-4 w-4" />
               </button>
             </div>

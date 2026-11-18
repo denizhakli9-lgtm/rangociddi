@@ -5,6 +5,7 @@ import { addDays, dateKey, formatTime, isoWeekday, keyLabel } from '@/lib/format
 import { friendlyError } from '@/lib/errors';
 import { Spinner } from '@/components/ui/Feedback';
 import type { Slot, WorkingHours } from '@/lib/types';
+import { tx } from '@/i18n/locale';
 
 interface Props {
   serviceId: string;
@@ -48,12 +49,14 @@ export function SlotPicker({ serviceId, employeeId, hours, days = 30, excludeApp
   }, [serviceId, employeeId, date, excludeAppointment]);
 
   const groups = useMemo(() => {
-    const g: Record<string, Slot[]> = { Sabah: [], 'Öğleden sonra': [], Akşam: [] };
+    const morning: Slot[] = [];
+    const afternoon: Slot[] = [];
+    const evening: Slot[] = [];
     slots.forEach((s) => {
       const hour = Number(formatTime(s.slot_start).slice(0, 2));
-      (hour < 12 ? g.Sabah : hour < 17 ? g['Öğleden sonra'] : g.Akşam).push(s);
+      (hour < 12 ? morning : hour < 17 ? afternoon : evening).push(s);
     });
-    return Object.entries(g).filter(([, list]) => list.length);
+    return ([[tx('Sabah', 'Morning'), morning], [tx('Öğleden sonra', 'Afternoon'), afternoon], [tx('Akşam', 'Evening'), evening]] as [string, Slot[]][]).filter(([, list]) => list.length);
   }, [slots]);
 
   return (
@@ -73,9 +76,9 @@ export function SlotPicker({ serviceId, employeeId, hours, days = 30, excludeApp
                 active ? 'border-gold-500 bg-gold-500 text-ink shadow-gold' : closed ? 'cursor-not-allowed border-line-soft text-mist-3' : 'border-line bg-coal text-white hover:border-gold-500/40'
               }`}
             >
-              <span className={`text-[10px] uppercase tracking-wider ${active ? 'text-ink/70' : 'text-mist-2'}`}>{d === today ? 'Bugün' : keyLabel(d, { weekday: 'short' })}</span>
+              <span className={`text-[10px] uppercase tracking-wider ${active ? 'text-ink/70' : 'text-mist-2'}`}>{d === today ? tx('Bugün', 'Today') : keyLabel(d, { weekday: 'short' })}</span>
               <span className="mt-1 font-display text-2xl leading-none">{keyLabel(d, { day: 'numeric' })}</span>
-              <span className={`mt-1 text-[10px] ${active ? 'text-ink/70' : 'text-mist-2'}`}>{closed ? 'Kapalı' : keyLabel(d, { month: 'short' })}</span>
+              <span className={`mt-1 text-[10px] ${active ? 'text-ink/70' : 'text-mist-2'}`}>{closed ? tx('Kapalı', 'Closed') : keyLabel(d, { month: 'short' })}</span>
             </button>
           );
         })}
@@ -89,8 +92,8 @@ export function SlotPicker({ serviceId, employeeId, hours, days = 30, excludeApp
         ) : !slots.length ? (
           <div className="flex flex-col items-center rounded-2xl border border-dashed border-line py-10 text-center">
             <CalendarX2 className="mb-3 h-7 w-7 text-mist-2" />
-            <p className="text-sm text-white">Bu gün için boş saat kalmadı</p>
-            <p className="mt-1 text-xs text-mist-2">Lütfen başka bir gün veya uzman seçin.</p>
+            <p className="text-sm text-white">{tx('Bu gün için boş saat kalmadı', 'No free times left on this day')}</p>
+            <p className="mt-1 text-xs text-mist-2">{tx('Lütfen başka bir gün veya uzman seçin.', 'Please choose another day or specialist.')}</p>
           </div>
         ) : (
           <div className="space-y-5">

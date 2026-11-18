@@ -1,5 +1,6 @@
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from '@/lib/theme';
+import { tx } from '@/i18n/locale';
 
 /** Compact sun/moon switch for headers. */
 export function ThemeToggle({ className = '' }: { className?: string }) {
@@ -11,8 +12,8 @@ export function ThemeToggle({ className = '' }: { className?: string }) {
       type="button"
       role="switch"
       aria-checked={dark}
-      aria-label="Karanlık mod"
-      title={dark ? 'Aydınlık moda geç' : 'Karanlık moda geç'}
+      aria-label={tx('Karanlık mod', 'Dark mode')}
+      title={dark ? tx('Aydınlık moda geç', 'Switch to light mode') : tx('Karanlık moda geç', 'Switch to dark mode')}
       onClick={() => setTheme(dark ? 'light' : 'dark')}
       className={`group relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-line bg-coal/60 text-gold-400 transition duration-300 hover:border-gold-500/60 hover:bg-gold-500/10 hover:shadow-gold active:scale-95 ${className}`}
     >

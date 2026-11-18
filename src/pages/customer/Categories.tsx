@@ -5,6 +5,8 @@ import { useAsync } from '@/lib/useAsync';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { ErrorState } from '@/components/ui/Feedback';
 import { formatTRY } from '@/lib/format';
+import { categoryDescription, categoryName } from '@/i18n/categories';
+import { tx } from '@/i18n/locale';
 
 export default function Categories() {
   const { data, loading, error, reload } = useAsync(async () => {
@@ -15,9 +17,9 @@ export default function Categories() {
 
   return (
     <div>
-      <p className="eyebrow mb-2">Kategoriler</p>
-      <h1 className="font-display text-4xl text-white">Size iyi gelecek her şey</h1>
-      <p className="mt-2 max-w-xl text-sm text-mist">Kadın ve erkek müşterilere özel hizmet veren seçkin işletmeleri kategoriye göre keşfedin.</p>
+      <p className="eyebrow mb-2">{tx('Kategoriler', 'Categories')}</p>
+      <h1 className="font-display text-4xl text-white">{tx('Size iyi gelecek her şey', 'Everything that feels good')}</h1>
+      <p className="mt-2 max-w-xl text-sm text-mist">{tx('Kadın ve erkek müşterilere özel hizmet veren seçkin işletmeleri kategoriye göre keşfedin.', 'Browse selected businesses for women and men by category.')}</p>
 
       {error ? (
         <div className="mt-8"><ErrorState onRetry={reload} error={error} /></div>
@@ -43,11 +45,11 @@ export default function Categories() {
                       </span>
                       <ArrowUpRight className="h-5 w-5 text-mist-3 transition group-hover:text-gold-400" />
                     </div>
-                    <h2 className="relative mt-5 font-display text-2xl text-white">{c.name}</h2>
-                    <p className="relative mt-1 line-clamp-2 text-xs text-mist-2">{c.description}</p>
+                    <h2 className="relative mt-5 font-display text-2xl text-white">{categoryName(c)}</h2>
+                    <p className="relative mt-1 line-clamp-2 text-xs text-mist-2">{categoryDescription(c)}</p>
                     <p className="relative mt-4 text-xs text-mist">
-                      <span className="text-white">{count} işletme</span>
-                      {minPrice > 0 && <> · {formatTRY(minPrice)}’den başlayan</>}
+                      <span className="text-white">{tx(`${count} işletme`, count === 1 ? '1 business' : `${count} businesses`)}</span>
+                      {minPrice > 0 && <> · {tx(`${formatTRY(minPrice)}’den başlayan`, `from ${formatTRY(minPrice)}`)}</>}
                     </p>
                   </Link>
                 );

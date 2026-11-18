@@ -12,6 +12,7 @@ import { useT } from '@/i18n/I18nProvider';
 import type { Profile } from '@/lib/types';
 import { AuthShell } from './AuthShell';
 import { publicUrl } from '@/lib/platform';
+import { tx } from '@/i18n/locale';
 
 // 'signed-in': an ordinary session without a recovery link. Setting a new
 // password from it would skip any proof of account ownership, so the person is
@@ -132,14 +133,14 @@ export default function ResetPassword() {
   if (status === 'signed-in') {
     const email = authSession?.user.email || linkEmail;
     return (
-      <AuthShell eyebrow="Hesap güvenliği" title="E-posta Doğrulaması Gerekli" subtitle="Güvenliğiniz için şifre değişikliği yalnızca e-posta adresinize gönderilen yenileme bağlantısıyla yapılabilir.">
+      <AuthShell eyebrow={tx('Hesap güvenliği', 'Account security')} title={tx('E-posta Doğrulaması Gerekli', 'Email verification required')} subtitle={tx('Güvenliğiniz için şifre değişikliği yalnızca e-posta adresinize gönderilen yenileme bağlantısıyla yapılabilir.', 'For your security, your password can only be changed with the reset link sent to your email.')}>
         {sentTo ? (
           <div className="animate-fade-up rounded-2xl border border-line bg-coal/60 p-6">
             <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gold-500/15 text-gold-400">
               <MailCheck className="h-6 w-6" />
             </span>
             <p className="text-sm leading-relaxed text-mist">
-              Yenileme bağlantısı <span className="font-semibold text-white">{sentTo}</span> adresine gönderildi. Bağlantıya tıklayarak yeni şifrenizi belirleyebilirsiniz. Gelen kutunuzda göremezseniz gereksiz klasörünü de kontrol edin.
+              {tx('Yenileme bağlantısı ', 'A reset link was sent to ')}<span className="font-semibold text-white">{sentTo}</span>{tx(' adresine gönderildi. Bağlantıya tıklayarak yeni şifrenizi belirleyebilirsiniz. Gelen kutunuzda göremezseniz gereksiz klasörünü de kontrol edin.', '. Click the link to set your new password. If you cannot see it in your inbox, check your spam folder too.')}
             </p>
           </div>
         ) : (
@@ -150,10 +151,10 @@ export default function ResetPassword() {
             <p className="text-sm leading-relaxed text-mist">
               {email ? (
                 <>
-                  Şifrenizi değiştirmek için <span className="font-semibold text-white">{email}</span> adresine bir yenileme bağlantısı gönderebiliriz.
+                  {tx('Şifrenizi değiştirmek için ', 'To change your password, we can send a reset link to ')}<span className="font-semibold text-white">{email}</span>{tx(' adresine bir yenileme bağlantısı gönderebiliriz.', '.')}
                 </>
               ) : (
-                'Şifrenizi değiştirmek için hesabınıza kayıtlı e-posta adresine bir yenileme bağlantısı isteyin.'
+                tx('Şifrenizi değiştirmek için hesabınıza kayıtlı e-posta adresine bir yenileme bağlantısı isteyin.', 'To change your password, request a reset link to the email address of your account.')
               )}
             </p>
           </div>
@@ -161,11 +162,11 @@ export default function ResetPassword() {
         {formError && <p className="mt-4 rounded-xl border border-error-500/30 bg-error-900/40 px-4 py-3 text-sm text-error-300">{formError}</p>}
         {!sentTo && (
           <Button type="button" size="lg" full className="mt-6" loading={sending} onClick={email ? sendLink : () => navigate('/sifremi-unuttum')}>
-            Yenileme Bağlantısı Gönder
+            {tx('Yenileme Bağlantısı Gönder', 'Send reset link')}
           </Button>
         )}
         <p className="mt-6 text-center text-sm text-mist">
-          <Link to="/profil" className="font-semibold text-gold-400 hover:text-gold-300">Hesabıma dön</Link>
+          <Link to="/profil" className="font-semibold text-gold-400 hover:text-gold-300">{tx('Hesabıma dön', 'Back to my account')}</Link>
         </p>
       </AuthShell>
     );
@@ -173,18 +174,18 @@ export default function ResetPassword() {
 
   if (status === 'invalid') {
     return (
-      <AuthShell eyebrow="Hesap kurtarma" title="Bağlantı Geçersiz" subtitle="Bu şifre yenileme bağlantısının süresi dolmuş ya da daha önce kullanılmış.">
+      <AuthShell eyebrow={tx('Hesap kurtarma', 'Account recovery')} title={tx('Bağlantı Geçersiz', 'Invalid link')} subtitle={tx('Bu şifre yenileme bağlantısının süresi dolmuş ya da daha önce kullanılmış.', 'This password reset link has expired or has already been used.')}>
         <div className="animate-fade-up rounded-2xl border border-line bg-coal/60 p-6">
           <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-warning-500/15 text-warning-300">
             <ShieldAlert className="h-6 w-6" />
           </span>
-          <p className="text-sm leading-relaxed text-mist">Güvenliğiniz için yenileme bağlantıları kısa süre geçerlidir ve yalnızca bir kez kullanılabilir. Yeni bir bağlantı isteyerek devam edebilirsiniz.</p>
+          <p className="text-sm leading-relaxed text-mist">{tx('Güvenliğiniz için yenileme bağlantıları kısa süre geçerlidir ve yalnızca bir kez kullanılabilir. Yeni bir bağlantı isteyerek devam edebilirsiniz.', 'For your security, reset links are valid for a short time and can only be used once. Request a new link to continue.')}</p>
         </div>
         <Button type="button" size="lg" full className="mt-6" onClick={() => navigate('/sifremi-unuttum')}>
-          Yeni Bağlantı İste
+          {tx('Yeni Bağlantı İste', 'Request a new link')}
         </Button>
         <p className="mt-6 text-center text-sm text-mist">
-          <Link to="/giris" className="font-semibold text-gold-400 hover:text-gold-300">Giriş ekranına dön</Link>
+          <Link to="/giris" className="font-semibold text-gold-400 hover:text-gold-300">{tx('Giriş ekranına dön', 'Back to sign in')}</Link>
         </p>
       </AuthShell>
     );
@@ -192,23 +193,23 @@ export default function ResetPassword() {
 
   if (status === 'done') {
     return (
-      <AuthShell eyebrow="Hesap kurtarma" title="Şifreniz Yenilendi" subtitle="Yeni şifrenizle oturumunuz açıldı, sizi yönlendiriyoruz.">
+      <AuthShell eyebrow={tx('Hesap kurtarma', 'Account recovery')} title={tx('Şifreniz Yenilendi', 'Password updated')} subtitle={tx('Yeni şifrenizle oturumunuz açıldı, sizi yönlendiriyoruz.', 'You are signed in with your new password; redirecting you now.')}>
         <div className="flex animate-fade-up items-center gap-4 rounded-2xl border border-success-500/30 bg-success-900/40 p-6">
           <CheckCircle2 className="h-6 w-6 shrink-0 text-success-300" />
-          <p className="text-sm text-success-300">Şifreniz başarıyla güncellendi.</p>
+          <p className="text-sm text-success-300">{tx('Şifreniz başarıyla güncellendi.', 'Your password has been updated.')}</p>
         </div>
       </AuthShell>
     );
   }
 
   return (
-    <AuthShell eyebrow="Hesap kurtarma" title="Yeni Şifre Belirle" subtitle="Hesabınız için en az 8 karakterden oluşan yeni bir şifre seçin.">
+    <AuthShell eyebrow={tx('Hesap kurtarma', 'Account recovery')} title={tx('Yeni Şifre Belirle', 'Set a new password')} subtitle={tx('Hesabınız için en az 8 karakterden oluşan yeni bir şifre seçin.', 'Choose a new password of at least 8 characters.')}>
       <form onSubmit={submit} className="space-y-5" noValidate>
-        <Input label="Yeni Şifre" name="password" type="password" autoComplete="new-password" autoCapitalize="none" autoCorrect="off" value={password} onChange={(e) => setPassword(e.target.value)} error={errors.password} icon={<Lock className="h-4 w-4" />} placeholder="••••••••" />
-        <Input label="Yeni Şifre Tekrar" name="password2" type="password" autoComplete="new-password" autoCapitalize="none" autoCorrect="off" value={password2} onChange={(e) => setPassword2(e.target.value)} error={errors.password2} icon={<Lock className="h-4 w-4" />} placeholder="••••••••" />
+        <Input label={tx('Yeni Şifre', 'New password')} name="password" type="password" autoComplete="new-password" autoCapitalize="none" autoCorrect="off" value={password} onChange={(e) => setPassword(e.target.value)} error={errors.password} icon={<Lock className="h-4 w-4" />} placeholder="••••••••" />
+        <Input label={tx('Yeni Şifre Tekrar', 'Repeat new password')} name="password2" type="password" autoComplete="new-password" autoCapitalize="none" autoCorrect="off" value={password2} onChange={(e) => setPassword2(e.target.value)} error={errors.password2} icon={<Lock className="h-4 w-4" />} placeholder="••••••••" />
         {formError && <p className="rounded-xl border border-error-500/30 bg-error-900/40 px-4 py-3 text-sm text-error-300">{formError}</p>}
         <Button type="submit" size="lg" full loading={loading}>
-          Şifreyi Güncelle
+          {tx('Şifreyi Güncelle', 'Update password')}
         </Button>
       </form>
     </AuthShell>

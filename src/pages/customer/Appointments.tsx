@@ -15,6 +15,7 @@ import { EmptyState, ErrorState, SkeletonList } from '@/components/ui/Feedback';
 import type { Appointment } from '@/lib/types';
 import { DirectionsButton } from '@/components/DirectionsSheet';
 import { CancelModal, RescheduleModal, ReviewModal } from './AppointmentModals';
+import { tx } from '@/i18n/locale';
 
 type Tab = 'upcoming' | 'past';
 const ACTIVE = ['pending_payment', 'pending_approval', 'confirmed'];
@@ -63,9 +64,9 @@ export default function Appointments() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <p className="eyebrow mb-2">Randevularım</p>
-      <h1 className="mb-6 font-display text-4xl text-white">Ayrılmış anlarınız</h1>
-      <Segmented<Tab> value={tab} onChange={setTab} options={[{ value: 'upcoming', label: 'Yaklaşan', count: upcoming.length }, { value: 'past', label: 'Geçmiş', count: past.length }]} />
+      <p className="eyebrow mb-2">{tx('Randevularım', 'My bookings')}</p>
+      <h1 className="mb-6 font-display text-4xl text-white">{tx('Ayrılmış anlarınız', 'Your booked moments')}</h1>
+      <Segmented<Tab> value={tab} onChange={setTab} options={[{ value: 'upcoming', label: tx('Yaklaşan', 'Upcoming'), count: upcoming.length }, { value: 'past', label: tx('Geçmiş', 'Past'), count: past.length }]} />
 
       <div className="mt-6">
         {loading ? (
@@ -75,9 +76,9 @@ export default function Appointments() {
         ) : !list.length ? (
           <EmptyState
             icon={tab === 'upcoming' ? <CalendarDays className="h-6 w-6" /> : <CalendarX2 className="h-6 w-6" />}
-            title={tab === 'upcoming' ? 'Yaklaşan randevunuz yok' : 'Geçmiş randevunuz yok'}
-            text="Size iyi gelecek bir hizmet keşfedin ve ilk randevunuzu oluşturun."
-            action={<Button onClick={() => navigate('/kesfet')}>Keşfet</Button>}
+            title={tab === 'upcoming' ? tx('Yaklaşan randevunuz yok', 'No upcoming bookings') : tx('Geçmiş randevunuz yok', 'No past bookings')}
+            text={tx('Size iyi gelecek bir hizmet keşfedin ve ilk randevunuzu oluşturun.', 'Discover a service you will enjoy and make your first booking.')}
+            action={<Button onClick={() => navigate('/kesfet')}>{tx('Keşfet', 'Discover')}</Button>}
           />
         ) : (
           <div className="space-y-4">
@@ -108,7 +109,7 @@ export default function Appointments() {
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <Link to={`/i/${a.businesses?.slug ?? ''}`} className="font-display text-xl text-white hover:text-gold-300">{a.businesses?.name}</Link>
-                        {expiredHold ? <Badge tone="neutral">Ödeme süresi doldu</Badge> : <AppointmentStatusBadge status={a.status} />}
+                        {expiredHold ? <Badge tone="neutral">{tx('Ödeme süresi doldu', 'Payment time ran out')}</Badge> : <AppointmentStatusBadge status={a.status} />}
                       </div>
                       <p className="mt-1 text-sm text-mist">{a.service_name} · {a.employee_name}</p>
                       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-mist-2">
@@ -117,41 +118,41 @@ export default function Appointments() {
                         <span className="font-mono tracking-wider">{a.booking_code}</span>
                       </div>
                       <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-mist">
-                        <span>Toplam {formatTRY(a.total_price)}</span>
+                        <span>{tx('Toplam', 'Total')} {formatTRY(a.total_price)}</span>
                         {payment && !expiredHold && (
                           <>
                             <span className="text-mist-3">·</span>
-                            <span>Kapora {formatTRY(payment.amount)}</span>
+                            <span>{tx('Kapora', 'Deposit')} {formatTRY(payment.amount)}</span>
                             {testPayment && payment.status !== 'pending' && payment.status !== 'cancelled'
-                              ? <Badge tone="info">Test ödemesi · tahsil edilmedi</Badge>
+                              ? <Badge tone="info">{tx('Test ödemesi · tahsil edilmedi', 'Test payment · not charged')}</Badge>
                               : <PaymentStatusBadge status={payment.status} />}
                           </>
                         )}
                       </div>
-                      {a.cancellation_reason && a.status === 'cancelled' && <p className="mt-2 text-xs text-mist-2">Not: {a.cancellation_reason}</p>}
+                      {a.cancellation_reason && a.status === 'cancelled' && <p className="mt-2 text-xs text-mist-2">{tx('Not:', 'Note:')} {a.cancellation_reason}</p>}
                     </div>
                   </div>
 
                   <div className="flex flex-wrap gap-2 border-t border-line bg-ink/30 px-4 py-3 sm:px-5">
                     {a.status === 'pending_payment' && !expiredHold && (
-                      <Button size="sm" icon={<CreditCard className="h-3.5 w-3.5" />} onClick={() => navigate(`/odeme/${a.id}`)}>Ödemeyi tamamla</Button>
+                      <Button size="sm" icon={<CreditCard className="h-3.5 w-3.5" />} onClick={() => navigate(`/odeme/${a.id}`)}>{tx('Ödemeyi tamamla', 'Complete payment')}</Button>
                     )}
                     {live && a.businesses && (
                       <DirectionsButton target={a.businesses} className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-line px-3 text-xs text-white transition hover:border-gold-500/40">
-                        <MapPin className="h-3.5 w-3.5 text-gold-400" /> Yol tarifi
+                        <MapPin className="h-3.5 w-3.5 text-gold-400" /> {tx('Yol tarifi', 'Directions')}
                       </DirectionsButton>
                     )}
                     {canReschedule && (
-                      <Button size="sm" variant="dark" icon={<RefreshCw className="h-3.5 w-3.5" />} onClick={() => setRescheduling(a)}>Ertele</Button>
+                      <Button size="sm" variant="dark" icon={<RefreshCw className="h-3.5 w-3.5" />} onClick={() => setRescheduling(a)}>{tx('Ertele', 'Reschedule')}</Button>
                     )}
                     {ACTIVE.includes(a.status) && !expiredHold && tab === 'upcoming' && (
-                      <Button size="sm" variant="ghost" icon={<XCircle className="h-3.5 w-3.5" />} onClick={() => setCancelling(a)}>İptal et</Button>
+                      <Button size="sm" variant="ghost" icon={<XCircle className="h-3.5 w-3.5" />} onClick={() => setCancelling(a)}>{tx('İptal et', 'Cancel')}</Button>
                     )}
                     {a.status === 'completed' && !reviewed && (
-                      <Button size="sm" variant="outline" icon={<Star className="h-3.5 w-3.5" />} onClick={() => setReviewing(a)}>Değerlendir</Button>
+                      <Button size="sm" variant="outline" icon={<Star className="h-3.5 w-3.5" />} onClick={() => setReviewing(a)}>{tx('Değerlendir', 'Review')}</Button>
                     )}
                     {tab === 'past' && a.businesses?.slug && !demo && (
-                      <Button size="sm" variant="ghost" icon={<Repeat className="h-3.5 w-3.5" />} onClick={() => navigate(`/i/${a.businesses!.slug}/randevu${a.service_id ? `?hizmet=${a.service_id}` : ''}`)}>Tekrar randevu al</Button>
+                      <Button size="sm" variant="ghost" icon={<Repeat className="h-3.5 w-3.5" />} onClick={() => navigate(`/i/${a.businesses!.slug}/randevu${a.service_id ? `?hizmet=${a.service_id}` : ''}`)}>{tx('Tekrar randevu al', 'Book again')}</Button>
                     )}
                   </div>
                 </article>

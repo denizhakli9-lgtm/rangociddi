@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { friendlyError } from '@/lib/errors';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import { tx } from '@/i18n/locale';
 
 export function useFavorites() {
   const { profile } = useAuth();
@@ -33,7 +34,7 @@ export function useFavorites() {
         return;
       }
       if (!isCustomer) {
-        toast('Favoriler yalnızca müşteri hesaplarında kullanılabilir.', 'info');
+        toast(tx('Favoriler yalnızca müşteri hesaplarında kullanılabilir.', 'Favourites are only available on customer accounts.'), 'info');
         return;
       }
       const had = ids.has(businessId);
@@ -55,7 +56,7 @@ export function useFavorites() {
         });
         toast(friendlyError(error), 'error');
       } else {
-        toast(had ? 'Favorilerden çıkarıldı' : 'Favorilere eklendi', 'success');
+        toast(had ? tx('Favorilerden çıkarıldı', 'Removed from favourites') : tx('Favorilere eklendi', 'Added to favourites'), 'success');
       }
     },
     [ids, isCustomer, navigate, profile, toast],

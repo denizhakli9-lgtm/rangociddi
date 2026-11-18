@@ -1,26 +1,46 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
-import { tr, type Dictionary } from '@/i18n/tr';
+import { createContext, Fragment, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import type { Dictionary } from '@/i18n/tr';
+import { chosenLocale, dict, locale as currentLocale, storeLocale, type Locale } from '@/i18n/locale';
+import { sloganFor } from '@/lib/brand';
 
-export type Locale = 'tr';
-
-const dictionaries: Record<Locale, Dictionary> = { tr };
+export type { Locale } from '@/i18n/locale';
 
 interface I18nValue {
+  /** The language the visitor chose (the business and admin panels still render Turkish). */
   locale: Locale;
-  t: Dictionary;
   setLocale: (l: Locale) => void;
+  slogan: string;
 }
 
 const I18nContext = createContext<I18nValue | null>(null);
 
-export function I18nProvider({ children, slogan }: { children: ReactNode; slogan: string }) {
-  const [locale, setLocale] = useState<Locale>('tr');
-  const value = useMemo(() => ({
-    locale,
-    t: { ...dictionaries[locale], brand: { ...dictionaries[locale].brand, tagline: slogan } },
-    setLocale,
-  }), [locale, slogan]);
-  return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
+const TITLES: Record<Locale, string> = {
+  tr: 'Rango | Randevunun yeni yolu.',
+  en: 'Rango | The new way to book.',
+};
+
+export function I18nProvider({ children, sloganIndex }: { children: ReactNode; sloganIndex: number }) {
+  const [locale, setState] = useState<Locale>(chosenLocale);
+
+  const setLocale = useCallback((l: Locale) => {
+    storeLocale(l);
+    setState(l);
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.lang = locale;
+    document.title = TITLES[locale];
+  }, [locale]);
+
+  const value = useMemo(() => ({ locale, setLocale, slogan: sloganFor(sloganIndex, locale) }), [locale, setLocale, sloganIndex]);
+
+  // Keyed by language: switching remounts the app so every text (including plain helper
+  // functions that read the language, such as date formatting) is rendered again.
+  return (
+    <I18nContext.Provider value={value}>
+      <Fragment key={locale}>{children}</Fragment>
+    </I18nContext.Provider>
+  );
 }
 
 export function useI18n(): I18nValue {
@@ -29,6 +49,10 @@ export function useI18n(): I18nValue {
   return ctx;
 }
 
+/** The dictionary for the language being rendered (Turkish inside the business/admin panels). */
 export function useT(): Dictionary {
-  return useI18n().t;
+  const { locale, slogan } = useI18n();
+  const d = dict();
+  // The rotating slogan belongs to the chosen language; the Turkish-only panels keep the default one.
+  return currentLocale() === locale ? { ...d, brand: { ...d.brand, tagline: slogan } } : d;
 }

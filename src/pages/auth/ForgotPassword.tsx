@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { useT } from '@/i18n/I18nProvider';
 import { AuthShell } from './AuthShell';
 import { publicUrl } from '@/lib/platform';
+import { tx } from '@/i18n/locale';
 
 export default function ForgotPassword() {
   const t = useT();
@@ -42,21 +43,21 @@ export default function ForgotPassword() {
 
   if (sentTo) {
     return (
-      <AuthShell eyebrow="E-postanızı kontrol edin" title="Bağlantı Gönderildi" subtitle="Şifrenizi yenilemek için gelen kutunuzdaki bağlantıya tıklayın.">
+      <AuthShell eyebrow={tx('E-postanızı kontrol edin', 'Check your email')} title={tx('Bağlantı Gönderildi', 'Link sent')} subtitle={tx('Şifrenizi yenilemek için gelen kutunuzdaki bağlantıya tıklayın.', 'Click the link in your inbox to reset your password.')}>
         <div className="animate-fade-up rounded-2xl border border-line bg-coal/60 p-6">
           <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gold-500/15 text-gold-400">
             <MailCheck className="h-6 w-6" />
           </span>
           <p className="text-sm leading-relaxed text-mist">
-            <span className="font-semibold text-white">{sentTo}</span> adresine kayıtlı bir hesap varsa, şifre yenileme bağlantısı birkaç dakika içinde ulaşacak. Gelen kutunuzda göremezseniz gereksiz klasörünü de kontrol edin.
+            {tx('', 'If an account is registered to ')}<span className="font-semibold text-white">{sentTo}</span>{tx(' adresine kayıtlı bir hesap varsa, şifre yenileme bağlantısı birkaç dakika içinde ulaşacak. Gelen kutunuzda göremezseniz gereksiz klasörünü de kontrol edin.', ', a password reset link will arrive within a few minutes. If you cannot see it in your inbox, check your spam folder too.')}
           </p>
         </div>
         <Button type="button" variant="ghost" full className="mt-6" onClick={() => setSentTo('')}>
-          Farklı bir e-posta dene
+          {tx('Farklı bir e-posta dene', 'Try a different email')}
         </Button>
         <p className="mt-6 text-center text-sm text-mist">
           <Link to="/giris" className="inline-flex items-center gap-2 font-semibold text-gold-400 hover:text-gold-300">
-            <ArrowLeft className="h-4 w-4" /> Giriş ekranına dön
+            <ArrowLeft className="h-4 w-4" /> {tx('Giriş ekranına dön', 'Back to sign in')}
           </Link>
         </p>
       </AuthShell>
@@ -64,17 +65,17 @@ export default function ForgotPassword() {
   }
 
   return (
-    <AuthShell eyebrow="Hesap kurtarma" title="Şifremi Unuttum" subtitle="Hesabınıza kayıtlı e-posta adresini girin, size şifre yenileme bağlantısı gönderelim.">
+    <AuthShell eyebrow={tx('Hesap kurtarma', 'Account recovery')} title={tx('Şifremi Unuttum', 'Forgot password')} subtitle={tx('Hesabınıza kayıtlı e-posta adresini girin, size şifre yenileme bağlantısı gönderelim.', 'Enter the email address of your account and we will send you a password reset link.')}>
       <form onSubmit={submit} className="space-y-5" noValidate>
-        <Input label="E-posta" name="email" type="email" autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={email} onChange={(e) => setEmail(e.target.value)} error={error} icon={<Mail className="h-4 w-4" />} placeholder="ornek@eposta.com" />
+        <Input label={tx('E-posta', 'Email')} name="email" type="email" autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={email} onChange={(e) => setEmail(e.target.value)} error={error} icon={<Mail className="h-4 w-4" />} placeholder={tx('ornek@eposta.com', 'you@example.com')} />
         {formError && <p className="rounded-xl border border-error-500/30 bg-error-900/40 px-4 py-3 text-sm text-error-300">{formError}</p>}
         <Button type="submit" size="lg" full loading={loading}>
-          Yenileme Bağlantısı Gönder
+          {tx('Yenileme Bağlantısı Gönder', 'Send reset link')}
         </Button>
       </form>
       <p className="mt-8 text-center text-sm text-mist">
         <Link to="/giris" className="inline-flex items-center gap-2 font-semibold text-gold-400 hover:text-gold-300">
-          <ArrowLeft className="h-4 w-4" /> Giriş ekranına dön
+          <ArrowLeft className="h-4 w-4" /> {tx('Giriş ekranına dön', 'Back to sign in')}
         </Link>
       </p>
     </AuthShell>

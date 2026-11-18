@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { AppointmentStatus, BusinessStatus, PaymentStatus, PayoutAccountStatus } from '@/lib/types';
-import { tr } from '@/i18n/tr';
+import { dict, tx } from '@/i18n/locale';
 
 type Tone = 'gold' | 'success' | 'warning' | 'error' | 'info' | 'neutral';
 
@@ -33,7 +33,7 @@ const apptTone: Record<AppointmentStatus, Tone> = {
 };
 
 export function AppointmentStatusBadge({ status }: { status: AppointmentStatus }) {
-  return <Badge tone={apptTone[status]}>{tr.appointmentStatus[status]}</Badge>;
+  return <Badge tone={apptTone[status]}>{dict().appointmentStatus[status]}</Badge>;
 }
 
 const payTone: Record<PaymentStatus, Tone> = {
@@ -46,13 +46,13 @@ const payTone: Record<PaymentStatus, Tone> = {
 };
 
 export function PaymentStatusBadge({ status }: { status: PaymentStatus }) {
-  return <Badge tone={payTone[status]}>{tr.paymentStatus[status]}</Badge>;
+  return <Badge tone={payTone[status]}>{dict().paymentStatus[status]}</Badge>;
 }
 
 /** Marks a payment made in test mode: no money was charged to (or refunded to) a card. */
 export function TestBadge({ label = 'Test' }: { label?: string }) {
   return (
-    <span title="Test ödemesi: karttan gerçek tahsilat yapılmadı." className="inline-flex">
+    <span title={tx('Test ödemesi: karttan gerçek tahsilat yapılmadı.', 'Test payment: no money was charged to the card.')} className="inline-flex">
       <Badge tone="warning">{label}</Badge>
     </span>
   );
@@ -61,7 +61,7 @@ export function TestBadge({ label = 'Test' }: { label?: string }) {
 const bizTone: Record<BusinessStatus, Tone> = { pending: 'warning', approved: 'success', rejected: 'error', suspended: 'neutral' };
 
 export function BusinessStatusBadge({ status }: { status: BusinessStatus }) {
-  return <Badge tone={bizTone[status]}>{tr.businessStatus[status]}</Badge>;
+  return <Badge tone={bizTone[status]}>{dict().businessStatus[status]}</Badge>;
 }
 
 const payoutTone: Record<PayoutAccountStatus, Tone> = { pending: 'warning', verified: 'success', rejected: 'error' };

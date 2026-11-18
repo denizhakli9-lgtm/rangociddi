@@ -4,30 +4,32 @@ import { ArrowRight, CalendarCheck, ShieldCheck, Sparkles } from 'lucide-react';
 import { Logo } from '@/components/ui/Brand';
 import { Button } from '@/components/ui/Button';
 import { markOnboarded } from '@/pages/Splash';
+import { LanguageToggle } from '@/components/ui/LanguageToggle';
+import { tx } from '@/i18n/locale';
 
 const slides = [
   {
     image: 'https://images.pexels.com/photos/10317444/pexels-photo-10317444.jpeg?auto=compress&cs=tinysrgb&h=1200&w=940',
     icon: Sparkles,
-    eyebrow: 'Keşfet',
-    title: 'İzmir’in en seçkin salonları tek yerde',
-    text: 'Kuaförden spaya, berberden cilt bakımına kadar özenle seçilmiş işletmeleri keşfedin.',
+    eyebrow: ['Keşfet', 'Discover'],
+    title: ['İzmir’in en seçkin salonları tek yerde', 'İzmir’s finest salons in one place'],
+    text: ['Kuaförden spaya, berberden cilt bakımına kadar özenle seçilmiş işletmeleri keşfedin.', 'From hair salons to spas, barbers to skin care: discover carefully selected businesses.'],
   },
   {
     image: 'https://images.pexels.com/photos/2521978/pexels-photo-2521978.jpeg?auto=compress&cs=tinysrgb&h=1200&w=940',
     icon: CalendarCheck,
-    eyebrow: 'Randevu',
-    title: 'Saniyeler içinde, anlık uygunlukla',
-    text: 'Hizmetinizi, uzmanınızı ve saatinizi seçin. Dolu saatler otomatik olarak gizlenir.',
+    eyebrow: ['Randevu', 'Booking'],
+    title: ['Saniyeler içinde, anlık uygunlukla', 'Book in seconds, with live availability'],
+    text: ['Hizmetinizi, uzmanınızı ve saatinizi seçin. Dolu saatler otomatik olarak gizlenir.', 'Choose your service, specialist and time. Taken times are hidden automatically.'],
   },
   {
     image: 'https://images.pexels.com/photos/6560271/pexels-photo-6560271.jpeg?auto=compress&cs=tinysrgb&h=1200&w=940',
     icon: ShieldCheck,
-    eyebrow: 'Güven',
-    title: 'Kapora ile yerinizi güvenceye alın',
-    text: 'Küçük bir kapora ile randevunuz kesinleşir, kalan tutarı işletmede ödersiniz.',
+    eyebrow: ['Güven', 'Peace of mind'],
+    title: ['Kapora ile yerinizi güvenceye alın', 'Secure your spot with a deposit'],
+    text: ['Küçük bir kapora ile randevunuz kesinleşir, kalan tutarı işletmede ödersiniz.', 'A small deposit confirms your booking; you pay the rest at the business.'],
   },
-];
+] as const;
 
 export default function Onboarding() {
   const [index, setIndex] = useState(0);
@@ -55,9 +57,12 @@ export default function Onboarding() {
         <div className="absolute left-6 top-6">
           <Logo size="sm" />
         </div>
-        <button onClick={() => finish('/kesfet')} className="absolute right-6 top-7 text-xs tracking-wide text-white/80 transition hover:text-white">
-          Atla
-        </button>
+        <div className="absolute right-6 top-5 flex items-center gap-3">
+          <LanguageToggle className="h-9 w-9 bg-ink/60" />
+          <button onClick={() => finish('/kesfet')} className="text-xs tracking-wide text-white/80 transition hover:text-white">
+            {tx('Atla', 'Skip')}
+          </button>
+        </div>
       </div>
 
       <div className="relative -mt-16 flex flex-col justify-between px-6 pb-10 sm:px-12 lg:mt-0 lg:justify-center lg:px-20">
@@ -65,9 +70,9 @@ export default function Onboarding() {
           <span className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl border border-gold-500/40 bg-coal text-gold-400">
             <slide.icon className="h-5 w-5" strokeWidth={1.6} />
           </span>
-          <p className="eyebrow mb-3">{slide.eyebrow}</p>
-          <h1 className="max-w-md font-display text-4xl leading-tight text-white sm:text-5xl">{slide.title}</h1>
-          <p className="mt-4 max-w-md text-[15px] leading-relaxed text-mist">{slide.text}</p>
+          <p className="eyebrow mb-3">{tx(...slide.eyebrow)}</p>
+          <h1 className="max-w-md font-display text-4xl leading-tight text-white sm:text-5xl">{tx(...slide.title)}</h1>
+          <p className="mt-4 max-w-md text-[15px] leading-relaxed text-mist">{tx(...slide.text)}</p>
         </div>
 
         <div className="mt-10">
@@ -76,7 +81,7 @@ export default function Onboarding() {
               <button
                 key={i}
                 onClick={() => setIndex(i)}
-                aria-label={`Slayt ${i + 1}`}
+                aria-label={tx(`Slayt ${i + 1}`, `Slide ${i + 1}`)}
                 className={`h-1 rounded-full transition-all duration-500 ${i === index ? 'w-10 bg-gold-500' : 'w-4 bg-line'}`}
               />
             ))}
@@ -84,21 +89,21 @@ export default function Onboarding() {
           {last ? (
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button size="lg" full onClick={() => finish('/kayit')}>
-                Hesap Oluştur
+                {tx('Hesap Oluştur', 'Create account')}
               </Button>
               <Button size="lg" variant="outline" full onClick={() => finish('/giris')}>
-                Giriş Yap
+                {tx('Giriş Yap', 'Sign in')}
               </Button>
             </div>
           ) : (
             <Button size="lg" full icon={<ArrowRight className="h-4 w-4" />} className="flex-row-reverse sm:w-auto" onClick={() => setIndex(index + 1)}>
-              Devam Et
+              {tx('Devam Et', 'Continue')}
             </Button>
           )}
           <p className="mt-6 text-center text-xs text-mist-2 sm:text-left">
-            İşletme sahibi misiniz?{' '}
+            {tx('İşletme sahibi misiniz?', 'Own a business?')}{' '}
             <Link to="/kayit?tip=isletme" onClick={markOnboarded} className="text-gold-400 hover:text-gold-300">
-              İşletmenizi Rango’ya ekleyin
+              {tx('İşletmenizi Rango’ya ekleyin', 'Add your business to Rango')}
             </Link>
           </p>
         </div>

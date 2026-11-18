@@ -6,6 +6,10 @@ import { useUserLocation } from '@/contexts/LocationContext';
 import { useToast } from '@/contexts/ToastContext';
 import { Button } from '@/components/ui/Button';
 import { getDevicePosition } from '@/lib/platform';
+import { tx } from '@/i18n/locale';
+
+const FOLD: Record<string, string> = { ç: 'c', ğ: 'g', ı: 'i', ö: 'o', ş: 's', ü: 'u' };
+const fold = (s: string) => s.toLocaleLowerCase('tr-TR').replace(/[çğıöşü]/g, (c) => FOLD[c] ?? c);
 
 export default function LocationSelect() {
   const { location, setLocation } = useUserLocation();
@@ -16,7 +20,7 @@ export default function LocationSelect() {
 
   const choose = async (label: string, lat: number, lng: number) => {
     await setLocation({ label, lat, lng });
-    toast(`Konum ${label} olarak ayarlandı`, 'success');
+    toast(tx(`Konum ${label} olarak ayarlandı`, `Location set to ${label}`), 'success');
     // Opened directly (shared link, new tab): there is no in-app page to go back to.
     if ((window.history.state?.idx ?? 0) > 0) navigate(-1);
     else navigate('/kesfet', { replace: true });
@@ -32,34 +36,35 @@ export default function LocationSelect() {
         // Only the matched district centre is kept, never the exact device fix,
         // so a precise home address is never stored on the account.
         if (km < 15) {
-          choose(`${nearest.name} (Konumum)`, nearest.lat, nearest.lng);
+          choose(`${nearest.name} (${tx('Konumum', 'My location')})`, nearest.lat, nearest.lng);
         } else {
-          toast('Konumunuz İzmir servis alanının dışında görünüyor. Lütfen listeden bir semt seçin.', 'error');
+          toast(tx('Konumunuz İzmir servis alanının dışında görünüyor. Lütfen listeden bir semt seçin.', 'You seem to be outside the İzmir service area. Please choose an area from the list.'), 'error');
         }
       },
       (err) => {
         setLocating(false);
-        toast(err === 'unsupported' ? 'Tarayıcınız konum özelliğini desteklemiyor.' : 'Konum izni alınamadı. Lütfen listeden bir semt seçin.', 'error');
+        toast(err === 'unsupported' ? tx('Tarayıcınız konum özelliğini desteklemiyor.', 'Your browser does not support location.') : tx('Konum izni alınamadı. Lütfen listeden bir semt seçin.', 'Location permission was not granted. Please choose an area from the list.'), 'error');
       },
     );
   };
 
-  const list = IZMIR_DISTRICTS.filter((d) => d.name.toLocaleLowerCase('tr-TR').includes(query.toLocaleLowerCase('tr-TR')));
+  // Accent-insensitive, so "karsiyaka" also finds Karşıyaka.
+  const list = IZMIR_DISTRICTS.filter((d) => fold(d.name).includes(fold(query)));
 
   return (
     <div className="mx-auto max-w-xl animate-fade-up">
-      <p className="eyebrow mb-2">Konum</p>
-      <h1 className="font-display text-4xl text-white">Neredesiniz?</h1>
-      <p className="mt-2 text-sm text-mist">Size en yakın işletmeleri göstermek için konumunuzu seçin. Rango şu an İzmir’de hizmet veriyor.</p>
+      <p className="eyebrow mb-2">{tx('Konum', 'Location')}</p>
+      <h1 className="font-display text-4xl text-white">{tx('Neredesiniz?', 'Where are you?')}</h1>
+      <p className="mt-2 text-sm text-mist">{tx('Size en yakın işletmeleri göstermek için konumunuzu seçin. Rango şu an İzmir’de hizmet veriyor.', 'Choose your location to see the businesses nearest to you. Rango currently serves İzmir.')}</p>
 
       <Button variant="outline" full size="lg" className="mt-8" loading={locating} icon={<LocateFixed className="h-4 w-4" />} onClick={useDevice}>
-        Mevcut konumumu kullan
+        {tx('Mevcut konumumu kullan', 'Use my current location')}
       </Button>
-      <p className="mt-2 text-xs leading-relaxed text-mist-2">Konumunuz yalnızca size en yakın semti bulmak için cihazınızda kullanılır; tam konumunuz saklanmaz, yalnızca seçilen semt kaydedilir.</p>
+      <p className="mt-2 text-xs leading-relaxed text-mist-2">{tx('Konumunuz yalnızca size en yakın semti bulmak için cihazınızda kullanılır; tam konumunuz saklanmaz, yalnızca seçilen semt kaydedilir.', 'Your location is only used on your device to find the nearest area; your exact position is never stored, only the chosen area.')}</p>
 
       <div className="relative mt-6">
         <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-mist-2" />
-        <input aria-label="Semt ara" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Semt ara" className="h-12 w-full rounded-xl border border-line bg-coal pl-11 pr-4 text-sm text-white placeholder:text-mist-3 focus:border-gold-500/60 focus:outline-none" />
+        <input aria-label={tx('Semt ara', 'Search areas')} value={query} onChange={(e) => setQuery(e.target.value)} placeholder={tx('Semt ara', 'Search areas')} className="h-12 w-full rounded-xl border border-line bg-coal pl-11 pr-4 text-sm text-white placeholder:text-mist-3 focus:border-gold-500/60 focus:outline-none" />
       </div>
 
       <div className="mt-4 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-coal">
@@ -76,7 +81,7 @@ export default function LocationSelect() {
             </button>
           );
         })}
-        {!list.length && <p className="px-5 py-6 text-center text-sm text-mist-2">Bu isimde bir semt bulunamadı.</p>}
+        {!list.length && <p className="px-5 py-6 text-center text-sm text-mist-2">{tx('Bu isimde bir semt bulunamadı.', 'No area found with this name.')}</p>}
       </div>
     </div>
   );

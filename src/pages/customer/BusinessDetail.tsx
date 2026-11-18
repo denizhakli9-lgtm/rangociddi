@@ -10,6 +10,7 @@ import { distanceKm, formatDistance } from '@/lib/geo';
 import { fullAddress, hasExactPin } from '@/lib/maps';
 import { isDemoBusiness } from '@/lib/demo';
 import { safeImageUrl } from '@/lib/safeUrl';
+import { categoryName } from '@/i18n/categories';
 import { publicUrl, shareLink } from '@/lib/platform';
 import { useUserLocation } from '@/contexts/LocationContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -19,6 +20,7 @@ import { Avatar, Segmented, Stars } from '@/components/ui/Brand';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, ErrorState, PageLoader } from '@/components/ui/Feedback';
+import { tx } from '@/i18n/locale';
 
 type Tab = 'services' | 'staff' | 'reviews' | 'info';
 
@@ -43,7 +45,7 @@ export default function BusinessDetail() {
   // Raw backend details only in development; visitors see the Turkish message.
   if (error) return <ErrorState onRetry={reload} error={import.meta.env.DEV ? error : undefined} />;
   if (!data) {
-    return <EmptyState icon={<Store className="h-6 w-6" />} title="İşletme bulunamadı" text="Aradığınız işletme yayından kaldırılmış olabilir." action={<Button onClick={() => navigate('/ara')}>İşletmeleri keşfet</Button>} />;
+    return <EmptyState icon={<Store className="h-6 w-6" />} title={tx('İşletme bulunamadı', 'Business not found')} text={tx('Aradığınız işletme yayından kaldırılmış olabilir.', 'The business you are looking for may have been removed.')} action={<Button onClick={() => navigate('/ara')}>{tx('İşletmeleri keşfet', 'Discover businesses')}</Button>} />;
   }
 
   const { business: b, services, employees, hours, reviews } = data;
@@ -67,7 +69,7 @@ export default function BusinessDetail() {
     // In the app window.location is https://localhost, so share the public site address.
     const url = publicUrl(window.location.pathname + window.location.search);
     try {
-      if ((await shareLink(b.name, url)) === 'copied') toast('Bağlantı kopyalandı', 'success');
+      if ((await shareLink(b.name, url)) === 'copied') toast(tx('Bağlantı kopyalandı', 'Link copied'), 'success');
     } catch {
       /* user dismissed share sheet */
     }
@@ -82,14 +84,14 @@ export default function BusinessDetail() {
           ))}
           <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/20 to-ink/40" />
           <div className="absolute inset-x-4 top-4 flex justify-between">
-            <button onClick={goBack} className="flex h-10 w-10 items-center justify-center rounded-full bg-ink/60 text-white backdrop-blur transition hover:bg-ink" aria-label="Geri">
+            <button onClick={goBack} className="flex h-10 w-10 items-center justify-center rounded-full bg-ink/60 text-white backdrop-blur transition hover:bg-ink" aria-label={t.common.back}>
               <ArrowLeft className="h-5 w-5" />
             </button>
             <div className="flex gap-2">
-              <button onClick={share} className="flex h-10 w-10 items-center justify-center rounded-full bg-ink/60 text-white backdrop-blur transition hover:bg-ink" aria-label="Paylaş">
+              <button onClick={share} className="flex h-10 w-10 items-center justify-center rounded-full bg-ink/60 text-white backdrop-blur transition hover:bg-ink" aria-label={tx('Paylaş', 'Share')}>
                 <Share2 className="h-4 w-4" />
               </button>
-              <button onClick={() => toggle(b.id)} className="flex h-10 w-10 items-center justify-center rounded-full bg-ink/60 backdrop-blur transition hover:bg-ink" aria-label="Favori">
+              <button onClick={() => toggle(b.id)} className="flex h-10 w-10 items-center justify-center rounded-full bg-ink/60 backdrop-blur transition hover:bg-ink" aria-label={fav ? tx('Favorilerden çıkar', 'Remove from favourites') : tx('Favorilere ekle', 'Add to favourites')} aria-pressed={fav}>
                 <Heart className={`h-4 w-4 ${fav ? 'fill-gold-500 text-gold-500' : 'text-white'}`} />
               </button>
             </div>
@@ -97,7 +99,7 @@ export default function BusinessDetail() {
           {photos.length > 1 && (
             <div className="absolute bottom-4 right-4 flex gap-1.5">
               {photos.map((_, i) => (
-                <button key={i} onClick={() => setPhoto(i)} aria-label={`Fotoğraf ${i + 1}`} className={`h-1.5 rounded-full transition-all ${i === photo ? 'w-6 bg-gold-500' : 'w-1.5 bg-white/50'}`} />
+                <button key={i} onClick={() => setPhoto(i)} aria-label={tx(`Fotoğraf ${i + 1}`, `Photo ${i + 1}`)} className={`h-1.5 rounded-full transition-all ${i === photo ? 'w-6 bg-gold-500' : 'w-1.5 bg-white/50'}`} />
               ))}
             </div>
           )}
@@ -108,7 +110,7 @@ export default function BusinessDetail() {
         <div className="min-w-0">
           <div className="animate-fade-up">
             <div className="flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-gold-500">
-              {b.categories?.name}
+              {categoryName(b.categories)}
               <span className="text-mist-3">·</span>
               <span className="text-mist">{t.genderFocus[b.gender_focus]}</span>
             </div>
@@ -125,26 +127,26 @@ export default function BusinessDetail() {
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-mist">
               <span className="flex items-center gap-1.5">
                 <Star className="h-4 w-4 fill-gold-500 text-gold-500" />
-                <span className="font-semibold text-white">{b.review_count ? Number(b.rating_avg).toFixed(1) : 'Yeni'}</span>
-                {b.review_count > 0 && <span>({b.review_count} değerlendirme)</span>}
+                <span className="font-semibold text-white">{b.review_count ? Number(b.rating_avg).toFixed(1) : t.common.new}</span>
+                {b.review_count > 0 && <span>({tx(`${b.review_count} değerlendirme`, b.review_count === 1 ? '1 review' : `${b.review_count} reviews`)})</span>}
               </span>
-              <span className={`flex items-center gap-1.5 ${open ? 'text-success-300' : 'text-mist-2'}`}><Clock className="h-4 w-4" />{open ? 'Şu an açık' : 'Şu an kapalı'}</span>
+              <span className={`flex items-center gap-1.5 ${open ? 'text-success-300' : 'text-mist-2'}`}><Clock className="h-4 w-4" />{open ? tx('Şu an açık', 'Open now') : tx('Şu an kapalı', 'Closed now')}</span>
             </div>
             <div className="mt-5 flex flex-col gap-4 rounded-2xl border border-line bg-coal/70 p-4 sm:flex-row sm:items-center">
               <div className="flex min-w-0 flex-1 items-start gap-3">
                 <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gold-500/10 text-gold-400"><MapPin className="h-5 w-5" /></span>
                 <div className="min-w-0">
                   <p className="text-sm leading-relaxed text-white">{address}</p>
-                  {distance && <p className="mt-0.5 text-xs text-mist-2">{hasExactPin(b) ? `Sana ${distance} uzaklıkta` : `${b.district} merkezine ${distance}`}</p>}
+                  {distance && <p className="mt-0.5 text-xs text-mist-2">{hasExactPin(b) ? tx(`Sana ${distance} uzaklıkta`, `${distance} away`) : tx(`${b.district} merkezine ${distance}`, `${distance} from central ${b.district}`)}</p>}
                 </div>
               </div>
               <div className="flex shrink-0 gap-2">
                 <DirectionsButton target={b} className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-gold-500 px-4 text-sm font-medium text-ink transition hover:bg-gold-400 sm:flex-none">
-                  <Navigation className="h-4 w-4" /> Yol tarifi al
+                  <Navigation className="h-4 w-4" /> {tx('Yol tarifi al', 'Get directions')}
                 </DirectionsButton>
                 {tel && (
                   <a href={tel} className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-line px-4 text-sm text-white transition hover:border-gold-500/40">
-                    <Phone className="h-4 w-4" /> Ara
+                    <Phone className="h-4 w-4" /> {tx('Ara', 'Call')}
                   </a>
                 )}
               </div>
@@ -157,10 +159,10 @@ export default function BusinessDetail() {
               value={tab}
               onChange={setTab}
               options={[
-                { value: 'services', label: 'Hizmetler', count: services.length },
-                { value: 'staff', label: 'Uzmanlar', count: employees.length },
-                { value: 'reviews', label: 'Yorumlar', count: reviews.length },
-                { value: 'info', label: 'Bilgi' },
+                { value: 'services', label: tx('Hizmetler', 'Services'), count: services.length },
+                { value: 'staff', label: tx('Uzmanlar', 'Specialists'), count: employees.length },
+                { value: 'reviews', label: tx('Yorumlar', 'Reviews'), count: reviews.length },
+                { value: 'info', label: tx('Bilgi', 'Info') },
               ]}
             />
           </div>
@@ -178,14 +180,14 @@ export default function BusinessDetail() {
                       </div>
                       <div className="text-right">
                         <p className="font-semibold text-white">{formatTRY(s.price)}</p>
-                        <p className="text-[11px] text-mist-2">Kapora {formatTRY(depositFor(Number(s.price), b.deposit_type, Number(b.deposit_value)))}</p>
+                        <p className="text-[11px] text-mist-2">{tx('Kapora', 'Deposit')} {formatTRY(depositFor(Number(s.price), b.deposit_type, Number(b.deposit_value)))}</p>
                       </div>
-                      <Button size="sm" variant="outline" disabled={demo} title={demo ? t.demo.notBookable : undefined} onClick={() => book(s.id)}>Seç</Button>
+                      <Button size="sm" variant="outline" disabled={demo} title={demo ? t.demo.notBookable : undefined} onClick={() => book(s.id)}>{tx('Seç', 'Select')}</Button>
                     </div>
                   ))}
                 </div>
               ) : (
-                <EmptyState icon={<CalendarClock className="h-6 w-6" />} title="Henüz hizmet yok" text="Bu işletme yakında hizmetlerini ekleyecek." />
+                <EmptyState icon={<CalendarClock className="h-6 w-6" />} title={tx('Henüz hizmet yok', 'No services yet')} text={tx('Bu işletme yakında hizmetlerini ekleyecek.', 'This business will add its services soon.')} />
               )
             )}
 
@@ -201,7 +203,7 @@ export default function BusinessDetail() {
                     </div>
                   </div>
                 ))}
-                {!employees.length && <p className="text-sm text-mist-2">Uzman bilgisi yakında eklenecek.</p>}
+                {!employees.length && <p className="text-sm text-mist-2">{tx('Uzman bilgisi yakında eklenecek.', 'Specialist details coming soon.')}</p>}
               </div>
             )}
 
@@ -221,7 +223,7 @@ export default function BusinessDetail() {
                       {r.comment && <p className="mt-3 text-sm leading-relaxed text-mist">{r.comment}</p>}
                       {r.owner_reply && (
                         <div className="mt-4 rounded-xl border-l-2 border-gold-500 bg-ink/50 px-4 py-3">
-                          <p className="text-[11px] font-semibold uppercase tracking-wider text-gold-400">İşletme yanıtı</p>
+                          <p className="text-[11px] font-semibold uppercase tracking-wider text-gold-400">{tx('İşletme yanıtı', 'Reply from the business')}</p>
                           <p className="mt-1 text-sm text-mist">{r.owner_reply}</p>
                         </div>
                       )}
@@ -229,21 +231,21 @@ export default function BusinessDetail() {
                   ))}
                 </div>
               ) : (
-                <EmptyState icon={<MessageSquare className="h-6 w-6" />} title="Henüz yorum yok" text="İlk değerlendirmeyi siz yapın." />
+                <EmptyState icon={<MessageSquare className="h-6 w-6" />} title={tx('Henüz yorum yok', 'No reviews yet')} text={tx('İlk değerlendirmeyi siz yapın.', 'Be the first to leave a review.')} />
               )
             )}
 
             {tab === 'info' && (
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="card p-5">
-                  <p className="eyebrow mb-4">Çalışma saatleri</p>
+                  <p className="eyebrow mb-4">{tx('Çalışma saatleri', 'Opening hours')}</p>
                   <ul className="space-y-2 text-sm">
                     {[1, 2, 3, 4, 5, 6, 7].map((wd) => {
                       const h = hours.find((x) => x.weekday === wd);
                       return (
                         <li key={wd} className={`flex justify-between ${wd === todayWd ? 'text-gold-300' : 'text-mist'}`}>
                           <span>{t.weekdays[wd - 1]}</span>
-                          <span>{!h || h.is_closed ? 'Kapalı' : `${shortTime(h.open_time)} – ${shortTime(h.close_time)}`}</span>
+                          <span>{!h || h.is_closed ? tx('Kapalı', 'Closed') : `${shortTime(h.open_time)} – ${shortTime(h.close_time)}`}</span>
                         </li>
                       );
                     })}
@@ -251,7 +253,7 @@ export default function BusinessDetail() {
                 </div>
                 <div className="space-y-4">
                   <div className="card p-5">
-                    <p className="eyebrow mb-3">Adres</p>
+                    <p className="eyebrow mb-3">{tx('Adres', 'Address')}</p>
                     <p className="text-sm text-mist">{address}</p>
                     <DirectionsButton target={b} className="mt-3 inline-flex items-center gap-1.5 text-xs text-gold-400 hover:text-gold-300" />
                     {tel && (
@@ -261,9 +263,9 @@ export default function BusinessDetail() {
                     )}
                   </div>
                   <div className="card p-5">
-                    <p className="eyebrow mb-3">Randevu politikası</p>
-                    <p className="text-sm text-mist">Kapora: <span className="text-white">{depositLabel}</span>. Kalan tutar işletmede ödenir.</p>
-                    <p className="mt-2 text-sm text-mist">Randevuya <span className="text-white">{b.cancellation_hours} saat</span> kalaya kadar ücretsiz iptal ve erteleme.</p>
+                    <p className="eyebrow mb-3">{tx('Randevu politikası', 'Booking policy')}</p>
+                    <p className="text-sm text-mist">{tx('Kapora', 'Deposit')}: <span className="text-white">{depositLabel}</span>. {tx('Kalan tutar işletmede ödenir.', 'The rest is paid at the business.')}</p>
+                    <p className="mt-2 text-sm text-mist">{tx('Randevuya ', 'Free cancellation and rescheduling up to ')}<span className="text-white">{tx(`${b.cancellation_hours} saat`, `${b.cancellation_hours} hours`)}</span>{tx(' kalaya kadar ücretsiz iptal ve erteleme.', ' before the appointment.')}</p>
                   </div>
                 </div>
               </div>
@@ -273,19 +275,19 @@ export default function BusinessDetail() {
 
         <aside className="hidden lg:block">
           <div className="card-gold sticky top-24 p-6">
-            <p className="eyebrow mb-2">Randevu</p>
-            <p className="font-display text-3xl text-white">{formatTRY(b.min_price)}<span className="text-base text-mist">’den başlayan</span></p>
+            <p className="eyebrow mb-2">{tx('Randevu', 'Booking')}</p>
+            <p className="font-display text-3xl text-white">{tx('', 'from ')}{formatTRY(b.min_price)}<span className="text-base text-mist">{tx('’den başlayan', '')}</span></p>
             <ul className="mt-5 space-y-3 text-sm text-mist">
-              <li className="flex gap-2.5"><ShieldCheck className="h-4 w-4 shrink-0 text-gold-400" />{depositLabel} kapora ile yeriniz garanti</li>
-              <li className="flex gap-2.5"><CalendarClock className="h-4 w-4 shrink-0 text-gold-400" />{b.cancellation_hours} saat öncesine kadar ücretsiz iptal</li>
-              <li className="flex gap-2.5"><BadgeCheck className="h-4 w-4 shrink-0 text-gold-400" />{b.auto_confirm ? 'Anında onay (aynı gün randevuları hariç)' : 'İşletme onaylı randevu'}</li>
+              <li className="flex gap-2.5"><ShieldCheck className="h-4 w-4 shrink-0 text-gold-400" />{tx(`${depositLabel} kapora ile yeriniz garanti`, `Your spot is secured with a ${depositLabel} deposit`)}</li>
+              <li className="flex gap-2.5"><CalendarClock className="h-4 w-4 shrink-0 text-gold-400" />{tx(`${b.cancellation_hours} saat öncesine kadar ücretsiz iptal`, `Free cancellation up to ${b.cancellation_hours} hours before`)}</li>
+              <li className="flex gap-2.5"><BadgeCheck className="h-4 w-4 shrink-0 text-gold-400" />{b.auto_confirm ? tx('Anında onay (aynı gün randevuları hariç)', 'Instant confirmation (except same-day bookings)') : tx('İşletme onaylı randevu', 'Confirmed by the business')}</li>
             </ul>
-            <Button full size="lg" className="mt-6" disabled={demo} onClick={() => book()}>{demo ? 'Randevu alınamaz' : 'Randevu Al'}</Button>
+            <Button full size="lg" className="mt-6" disabled={demo} onClick={() => book()}>{demo ? tx('Randevu alınamaz', 'Not bookable') : tx('Randevu Al', 'Book now')}</Button>
             {demo && <p className="mt-2 text-center text-xs text-mist-2">{t.demo.notBookable}</p>}
             <DirectionsButton target={b} className="mt-3 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-line text-sm text-white transition hover:border-gold-500/40">
-              <Navigation className="h-4 w-4 text-gold-400" /> Yol tarifi al
+              <Navigation className="h-4 w-4 text-gold-400" /> {tx('Yol tarifi al', 'Get directions')}
             </DirectionsButton>
-            <Link to="/ara" className="mt-3 block text-center text-xs text-mist-2 hover:text-white">Benzer işletmeleri gör</Link>
+            <Link to="/ara" className="mt-3 block text-center text-xs text-mist-2 hover:text-white">{tx('Benzer işletmeleri gör', 'See similar businesses')}</Link>
           </div>
         </aside>
       </div>
@@ -300,16 +302,16 @@ export default function BusinessDetail() {
               </>
             ) : (
               <>
-                <p className="text-[11px] text-mist-2">Başlayan fiyatlarla</p>
+                <p className="text-[11px] text-mist-2">{tx('Başlayan fiyatlarla', 'Prices from')}</p>
                 <p className="font-semibold text-white">{formatTRY(b.min_price)}</p>
               </>
             )}
           </div>
           <div className="flex flex-1 items-center justify-end gap-2 sm:flex-none">
-            <DirectionsButton target={b} ariaLabel="Yol tarifi al" className="grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-line text-gold-400 transition hover:border-gold-500/40">
+            <DirectionsButton target={b} ariaLabel={tx('Yol tarifi al', 'Get directions')} className="grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-line text-gold-400 transition hover:border-gold-500/40">
               <Navigation className="h-5 w-5" />
             </DirectionsButton>
-            <Button size="lg" disabled={demo} onClick={() => book()} className="flex-1 sm:flex-none">{demo ? 'Randevu alınamaz' : 'Randevu Al'}</Button>
+            <Button size="lg" disabled={demo} onClick={() => book()} className="flex-1 sm:flex-none">{demo ? tx('Randevu alınamaz', 'Not bookable') : tx('Randevu Al', 'Book now')}</Button>
           </div>
         </div>
       </div>

@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom';
 import { Logo, RangoSignature } from '@/components/ui/Brand';
 import { LegalFooter } from '@/components/legal/LegalFooter';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { LanguageToggle } from '@/components/ui/LanguageToggle';
 import { useT } from '@/i18n/I18nProvider';
+import { tx } from '@/i18n/locale';
 
 const IMAGE = 'https://images.pexels.com/photos/10317447/pexels-photo-10317447.jpeg?auto=compress&cs=tinysrgb&h=1400&w=1000';
 
@@ -21,10 +23,13 @@ export function AuthShell({ eyebrow, title, subtitle, children }: { eyebrow: str
       </div>
       <div className="flex flex-col px-6 py-8 sm:px-12 lg:px-20">
         <div className="mb-12 flex items-center justify-between gap-4">
-          <Link to="/kesfet" aria-label="Rango ana sayfa">
+          <Link to="/kesfet" aria-label={tx('Rango ana sayfa', 'Rango home')}>
             <Logo size="sm" />
           </Link>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <LanguageToggle />
+            <ThemeToggle />
+          </div>
         </div>
         <div className="mx-auto w-full max-w-md flex-1 animate-fade-up">
           <p className="eyebrow mb-3">{eyebrow}</p>

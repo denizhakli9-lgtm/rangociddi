@@ -1,7 +1,17 @@
 import { supabase } from '@/lib/supabase';
+import { tx } from '@/i18n/locale';
 export interface SupportThread { id: string; user_id: string; subject: string; status: 'ai' | 'waiting' | 'human' | 'resolved'; assigned_to: string | null; updated_at: string }
 export interface SupportMessage { id: string; sender: 'user' | 'agent' | 'ai'; body: string; created_at: string }
-export const supportLabels = { ai: 'Yapay zekâ karşılaması', waiting: 'Temsilci bekleniyor', human: 'Canlı temsilci', resolved: 'Çözüldü' };
+const SUPPORT_LABELS = {
+  ai: ['Yapay zekâ karşılaması', 'AI assistant'],
+  waiting: ['Temsilci bekleniyor', 'Waiting for an agent'],
+  human: ['Canlı temsilci', 'Live agent'],
+  resolved: ['Çözüldü', 'Resolved'],
+} as const satisfies Record<SupportThread['status'], readonly [string, string]>;
+/** Status label in the current language (Turkish inside the support team workspace). */
+export function supportLabel(status: SupportThread['status']): string {
+  return tx(...SUPPORT_LABELS[status]);
+}
 export async function supportAction(action: string, thread?: string, text = '') {
   const { data, error } = await supabase.rpc('support_action', { p_action: action, p_thread: thread ?? null, p_text: text });
   if (error) throw error;

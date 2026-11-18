@@ -23,7 +23,7 @@ const visitSlogan = nextVisitSlogan();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <I18nProvider slogan={visitSlogan}>
+    <I18nProvider sloganIndex={visitSlogan}>
       <AuthProvider>
         <LocationProvider>
           <ToastProvider>

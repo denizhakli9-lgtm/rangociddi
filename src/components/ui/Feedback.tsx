@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { tr } from '@/i18n/tr';
+import { dict } from '@/i18n/locale';
 
 export function Spinner({ className = 'h-6 w-6' }: { className?: string }) {
   return <Loader2 className={`animate-spin text-gold-500 ${className}`} />;
@@ -31,7 +31,7 @@ export function EmptyState({ icon, title, text, action }: { icon: ReactNode; tit
  * are never rendered; when `error` is passed they are only written to the console, and only
  * in development builds (import.meta.env.DEV), so production users never see them.
  */
-export function ErrorState({ message = tr.errors.load, onRetry, error }: { message?: string; onRetry?: () => void; error?: unknown }) {
+export function ErrorState({ message = dict().errors.load, onRetry, error }: { message?: string; onRetry?: () => void; error?: unknown }) {
   useEffect(() => {
     if (error && import.meta.env.DEV) console.error(error);
   }, [error]);
@@ -41,7 +41,7 @@ export function ErrorState({ message = tr.errors.load, onRetry, error }: { messa
       <p className="text-sm text-error-300">{message}</p>
       {onRetry && (
         <Button variant="dark" size="sm" className="mt-4" onClick={onRetry}>
-          {tr.common.retry}
+          {dict().common.retry}
         </Button>
       )}
     </div>

@@ -10,6 +10,7 @@ import { BusinessCard } from '@/components/BusinessCard';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, ErrorState } from '@/components/ui/Feedback';
 import type { Business } from '@/lib/types';
+import { tx } from '@/i18n/locale';
 
 export default function Favorites() {
   const navigate = useNavigate();
@@ -25,14 +26,14 @@ export default function Favorites() {
 
   return (
     <div>
-      <p className="eyebrow mb-2">Favoriler</p>
-      <h1 className="mb-8 font-display text-4xl text-white">Sevdiğiniz yerler</h1>
+      <p className="eyebrow mb-2">{tx('Favoriler', 'Favourites')}</p>
+      <h1 className="mb-8 font-display text-4xl text-white">{tx('Sevdiğiniz yerler', 'Places you love')}</h1>
       {loading ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="skeleton aspect-[4/3]" />)}</div>
       ) : error ? (
         <ErrorState onRetry={reload} />
       ) : !list.length ? (
-        <EmptyState icon={<Heart className="h-6 w-6" />} title="Henüz favoriniz yok" text="Beğendiğiniz işletmelerdeki kalp simgesine dokunarak buraya ekleyin." action={<Button onClick={() => navigate('/ara')}>İşletmeleri keşfet</Button>} />
+        <EmptyState icon={<Heart className="h-6 w-6" />} title={tx('Henüz favoriniz yok', 'No favourites yet')} text={tx('Beğendiğiniz işletmelerdeki kalp simgesine dokunarak buraya ekleyin.', 'Tap the heart on businesses you like to add them here.')} action={<Button onClick={() => navigate('/ara')}>{tx('İşletmeleri keşfet', 'Discover businesses')}</Button>} />
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {list.map((b) => (

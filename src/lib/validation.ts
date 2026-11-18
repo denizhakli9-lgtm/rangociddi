@@ -1,3 +1,5 @@
+import { tx } from '@/i18n/locale';
+
 export const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim());
 
 export const isPhone = (v: string) => {
@@ -56,5 +58,5 @@ export function cardBrand(num: string): string {
   if (/^(5[1-5]|2[2-7])/.test(d)) return 'Mastercard';
   if (/^3[47]/.test(d)) return 'Amex';
   if (/^9792/.test(d)) return 'Troy';
-  return 'Kart';
+  return tx('Kart', 'Card');
 }

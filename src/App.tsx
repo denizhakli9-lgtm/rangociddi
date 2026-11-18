@@ -1,10 +1,11 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Link, Navigate, Route, Routes } from 'react-router-dom';
 import { CustomerLayout } from '@/components/layout/CustomerLayout';
 import { RequireAuth } from '@/components/layout/RequireAuth';
 import { PageLoader } from '@/components/ui/Feedback';
 import { ScrollToTop } from '@/components/ScrollToTop';
 import { CookieNotice } from '@/components/legal/CookieNotice';
+import { maintenanceActive } from '@/lib/maintenance';
 import Splash from '@/pages/Splash';
 import Login from '@/pages/auth/Login';
 import Home from '@/pages/customer/Home';
@@ -30,8 +31,41 @@ const LegalPage = lazy(() => import('@/pages/legal/LegalPage'));
 const OwnerArea = lazy(() => import('@/pages/owner/OwnerArea'));
 const AdminArea = lazy(() => import('@/pages/admin/AdminArea'));
 const AdminSetup = lazy(() => import('@/pages/admin/AdminSetup'));
+const Maintenance = lazy(() => import('@/pages/Maintenance'));
+
+/** The website while maintenance mode is on: every page shows the notice, only the legal texts stay open. */
+function MaintenanceRoutes() {
+  return (
+    <BrowserRouter>
+      <ScrollToTop />
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/yasal" element={<Navigate to="/yasal/aydinlatma-metni" replace />} />
+          <Route
+            path="/yasal/:slug"
+            element={
+              <div className="min-h-screen bg-ink">
+                <header className="mx-auto max-w-6xl px-4 pt-6 sm:px-6">
+                  <Link to="/" className="font-display text-2xl font-semibold tracking-wide text-white">
+                    Rango<span className="text-gold-500">.</span>
+                  </Link>
+                </header>
+                <main className="mx-auto max-w-6xl px-4 pb-16 pt-6 sm:px-6">
+                  <LegalPage />
+                </main>
+              </div>
+            }
+          />
+          <Route path="*" element={<Maintenance />} />
+        </Routes>
+      </Suspense>
+    </BrowserRouter>
+  );
+}
 
 export default function App() {
+  if (maintenanceActive) return <MaintenanceRoutes />;
+
   return (
     <BrowserRouter>
       <ScrollToTop />

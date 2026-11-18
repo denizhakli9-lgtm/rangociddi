@@ -1,123 +1,66 @@
-/*
- * Maintenance screen (pages/Maintenance.tsx).
- *
- * The photo is a portrait phone lock screen (852 x 1846). `.maint-stage` is the
- * photo's own box: it covers the screen on phones and is shown whole on wide
- * screens. Because the box always matches the photo exactly, the notice can be
- * placed in % of the photo and lands on the lock screen's own "pill" at any
- * screen size.
- */
 .maint-root {
-  position: fixed;
-  inset: 0;
-  overflow: hidden;
-  background: #000;
-  container-type: size;
-}
-
-/* Wide screens only: a blurred copy fills the space beside the photo. */
-.maint-backdrop {
-  position: absolute;
-  left: -10%;
-  top: -10%;
-  width: 120%;
-  max-width: none;
-  height: 120%;
-  object-fit: cover;
-  opacity: 0.4;
-  filter: blur(40px);
-  display: none;
-}
-
-.maint-stage {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  aspect-ratio: 852 / 1846;
-  /* Phones: cover the screen. (First line is the fallback for browsers without container units.) */
-  width: max(100vw, calc(100vh * 852 / 1846));
-  width: max(100cqw, calc(100cqh * 852 / 1846));
-  transform: translate(-50%, -50%);
-  container-type: inline-size;
-}
-
-/* Second, transparent copy of the stage that carries the notice above the footer shade. */
-.maint-stage-top {
-  pointer-events: none;
-}
-
-.maint-photo {
-  display: block;
-  width: 100%;
-  height: 100%;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-/* Sits exactly on the lock screen's own pill (centre 73.85% down, 58.7% wide). */
-.maint-pill {
-  position: absolute;
-  left: 50%;
-  top: 73.85%;
-  width: 61%;
-  height: 7.7%;
-  margin: 0;
-  transform: translate(-50%, -50%);
+  min-height: 100vh;
+  min-height: 100svh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.6em;
-  border-radius: 9999px;
-  background: rgba(20, 20, 22, 0.97);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
-  color: #fafaf8;
-  font-size: 17px;
-  font-size: 4.7cqw;
-  font-weight: 600;
-  line-height: 1;
-  letter-spacing: 0.01em;
-  white-space: nowrap;
-}
-
-.maint-pill-icon {
-  display: flex;
-  width: 1.9em;
-  height: 1.9em;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  border-radius: 9999px;
-  background: #d4af37;
-  color: #080808;
-}
-
-.maint-pill-icon svg {
-  width: 1.05em;
-  height: 1.05em;
-}
-
-.maint-foot {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 72px 20px max(16px, env(safe-area-inset-bottom));
-  background: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.9) 45%, transparent 100%);
-  color: rgba(250, 250, 248, 0.85);
-  font-size: 13px;
-  line-height: 20px;
+  padding: 48px 24px max(24px, env(safe-area-inset-bottom));
+  background: #080b10;
+  color: #fff;
   text-align: center;
 }
 
+.maint-content {
+  width: 100%;
+  max-width: 800px;
+  margin: auto 0;
+  padding: 48px 0;
+}
+
+.maint-brand {
+  margin-bottom: 32px;
+  color: #dfc078;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+}
+
+.maint-names {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(48px, 9vw, 88px);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.maint-heart {
+  width: 0.85em;
+  height: 0.85em;
+  flex-shrink: 0;
+  color: #fb7185;
+  fill: #fb7185;
+}
+
+.maint-message {
+  margin-top: 32px;
+  color: #cbd5e1;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 .maint-links {
-  margin-top: 6px;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 2px 14px;
-  color: rgba(250, 250, 248, 0.6);
-  font-size: 11px;
-  line-height: 16px;
+  gap: 16px;
+  color: #cbd5e1;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .maint-links a:hover {
@@ -125,14 +68,18 @@
   text-underline-offset: 4px;
 }
 
-@media (min-width: 768px) {
-  .maint-backdrop {
-    display: block;
-  }
+.maint-links a:focus-visible {
+  outline: 2px solid #dfc078;
+  outline-offset: 4px;
+}
 
-  /* Wide screens: show the whole photo instead of cropping it. */
-  .maint-stage {
-    width: min(100vw, calc(100vh * 852 / 1846));
-    width: min(100cqw, calc(100cqh * 852 / 1846));
+@media (prefers-reduced-motion: no-preference) {
+  .maint-names {
+    animation: maint-pulse 2s ease-in-out infinite;
   }
+}
+
+@keyframes maint-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
 }

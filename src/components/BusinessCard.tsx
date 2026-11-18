@@ -5,7 +5,8 @@ import { formatTime, formatTRY } from '@/lib/format';
 import { useState } from 'react';
 import { formatDistance } from '@/lib/geo';
 import { isDemoBusiness } from '@/lib/demo';
-import { safeImageUrl } from '@/lib/safeUrl';
+import { businessCover } from '@/lib/placeholderImages';
+import { PlaceholderTag } from '@/components/ui/PlaceholderTag';
 import { categoryName } from '@/i18n/categories';
 import { dict, tx } from '@/i18n/locale';
 
@@ -22,7 +23,7 @@ interface Props {
 export function BusinessCard({ business: b, distance, favorite, onToggleFavorite, openNow, variant = 'grid', availableAt }: Props) {
   const demo = isDemoBusiness(b);
   const verified = b.is_verified && !demo;
-  const cover = safeImageUrl(b.cover_url);
+  const cover = businessCover(b);
   const heart = onToggleFavorite && (
     <button
       onClick={(e) => {
@@ -56,7 +57,8 @@ export function BusinessCard({ business: b, distance, favorite, onToggleFavorite
     return (
       <Link to={`/i/${b.slug}`} className="card group relative flex gap-4 p-3 transition hover:border-gold-500/40">
         <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-xl sm:h-32 sm:w-36">
-          <BusinessCover src={cover} name={b.name} />
+          <BusinessCover src={cover.src} name={b.name} />
+          {cover.placeholder && <PlaceholderTag compact className="bottom-1 left-1" />}
         </div>
         <div className="flex min-w-0 flex-1 flex-col justify-between py-1 pr-10">
           <div>
@@ -87,7 +89,8 @@ export function BusinessCard({ business: b, distance, favorite, onToggleFavorite
   return (
     <Link to={`/i/${b.slug}`} className="card group block overflow-hidden transition hover:border-gold-500/40 hover:shadow-card active:scale-[0.99]">
       <div className="relative aspect-[4/3] overflow-hidden">
-        <BusinessCover src={cover} name={b.name} />
+        <BusinessCover src={cover.src} name={b.name} />
+        {cover.placeholder && <PlaceholderTag className="bottom-2.5 left-2.5" />}
         <div className="absolute left-3 right-16 top-3 flex flex-wrap gap-1.5">
           {demo && <span className="rounded-full border border-warning-500/40 bg-ink/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-warning-300 backdrop-blur">{dict().demo.badge}</span>}
           {b.is_featured && <span className="rounded-full bg-gold-500 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-ink">{dict().common.featured}</span>}

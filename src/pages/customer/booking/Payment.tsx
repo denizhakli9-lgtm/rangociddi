@@ -7,7 +7,8 @@ import { useAsync } from '@/lib/useAsync';
 import { friendlyError } from '@/lib/errors';
 import { formatDateTime, formatDuration, formatTRY } from '@/lib/format';
 import { fullAddress } from '@/lib/maps';
-import { safeImageUrl } from '@/lib/safeUrl';
+import { businessCover } from '@/lib/placeholderImages';
+import { PlaceholderTag } from '@/components/ui/PlaceholderTag';
 import { COMPANY, legalPath } from '@/lib/legal';
 import { useToast } from '@/contexts/ToastContext';
 import { Input } from '@/components/ui/Field';
@@ -84,7 +85,7 @@ export default function Payment() {
   const { toast } = useToast();
   const { data, loading, error, reload } = useAsync(async () => {
     const [{ data: appt, error: err }, settings] = await Promise.all([
-      supabase.from('appointments').select('*, businesses(id, name, slug, cover_url, address, district, city, latitude, longitude, cancellation_hours, phone)').eq('id', id).maybeSingle(),
+      supabase.from('appointments').select('*, businesses(id, name, slug, cover_url, address, district, city, latitude, longitude, cancellation_hours, phone, categories(name, slug))').eq('id', id).maybeSingle(),
       fetchSettings(),
     ]);
     if (err) throw err;
@@ -114,7 +115,7 @@ export default function Payment() {
   const testMode = settings.payment_mode === 'test';
   const expired = remaining === 0;
   const b = appt.businesses;
-  const cover = safeImageUrl(b?.cover_url);
+  const cover = b ? businessCover(b) : null;
   const address = b ? fullAddress(b) : '';
   // The window snapshotted on the booking (after the hardening migration) is what the server applies.
   const policyHours = appt.cancellation_hours ?? b?.cancellation_hours ?? 24;
@@ -225,7 +226,12 @@ export default function Payment() {
       </div>
 
       <aside className="card-gold h-fit overflow-hidden lg:sticky lg:top-24">
-        {cover && <img src={cover} alt="" className="h-36 w-full object-cover" />}
+        {cover && (
+          <div className="relative">
+            <img src={cover.src} alt="" className="h-36 w-full object-cover" />
+            {cover.placeholder && <PlaceholderTag className="bottom-2.5 left-2.5" />}
+          </div>
+        )}
         <div className="space-y-4 p-6">
           <div>
             <p className="font-display text-2xl text-white">{b?.name}</p>

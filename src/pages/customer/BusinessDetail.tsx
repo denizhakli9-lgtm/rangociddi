@@ -11,6 +11,8 @@ import { fullAddress, hasExactPin } from '@/lib/maps';
 import { isDemoBusiness } from '@/lib/demo';
 import { safeImageUrl } from '@/lib/safeUrl';
 import { categoryName } from '@/i18n/categories';
+import { businessCover } from '@/lib/placeholderImages';
+import { PlaceholderTag } from '@/components/ui/PlaceholderTag';
 import { publicUrl, shareLink } from '@/lib/platform';
 import { useUserLocation } from '@/contexts/LocationContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -50,7 +52,10 @@ export default function BusinessDetail() {
 
   const { business: b, services, employees, hours, reviews } = data;
   const demo = isDemoBusiness(b);
-  const photos = [b.cover_url, ...(b.gallery ?? [])].map(safeImageUrl).filter((src): src is string => !!src);
+  const ownPhotos = [b.cover_url, ...(b.gallery ?? [])].map(safeImageUrl).filter((src): src is string => !!src);
+  // No photos yet: a labelled sector photo instead of an empty header.
+  const placeholderPhoto = ownPhotos.length === 0;
+  const photos = placeholderPhoto ? [businessCover(b).src] : ownPhotos;
   const todayWd = isoWeekday(dateKey());
   const open = isOpenNow(hours.find((h) => h.weekday === todayWd));
   const fav = ids.has(b.id);
@@ -83,6 +88,7 @@ export default function BusinessDetail() {
             <img key={src + i} src={src} alt={b.name} loading={i === 0 ? "eager" : "lazy"} decoding="async" className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${i === photo ? 'opacity-100' : 'opacity-0'}`} />
           ))}
           <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/20 to-ink/40" />
+          {placeholderPhoto && <PlaceholderTag className="bottom-4 left-4" />}
           <div className="absolute inset-x-4 top-4 flex justify-between">
             <button onClick={goBack} className="flex h-10 w-10 items-center justify-center rounded-full bg-ink/60 text-white backdrop-blur transition hover:bg-ink" aria-label={t.common.back}>
               <ArrowLeft className="h-5 w-5" />

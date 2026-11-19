@@ -1,16 +1,14 @@
 import { ImageIcon } from 'lucide-react';
 import { tx } from '@/i18n/locale';
 
-/**
- * Small label over a sector photo that stands in for a business's own cover, so customers
- * do not take a stock photo for the real salon. Place inside a `relative` container.
- */
 export function PlaceholderTag({ className = 'bottom-3 left-3', compact = false }: { className?: string; compact?: boolean }) {
-  const label = tx('Temsili görsel', 'Illustrative photo');
+  const label = compact
+    ? tx('YZ · Temsili görsel', 'AI · Illustrative image')
+    : tx('Yapay zekâ ile hazırlanmış temsili görsel', 'AI-generated illustrative image');
   return (
     <span
-      title={tx('İşletme henüz kendi fotoğrafını eklemedi.', 'The business has not added its own photo yet.')}
-      className={`pointer-events-none absolute z-10 inline-flex items-center gap-1 rounded-full bg-ink/70 font-medium text-white/85 backdrop-blur ${compact ? 'px-1.5 py-0.5 text-[9px]' : 'px-2.5 py-1 text-[10px]'} ${className}`}
+      title={tx('Yapay zekâ ile hazırlanmış temsili görsel. İşletmenin gerçek fotoğrafı değildir.', 'AI-generated illustrative image. Not an actual photo of the business.')} 
+      className={`pointer-events-none absolute z-10 inline-flex max-w-[calc(100%-24px)] items-center gap-1 rounded-xl bg-black/85 font-medium text-white backdrop-blur ${compact ? 'px-1.5 py-0.5 text-[9px]' : 'px-2.5 py-1 text-[10px]'} ${className}`}
     >
       {!compact && <ImageIcon className="h-3 w-3" aria-hidden="true" />}
       {label}

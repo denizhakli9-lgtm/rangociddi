@@ -70,9 +70,9 @@ export default function Onboarding() {
           <span className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl border border-gold-500/40 bg-coal text-gold-400">
             <slide.icon className="h-5 w-5" strokeWidth={1.6} />
           </span>
-          <p className="eyebrow mb-3">{tx(...slide.eyebrow)}</p>
-          <h1 className="max-w-md font-display text-4xl leading-tight text-white sm:text-5xl">{tx(...slide.title)}</h1>
-          <p className="mt-4 max-w-md text-[15px] leading-relaxed text-mist">{tx(...slide.text)}</p>
+          <p className="eyebrow mb-3">{tx(slide.eyebrow[0], slide.eyebrow[1])}</p>
+          <h1 className="max-w-md font-display text-4xl leading-tight text-white sm:text-5xl">{tx(slide.title[0], slide.title[1])}</h1>
+          <p className="mt-4 max-w-md text-[15px] leading-relaxed text-mist">{tx(slide.text[0], slide.text[1])}</p>
         </div>
 
         <div className="mt-10">

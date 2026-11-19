@@ -10,7 +10,8 @@ const SUPPORT_LABELS = {
 } as const satisfies Record<SupportThread['status'], readonly [string, string]>;
 /** Status label in the current language (Turkish inside the support team workspace). */
 export function supportLabel(status: SupportThread['status']): string {
-  return tx(...SUPPORT_LABELS[status]);
+  const [trText, enText] = SUPPORT_LABELS[status];
+  return tx(trText, enText);
 }
 export async function supportAction(action: string, thread?: string, text = '') {
   const { data, error } = await supabase.rpc('support_action', { p_action: action, p_thread: thread ?? null, p_text: text });

@@ -156,7 +156,7 @@ export default function BusinessProfile() {
           </div>
           {!coverSrc && (
             <p className="-mt-2 mb-5 rounded-xl border border-gold-500/30 bg-gold-500/5 px-4 py-3 text-xs leading-relaxed text-mist">
-              Kendi kapak fotoğrafınızı yükleyene kadar müşterilerinize sektörünüze uygun bu temsili görsel, “Temsili görsel” etiketiyle gösterilir. Gerçek salon fotoğrafı olan işletmeler çok daha fazla randevu alır; “Kapak değiştir” ile kendi fotoğrafınızı ekleyin.
+              Kendi kapak fotoğrafınızı yükleyene kadar sektörünüze uygun, yapay zekâ ile hazırlanmış bir temsili görsel gösterilir. Bu görsel gerçek fotoğraf galerinize eklenmez. “Kapak değiştir” ile işletmenizin gerçek fotoğrafını yükleyin ve değişiklikleri kaydedin; müşterilerinize işletmenizi kendi fotoğraflarınızla tanıtın.
             </p>
           )}
           <p className="mb-3 text-xs font-medium tracking-wide text-mist">Galeri ({media.gallery.length}/{MAX_GALLERY})</p>

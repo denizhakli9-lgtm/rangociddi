@@ -39,11 +39,11 @@ export const COMPANY = {
   verbis: '',
 } as const;
 
-export const LEGAL_UPDATED_AT = '14 Kasım 2026';
+export const LEGAL_UPDATED_AT = '20 Kasım 2026';
 
 export const LEGAL_VERSIONS = {
-  terms: '2026-11-14',
-  privacy: '2026-11-14',
+  terms: '2026-11-20',
+  privacy: '2026-11-20',
   cookies: '2026-11-14',
 } as const;
 

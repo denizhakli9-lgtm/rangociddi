@@ -18,6 +18,7 @@ import { EmptyState, ErrorState, PageLoader } from '@/components/ui/Feedback';
 import type { Appointment } from '@/lib/types';
 import { tx } from '@/i18n/locale';
 import { isNative } from '@/lib/platform';
+import { invokeEdge } from '@/lib/functions';
 
 /**
  * Test card shown read-only in test mode. No real card data is ever typed into this page:
@@ -27,26 +28,30 @@ const TEST_CARD = { name: 'TEST KULLANICI', number: '4242 4242 4242 4242', expir
 
 /** How often the page re-checks the booking while the customer is on PayTR's payment page. */
 const PAYMENT_POLL_MS = 3000;
+/** Every this many polls the server also asks PayTR directly (paytr-status), in case PayTR's notification is late. */
+const RECONCILE_EVERY = 7;
 
 /**
- * Asks the paytr-token Edge Function for PayTR's hosted payment page. The deposit is confirmed only by
- * PayTR's server-to-server callback (paytr-callback), never by this page or by PayTR's return URL.
+ * Asks the paytr-token Edge Function for PayTR's hosted payment page. The deposit is confirmed only on the
+ * server: by PayTR's notification (paytr-callback) or PayTR's status service (paytr-status), never by this
+ * page or by PayTR's return URL.
  */
 async function startPaytrCheckout(appointmentId: string): Promise<{ url: string; test: boolean }> {
-  const { data, error } = await supabase.functions.invoke('paytr-token', {
-    body: { appointment: appointmentId, platform: isNative ? 'app' : 'web' },
+  const data = await invokeEdge<{ url?: unknown; test?: unknown }>('paytr-token', {
+    appointment: appointmentId,
+    platform: isNative ? 'app' : 'web',
   });
-  if (error) {
-    let code = '';
-    const context = (error as { context?: unknown }).context;
-    if (context instanceof Response) {
-      const body = await context.json().catch(() => null) as { error?: unknown } | null;
-      if (typeof body?.error === 'string') code = body.error;
-    }
-    throw new Error(code || error.message);
-  }
   if (!data || typeof data.url !== 'string' || !data.url.startsWith('https://www.paytr.com/')) throw new Error('VEYRA_PAYMENT_PROVIDER');
   return { url: data.url, test: data.test === true };
+}
+
+/** Lets the server ask PayTR about this booking's unfinished payments; errors are ignored (polling continues). */
+async function reconcilePaytr(appointmentId: string): Promise<void> {
+  try {
+    await invokeEdge('paytr-status', { appointment: appointmentId });
+  } catch {
+    /* PayTR's notification and the status polling still apply */
+  }
 }
 
 const linkCls = 'text-gold-400 underline-offset-2 hover:underline';
@@ -124,7 +129,10 @@ export default function Payment() {
 
   // Coming back from PayTR: "ok" waits for the callback; "hata" tells the customer and lets them retry.
   useEffect(() => {
-    if (paytrReturn === 'ok') setAwaitingPayment(true);
+    if (paytrReturn === 'ok') {
+      setAwaitingPayment(true);
+      void reconcilePaytr(id);
+    }
     if (paytrReturn === 'hata' && !failureShown.current) {
       failureShown.current = true;
       setAwaitingPayment(false);
@@ -132,7 +140,7 @@ export default function Payment() {
       toast(tx('Ödeme tamamlanamadı. Kartınızdan tahsilat yapılmadı; tekrar deneyebilirsiniz.', 'The payment was not completed. Nothing was charged; you can try again.'), 'error');
       setSearchParams({}, { replace: true });
     }
-  }, [paytrReturn, setSearchParams, toast]);
+  }, [paytrReturn, setSearchParams, toast, id]);
 
   // While the customer is paying, follow the booking: PayTR's callback moves it out of pending_payment.
   const checkPaid = useCallback(async () => {
@@ -145,17 +153,22 @@ export default function Payment() {
 
   useEffect(() => {
     if (!awaitingPayment) return;
+    let ticks = 0;
     void checkPaid();
-    const timer = setInterval(() => void checkPaid(), PAYMENT_POLL_MS);
+    const timer = setInterval(() => {
+      ticks += 1;
+      if (ticks % RECONCILE_EVERY === 0) void reconcilePaytr(id).then(checkPaid);
+      else void checkPaid();
+    }, PAYMENT_POLL_MS);
     return () => clearInterval(timer);
-  }, [awaitingPayment, checkPaid]);
+  }, [awaitingPayment, checkPaid, id]);
 
   // In the app PayTR opens in an in-app browser sheet; check right away when the customer closes it.
   useEffect(() => {
     if (!isNative || !awaitingPayment) return;
-    const listener = Browser.addListener('browserFinished', () => void checkPaid());
+    const listener = Browser.addListener('browserFinished', () => void reconcilePaytr(id).then(checkPaid));
     return () => void listener.then((l) => l.remove());
-  }, [awaitingPayment, checkPaid]);
+  }, [awaitingPayment, checkPaid, id]);
 
   useEffect(() => {
     if (!data?.appt) return;
@@ -298,9 +311,7 @@ export default function Payment() {
               <iframe
                 src={checkoutUrl}
                 title={tx('PayTR güvenli ödeme', 'PayTR secure payment')}
-                className="block h-[640px] w-full"
-                allow="payment"
-                referrerPolicy="no-referrer-when-downgrade"
+                className="block h-[max(560px,80vh)] w-full sm:h-[680px]"
               />
             </div>
             <p className="flex items-center gap-2 text-xs text-mist">
@@ -328,7 +339,7 @@ export default function Payment() {
               </p>
             ) : paytrTest ? (
               <p className="rounded-xl border border-warning-500/40 bg-warning-900/40 px-4 py-3 text-sm leading-relaxed text-warning-300">
-                {tx('PayTR test modu: ödeme sayfasında yalnızca PayTR test kartlarını kullanın. Kartınızdan gerçek tahsilat yapılmaz.', 'PayTR test mode: use only PayTR test cards on the payment page. Nothing is actually charged.')}
+                {tx('PayTR test modu: test kartı PayTR ödeme sayfasında hazır gelir. "Ödeme Yap"a, ardından 3D Secure test sayfasında "Gönder"e basın. Kartınızdan gerçek tahsilat yapılmaz.', 'PayTR test mode: the test card is prefilled on PayTR’s page. Press “Ödeme Yap”, then “Gönder” on the 3D Secure test page. Nothing is actually charged.')}
               </p>
             ) : (
               <p className="flex items-center gap-2 text-xs text-mist-2">

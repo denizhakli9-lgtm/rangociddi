@@ -36,10 +36,19 @@ function newMerchantOid(): string {
   return 'RG' + Date.now().toString(36).toUpperCase() + Array.from(random, (b) => b.toString(16).padStart(2, '0')).join('').toUpperCase();
 }
 
-/** The customer's public IP as seen by the Supabase edge (first X-Forwarded-For entry). */
+/** PayTR wants the customer's public IP (at most 39 characters). */
+const IP = /^(?:\d{1,3}(?:\.\d{1,3}){3}|[0-9a-f:]{2,39})$/i;
 function clientIp(req: Request): string {
-  const forwarded = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
-  return forwarded || req.headers.get('x-real-ip')?.trim() || '';
+  const candidates = [
+    req.headers.get('cf-connecting-ip'),
+    req.headers.get('x-forwarded-for')?.split(',')[0],
+    req.headers.get('x-real-ip'),
+  ];
+  for (const candidate of candidates) {
+    const ip = candidate?.trim() ?? '';
+    if (ip && ip.length <= 39 && IP.test(ip)) return ip;
+  }
+  return '';
 }
 
 /** PayTR rejects empty customer fields; keep them plain and within PayTR's limits. */
@@ -90,17 +99,18 @@ Deno.serve(async (req: Request) => {
     const noInstallment = '1';
     const maxInstallment = '0';
     const currency = 'TL';
-    const email = clean(order.email || auth.user.email, 100);
+    // PayTR rejects e-mail addresses with non-ASCII (e.g. Turkish) characters; such rare addresses get a neutral alias.
+    const rawEmail = clean(order.email || auth.user.email, 100);
+    const email = /^[\x21-\x7E]+@[\x21-\x7E]+$/.test(rawEmail) ? rawEmail : `musteri-${auth.user.id.slice(0, 8)}@rango.com.tr`;
     const basket = base64Utf8(JSON.stringify([[clean(order.item, 200) || 'Randevu kaporası', (order.amount_kurus / 100).toFixed(2), 1]]));
     // PayTR stops the payment page shortly before our slot hold runs out.
     const timeoutMinutes = Math.max(1, Math.min(30, Math.floor(order.seconds_left / 60) - 1));
 
-    const okUrl = native
-      ? `${SITE_URL}/odeme-sonuc.html?randevu=${appointment}&durum=ok`
-      : `${SITE_URL}/odeme/${appointment}?paytr=ok`;
-    const failUrl = native
-      ? `${SITE_URL}/odeme-sonuc.html?randevu=${appointment}&durum=hata`
-      : `${SITE_URL}/odeme/${appointment}?paytr=hata`;
+    // A static return page: it works whether PayTR opens it in the top window, inside its iframe (it then moves
+    // the top window to the booking's payment page) or in the app's in-app browser (App Links hand it to the app).
+    const source = native ? 'app' : 'web';
+    const okUrl = `${SITE_URL}/odeme-sonuc.html?randevu=${appointment}&durum=ok&kaynak=${source}`;
+    const failUrl = `${SITE_URL}/odeme-sonuc.html?randevu=${appointment}&durum=hata&kaynak=${source}`;
 
     const paytrToken = await hmacBase64(
       merchantKey,
@@ -115,7 +125,8 @@ Deno.serve(async (req: Request) => {
       payment_amount: amount,
       paytr_token: paytrToken,
       user_basket: basket,
-      debug_on: '0',
+      // Detailed PayTR error messages while testing; integration errors arrive as code 99 otherwise.
+      debug_on: testMode,
       no_installment: noInstallment,
       max_installment: maxInstallment,
       user_name: clean(order.full_name, 60) || 'Rango Müşterisi',

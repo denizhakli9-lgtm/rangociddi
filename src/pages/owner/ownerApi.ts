@@ -66,6 +66,8 @@ export function istanbulDayStart(key: string): string {
  */
 export function isTestPayment(p: { provider_payment_id?: string | null; status?: string } | null | undefined, paymentMode?: string | null): boolean {
   if (!p) return false;
+  // A real PayTR capture stays real even if the platform is switched back to test mode later.
+  if (typeof p.provider_payment_id === 'string' && p.provider_payment_id.startsWith('PAYTR-')) return false;
   if (paymentMode === 'test') return true;
   return typeof p.provider_payment_id === 'string' && p.provider_payment_id.startsWith('TEST-');
 }

@@ -28,6 +28,14 @@ Options -Indexes
   Header always set Cross-Origin-Opener-Policy "same-origin"
   Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://__SUPABASE_HOST__ https://images.pexels.com; font-src 'self' data:; connect-src 'self' https://__SUPABASE_HOST__ wss://__SUPABASE_HOST__; frame-src https://www.paytr.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
 
+  # PayTR dönüş sayfası: PayTR bunu kendi ödeme iframe'i içinde açabilir. Yalnızca bu dosya
+  # www.paytr.com tarafından çerçevelenebilir; sitenin geri kalanı çerçevelenemez.
+  <Files "odeme-sonuc.html">
+    Header always unset X-Frame-Options
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self' https://www.paytr.com"
+    Header set Cache-Control "no-cache"
+  </Files>
+
   # index.html her zaman güncel gelsin, hash'li dosyalar uzun süre önbellekte kalsın
   <FilesMatch "index\.html$">
     Header set Cache-Control "no-cache, no-store, must-revalidate"

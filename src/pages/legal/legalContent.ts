@@ -94,7 +94,7 @@ const aydinlatma: LegalDocument = {
       blocks: [
         ul(
           'Randevu aldığınız işletme: ad soyad, telefon, e-posta, randevu ve not bilgileriniz, hizmetin sunulabilmesi ve sizinle iletişim kurulabilmesi için (sözleşmenin ifası).',
-          'Lisanslı ödeme kuruluşu (ör. iyzico, PayTR): online ödeme altyapısı devreye alındığında, kapora tahsilatı ve iadesi için gereken işlem bilgileri (sözleşmenin ifası, hukuki yükümlülük).',
+          'Lisanslı ödeme kuruluşu PayTR Ödeme ve Elektronik Para Kuruluşu A.Ş.: kapora tahsilatı ve iadesi için ad soyad, e-posta, telefon, IP adresi ve sipariş bilgileri (sipariş numarası, tutar, hizmet adı). Kart bilgileriniz Rango’ya uğramadan doğrudan PayTR’nin güvenli ödeme sayfasında işlenir (sözleşmenin ifası, hukuki yükümlülük).',
           'Altyapı ve barındırma hizmet sağlayıcıları: veritabanı, kimlik doğrulama, e-posta doğrulama gönderimi ve dosya depolama hizmeti veren Supabase, Inc. ile web barındırma hizmeti veren Hostinger; verileriniz bu hizmetler aracılığıyla saklanır.',
           'Yapay zekâ destek hizmeti sağlayıcısı (OpenAI, L.L.C.): yalnızca destek merkezinde yapay zekâ asistanı etkin olduğunda, yazdığınız mesaj içerikleri ön yanıt üretmek amacıyla iletilir. Gönderimden önce e-posta adresleri, telefon, IBAN, kart, kimlik numarası ve rezervasyon kodu gibi bilgiler otomatik olarak maskelenir; ödeme, iade, şifre, şikâyet, KVKK ve sağlık gibi konular tespit edildiğinde mesajınız yapay zekâya gönderilmeden temsilciye aktarılır. Ad ve adres gibi bilgileri destek mesajlarınıza yazmamanızı rica ederiz.',
           'Görsel içerik sağlayıcısı (Pexels): bazı tanıtım görselleri bu sağlayıcının sunucularından yüklenir; bu sırada tarayıcınız IP adresinizi iletir.',
@@ -180,7 +180,7 @@ const kosullar: LegalDocument = {
         ul(
           'Randevu, işletmenin belirlediği hizmet, süre, fiyat ve çalışan müsaitliği üzerinden oluşturulur. Fiyatlar ve kapora tutarı ödeme öncesinde açıkça gösterilir.',
           'Aynı gün için alınan randevular işletmenin onayına tabidir; işletme onaylayana kadar randevu kesinleşmez.',
-          'Kapora, online ödeme altyapısı devreye alındığında lisanslı ödeme kuruluşu aracılığıyla tahsil edilir; kalan tutar hizmet sonrasında doğrudan işletmeye ödenir. Platform test modunda çalıştığı sürece kartınızdan herhangi bir tutar çekilmez ve hizmet bedelinin tamamı işletmede ödenir; ödeme ekranında bu durum açıkça belirtilir.',
+          'Kapora, lisanslı ödeme kuruluşu PayTR Ödeme ve Elektronik Para Kuruluşu A.Ş. aracılığıyla, PayTR’nin güvenli ödeme sayfasında tahsil edilir; kalan tutar hizmet sonrasında doğrudan işletmeye ödenir. Platform test modunda çalıştığı sürece kartınızdan herhangi bir tutar çekilmez ve hizmet bedelinin tamamı işletmede ödenir; ödeme ekranında bu durum açıkça belirtilir.',
           'Örnek işletme olarak işaretlenen işletmeler tanıtım amaçlıdır ve randevu kabul etmez.',
           'İptal, erteleme ve iade şartları “İptal ve İade Koşulları” sayfasında ve işletmenin randevu ekranında gösterilen iptal süresinde düzenlenmiştir.',
         ),
@@ -285,7 +285,7 @@ const iade: LegalDocument = {
       title: '1. Ödeme öncesi bilgilendirme',
       blocks: [
         p('Randevunuzu onaylamadan önce; işletmenin adı ve adresi, hizmetin adı, süresi ve toplam fiyatı, kapora tutarı, işletmede ödenecek tutar ve işletmenin ücretsiz iptal süresi ödeme ekranında gösterilir.'),
-        p('Platform şu anda test modunda çalışmaktadır: ödeme ekranındaki işlem bir test ödemesidir, kartınızdan herhangi bir tutar çekilmez ve hizmet bedelinin tamamı işletmede ödenir. Online ödeme altyapısı devreye alındığında bu sayfa güncellenecektir.'),
+        p('Kapora, lisanslı ödeme kuruluşu PayTR aracılığıyla tahsil edilir. Platform test modunda çalıştığı sürece ödeme ekranındaki işlem bir test ödemesidir: kartınızdan herhangi bir tutar çekilmez ve hizmet bedelinin tamamı işletmede ödenir; ödeme ekranında bu durum açıkça belirtilir.'),
       ],
     },
     {
@@ -309,7 +309,7 @@ const iade: LegalDocument = {
     {
       title: '4. İade süreci',
       blocks: [
-        p('Test modunda yapılan ödemelerde karttan tahsilat yapılmadığından iade işlemi de gerekmez. Online ödeme altyapısı devreye alındıktan sonra iadeler, ödemede kullandığınız karta, ödeme kuruluşu aracılığıyla yapılır. İade talebiniz onaylandıktan sonra tutarın hesabınıza yansıması bankanıza bağlı olarak genellikle 2–10 iş günü sürer. Uyuşmazlık halinde destek merkezimizden talep oluşturabilirsiniz.'),
+        p('Test modunda yapılan ödemelerde karttan tahsilat yapılmadığından iade işlemi de gerekmez. Kartla ödenen kaporaların iadesi, ödemede kullandığınız karta PayTR aracılığıyla yapılır. İade talebiniz onaylandıktan sonra tutarın hesabınıza yansıması bankanıza bağlı olarak genellikle 2–10 iş günü sürer. Uyuşmazlık halinde destek merkezimizden talep oluşturabilirsiniz.'),
         p('Belirli bir tarih ve saatte ifa edilmesi gereken hizmetlere ilişkin bu düzenleme, Mesafeli Sözleşmeler Yönetmeliği ve tüketici mevzuatından doğan haklarınızı ortadan kaldırmaz.'),
       ],
     },

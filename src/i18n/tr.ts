@@ -101,6 +101,7 @@ export const tr = {
     VEYRA_ALREADY_PAID: 'Bu randevunun kaporası zaten ödenmiş.',
     VEYRA_PAYMENT_IN_PROGRESS: 'Önceki ödeme denemeniz kontrol ediliyor. Birkaç saniye sonra tekrar deneyin.',
     VEYRA_PAYMENT_ATTEMPTS: 'Bu randevu için çok fazla ödeme denemesi yapıldı. Lütfen saati serbest bırakıp yeniden randevu oluşturun.',
+    VEYRA_PROFILE_INCOMPLETE: 'Ödeme için profilinizde ad soyad ve telefon numarası bulunmalı. Profil sayfasından ekleyip tekrar deneyin.',
     VEYRA_REFUND_ALREADY_SENT: 'Bu iade PayTR üzerinden gönderildi; reddedilemez. Talebi onaylayın.',
     VEYRA_RESCHEDULE_LIMIT: 'Bu randevu için erteleme hakkınız doldu.',
     VEYRA_POLICY_WINDOW: 'İşletmenin iptal/erteleme süresi geçtiği için bu işlem yapılamaz.',

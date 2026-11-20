@@ -36,12 +36,14 @@ function newMerchantOid(): string {
   return 'RG' + Date.now().toString(36).toUpperCase() + Array.from(random, (b) => b.toString(16).padStart(2, '0')).join('').toUpperCase();
 }
 
-/** PayTR wants the customer's public IP (at most 39 characters). */
+/**
+ * PayTR wants the customer's public IP (at most 39 characters). Only headers set by the platform's edge are
+ * used; X-Forwarded-For is not, because a caller can prepend any address to it.
+ */
 const IP = /^(?:\d{1,3}(?:\.\d{1,3}){3}|[0-9a-f:]{2,39})$/i;
 function clientIp(req: Request): string {
   const candidates = [
     req.headers.get('cf-connecting-ip'),
-    req.headers.get('x-forwarded-for')?.split(',')[0],
     req.headers.get('x-real-ip'),
   ];
   for (const candidate of candidates) {
@@ -115,6 +117,11 @@ Deno.serve(async (req: Request) => {
       return reply({ error: code ?? 'VEYRA_PAYMENT_PROVIDER' }, code ? 400 : 500);
     }
 
+    // PayTR needs the payer's real name and phone (fraud checks, disputes); nothing is invented.
+    const userName = clean(order.full_name, 60);
+    const userPhone = clean(order.phone, 20);
+    if (!userName || !userPhone) return reply({ error: 'VEYRA_PROFILE_INCOMPLETE' }, 400);
+
     const amount = String(order.amount_kurus);
     const testMode = order.test_mode ? '1' : '0';
     const noInstallment = '1';
@@ -150,9 +157,9 @@ Deno.serve(async (req: Request) => {
       debug_on: testMode,
       no_installment: noInstallment,
       max_installment: maxInstallment,
-      user_name: clean(order.full_name, 60) || 'Rango Müşterisi',
+      user_name: userName,
       user_address: clean(order.address, 400) || 'Türkiye',
-      user_phone: clean(order.phone, 20) || '05000000000',
+      user_phone: userPhone,
       merchant_ok_url: okUrl,
       merchant_fail_url: failUrl,
       timeout_limit: String(timeoutMinutes),

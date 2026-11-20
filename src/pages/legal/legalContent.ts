@@ -94,7 +94,7 @@ const aydinlatma: LegalDocument = {
       blocks: [
         ul(
           'Randevu aldığınız işletme: ad soyad, telefon, e-posta, randevu ve not bilgileriniz, hizmetin sunulabilmesi ve sizinle iletişim kurulabilmesi için (sözleşmenin ifası).',
-          'Lisanslı ödeme kuruluşu PayTR Ödeme ve Elektronik Para Kuruluşu A.Ş.: kapora tahsilatı ve iadesi için ad soyad, e-posta, telefon, IP adresi ve sipariş bilgileri (sipariş numarası, tutar, hizmet adı). Kart bilgileriniz Rango’ya uğramadan doğrudan PayTR’nin güvenli ödeme sayfasında işlenir (sözleşmenin ifası, hukuki yükümlülük).',
+          'Lisanslı ödeme kuruluşu PayTR Ödeme ve Elektronik Para Kuruluşu A.Ş.: kapora tahsilatı ve iadesi için ad soyad, e-posta, telefon, IP adresi, profilinizdeki il/ilçe bilgisi ve sipariş bilgileri (sipariş numarası, tutar, işletme ve hizmet adı). Kart bilgileriniz Rango’ya uğramadan doğrudan PayTR’nin güvenli ödeme sayfasında işlenir (sözleşmenin ifası, hukuki yükümlülük).',
           'Altyapı ve barındırma hizmet sağlayıcıları: veritabanı, kimlik doğrulama, e-posta doğrulama gönderimi ve dosya depolama hizmeti veren Supabase, Inc. ile web barındırma hizmeti veren Hostinger; verileriniz bu hizmetler aracılığıyla saklanır.',
           'Yapay zekâ destek hizmeti sağlayıcısı (OpenAI, L.L.C.): yalnızca destek merkezinde yapay zekâ asistanı etkin olduğunda, yazdığınız mesaj içerikleri ön yanıt üretmek amacıyla iletilir. Gönderimden önce e-posta adresleri, telefon, IBAN, kart, kimlik numarası ve rezervasyon kodu gibi bilgiler otomatik olarak maskelenir; ödeme, iade, şifre, şikâyet, KVKK ve sağlık gibi konular tespit edildiğinde mesajınız yapay zekâya gönderilmeden temsilciye aktarılır. Ad ve adres gibi bilgileri destek mesajlarınıza yazmamanızı rica ederiz.',
           'Görsel içerik sağlayıcısı (Pexels): bazı tanıtım görselleri bu sağlayıcının sunucularından yüklenir; bu sırada tarayıcınız IP adresinizi iletir.',
@@ -264,6 +264,7 @@ const cerez: LegalDocument = {
       title: '2. Üçüncü taraf içerikler',
       blocks: [
         p('Bazı tanıtım görselleri Pexels sunucularından yüklenir. Bu sağlayıcı, görseli iletirken tarayıcınızın IP adresini görebilir; ancak tarafımızca bu sağlayıcıya çerez yerleştirme izni verilmemiştir. Yazı tipleri kendi sunucumuzdan yüklenir.'),
+        p('Kapora ödemesi sırasında ödeme sayfası lisanslı ödeme kuruluşu PayTR (www.paytr.com) tarafından, sitemizin içinde bir çerçevede veya uygulama içi tarayıcıda gösterilir. Bu sayfa, ödemenin güvenliği ve dolandırıcılığın önlenmesi için PayTR ve altyapı sağlayıcılarının kendi çerez ve benzeri teknolojilerini kullanabilir; bu kayıtlar PayTR’nin kendi politikalarına tabidir ve Rango tarafından okunmaz.'),
       ],
     },
     {

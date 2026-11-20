@@ -103,6 +103,7 @@ export const en: Dictionary = {
     VEYRA_ALREADY_PAID: 'The deposit for this booking has already been paid.',
     VEYRA_PAYMENT_IN_PROGRESS: 'Your previous payment attempt is being checked. Try again in a few seconds.',
     VEYRA_PAYMENT_ATTEMPTS: 'Too many payment attempts for this booking. Release the held time and book again.',
+    VEYRA_PROFILE_INCOMPLETE: 'Your profile needs your full name and phone number for payment. Add them on the Profile page and try again.',
     VEYRA_REFUND_ALREADY_SENT: 'This refund was already sent through PayTR and cannot be rejected. Approve the request.',
     VEYRA_RESCHEDULE_LIMIT: 'You have used all reschedules for this booking.',
     VEYRA_POLICY_WINDOW: 'The business’s cancellation/reschedule window has passed, so this is not possible.',

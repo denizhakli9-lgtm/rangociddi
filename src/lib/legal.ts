@@ -44,7 +44,7 @@ export const LEGAL_UPDATED_AT = '20 Kasım 2026';
 export const LEGAL_VERSIONS = {
   terms: '2026-11-20',
   privacy: '2026-11-20',
-  cookies: '2026-11-14',
+  cookies: '2026-11-20',
 } as const;
 
 /** True while a company field still contains a "[...]" placeholder. */

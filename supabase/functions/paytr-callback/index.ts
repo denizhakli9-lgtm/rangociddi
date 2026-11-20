@@ -52,7 +52,10 @@ Deno.serve(async (req: Request) => {
   const totalAmount = field('total_amount');
   const hash = field('hash');
 
-  if (!/^[A-Za-z0-9]{8,64}$/.test(merchantOid) || !/^\d+$/.test(totalAmount) || !hash) return text('Bad request', 400);
+  // Only the documented values: a valid hash with e.g. status 'success1' + a shifted total_amount must not count.
+  if (!/^[A-Za-z0-9]{8,64}$/.test(merchantOid) || !/^\d+$/.test(totalAmount) || !hash || (status !== 'success' && status !== 'failed')) {
+    return text('Bad request', 400);
+  }
 
   const expected = await hmacBase64(merchantKey, merchantOid + merchantSalt + status + totalAmount);
   if (!safeEqual(expected, hash)) {
@@ -60,9 +63,8 @@ Deno.serve(async (req: Request) => {
     return text('PAYTR notification failed: bad hash', 400);
   }
 
-  // payment_amount is the order amount; total_amount may include installment interest.
-  const paymentAmount = field('payment_amount');
-  const amountKurus = Number(/^\d+$/.test(paymentAmount) ? paymentAmount : totalAmount);
+  // Only the signed total_amount (what the customer paid) is trusted; payment_amount is not covered by the hash.
+  const amountKurus = Number(totalAmount);
   const reason = [field('failed_reason_code'), field('failed_reason_msg')].filter(Boolean).join(' - ');
   // PayTR marks test transactions (store in test mode, or test_mode=1) with test_mode=1. Not part of the hash,
   // so it is only ever used to downgrade a payment to a test payment, never to upgrade one.

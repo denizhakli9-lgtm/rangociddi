@@ -92,6 +92,8 @@ export const tr = {
     VEYRA_INVALID_STATE: 'Randevunun mevcut durumu bu işleme izin vermiyor.',
     VEYRA_PAYMENT_EXPIRED: 'Ödeme süresi doldu. Lütfen randevuyu yeniden oluşturun.',
     VEYRA_PROVIDER_REQUIRED: 'Ödeme sağlayıcısı henüz yapılandırılmadı.',
+    VEYRA_CONSENT_REQUIRED: 'Ödemeye geçmeden önce satış onayını işaretleyin.',
+    VEYRA_TERMS_VERSION: 'Satış sözleşmesi sürümü doğrulanamadı. Sayfayı yenileyip tekrar deneyin.',
     VEYRA_PAYMENT_TOO_LATE: 'Ödeme için ayrılan süre bitmek üzere. Lütfen randevuyu yeniden oluşturun.',
     VEYRA_PAYMENT_PROVIDER: 'Ödeme sayfası şu an açılamadı. Lütfen birkaç saniye sonra tekrar deneyin.',
     VEYRA_PAYMENT_MIN_AMOUNT: 'Kapora tutarı online ödeme için çok düşük (en az 1 TL). Lütfen işletmeyle iletişime geçin.',

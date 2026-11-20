@@ -117,7 +117,7 @@ export function DeleteAccount({ profile }: { profile: Profile }) {
           <ul className="list-disc space-y-1.5 pl-5 marker:text-gold-500">
             <li>{tx('Adınız, e-posta adresiniz, telefonunuz, konumunuz, favorileriniz ve bildirimleriniz silinir.', 'Your name, email, phone, location, favourites and notifications are deleted.')}</li>
             <li>{tx('Yorumlarınız “Silinmiş kullanıcı” adıyla anonim olarak kalır.', 'Your reviews remain anonymously under “Deleted user”.')}</li>
-            <li>{tx('Randevu, ödeme ve iade kayıtları vergi ve ticari mevzuat gereği yasal süre boyunca, kimliğinizle ilişkilendirilmeden saklanır.', 'Booking, payment and refund records are kept for the legally required period under tax and commercial law, without being linked to your identity.')}</li>
+            <li>{tx('Randevu, ödeme, satış onayı ve iade kayıtları; vergi, ticaret ve tüketici mevzuatı ile ödeme kuruluşu sözleşmemiz gereği yasal süre boyunca, kimliğinizle ilişkilendirilmeden saklanır.', 'Booking, payment, purchase-confirmation and refund records are kept for the period required by tax, commercial and consumer law and by our payment institution agreement, without being linked to your identity.')}</li>
             <li>{tx('Yaklaşan randevularınız varsa önce bunları iptal etmeniz gerekir.', 'If you have upcoming bookings, you need to cancel them first.')}</li>
           </ul>
           {profile.role !== 'customer' && (

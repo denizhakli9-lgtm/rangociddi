@@ -6,10 +6,11 @@ import { LEGAL_DOCUMENTS, type LegalBlock } from './legalContent';
 import { isEnglish, tx } from '@/i18n/locale';
 
 function Block({ block }: { block: LegalBlock }) {
-  if (block.kind === 'p') return <p className="text-sm leading-relaxed text-mist">{block.text}</p>;
+  // Contract text is set at 16px (≈12 pt), the minimum size consumer law asks for (TKHK md. 4).
+  if (block.kind === 'p') return <p className="text-base leading-relaxed text-mist">{block.text}</p>;
   if (block.kind === 'ul') {
     return (
-      <ul className="list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-mist marker:text-gold-500">
+      <ul className="list-disc space-y-1.5 pl-5 text-base leading-relaxed text-mist marker:text-gold-500">
         {block.items.map((item) => (
           <li key={item}>{item}</li>
         ))}

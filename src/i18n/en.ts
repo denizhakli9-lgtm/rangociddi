@@ -94,6 +94,8 @@ export const en: Dictionary = {
     VEYRA_INVALID_STATE: 'The booking’s current status does not allow this.',
     VEYRA_PAYMENT_EXPIRED: 'The payment time ran out. Please make the booking again.',
     VEYRA_PROVIDER_REQUIRED: 'Online payment is not set up yet.',
+    VEYRA_CONSENT_REQUIRED: 'Please tick the purchase confirmation before paying.',
+    VEYRA_TERMS_VERSION: 'The sales agreement version could not be verified. Refresh the page and try again.',
     VEYRA_PAYMENT_TOO_LATE: 'The payment time is about to run out. Please make the booking again.',
     VEYRA_PAYMENT_PROVIDER: 'The payment page could not be opened. Please try again in a few seconds.',
     VEYRA_PAYMENT_MIN_AMOUNT: 'The deposit is too small for online payment (minimum 1 TL). Please contact the business.',

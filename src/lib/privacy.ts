@@ -21,11 +21,13 @@ async function collect(query: PromiseLike<{ data: unknown; error: { message: str
  */
 export async function exportMyData(profile: Profile): Promise<Blob> {
   const uid = profile.id;
-  const [{ data: auth }, appointments, payments, refunds, reviews, favorites, notifications, threads, businesses] = await Promise.all([
+  const [{ data: auth }, appointments, payments, refunds, saleConsents, reviews, favorites, notifications, threads, businesses] = await Promise.all([
     supabase.auth.getUser(),
     collect(supabase.from('appointments').select('*').eq('customer_id', uid).order('starts_at', { ascending: false })),
     collect(supabase.from('payments').select('id,appointment_id,amount,currency,status,provider,card_brand,card_last4,paid_at,refunded_amount,refunded_at,created_at').eq('customer_id', uid)),
     collect(supabase.from('refund_requests').select('*').eq('customer_id', uid)),
+    // Own purchase confirmations only (business owners can also read their business's rows).
+    collect(supabase.from('sale_consents').select('*').eq('customer_id', uid).order('accepted_at', { ascending: false })),
     collect(supabase.from('reviews').select('*').eq('customer_id', uid)),
     collect(supabase.from('favorites').select('business_id,created_at').eq('customer_id', uid)),
     collect(supabase.from('notifications').select('*').eq('user_id', uid).order('created_at', { ascending: false })),
@@ -69,6 +71,7 @@ export async function exportMyData(profile: Profile): Promise<Blob> {
     appointments,
     payments,
     refund_requests: refunds,
+    sale_consents: saleConsents,
     reviews,
     favorites,
     notifications,

@@ -206,7 +206,7 @@ export default function BookingWizard() {
               <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gold-500" />
               <span>
                 {tx(`Randevuya ${b.cancellation_hours} saat kalaya kadar ücretsiz iptal edebilir veya erteleyebilirsiniz.`, `You can cancel or reschedule free of charge up to ${b.cancellation_hours} hours before the appointment.`)}
-                {deposit > 0 && !testMode && tx(' Bu süreden sonra kapora iade edilmez.', ' After that, the deposit is not refunded.')}{' '}
+                {deposit > 0 && !testMode && tx(' Cayma süresi sona erdikten sonra, bu süreden geç yapılan iptallerde kapora iade edilmez.', ' Once the withdrawal period has ended, the deposit is not refunded for later cancellations.')}{' '}
                 <Link to={legalPath('iptal-iade')} className="text-gold-400 underline-offset-2 hover:underline">{tx('İptal ve İade Koşulları', 'Cancellation & Refund Policy')}</Link>
               </span>
             </p>

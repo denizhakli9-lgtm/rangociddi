@@ -308,6 +308,8 @@ Never unnecessarily rebuild working features.
 
 Never remove existing functionality without explicit approval.
 
+Never remove or bypass the purchase confirmation (satış onayı) on the payment page: src/pages/customer/booking/Payment.tsx must call the record_sale_consent RPC before pay_deposit and before opening the PayTR checkout, and the PAYTR sentence and www.paytr.com link in src/components/legal/LegalFooter.tsx must stay (PayTR agreement md. 7.2 and 10.3). Do not rename or edit files that are already applied in supabase/migrations.
+
 Never create fake data or placeholder interactions that appear to be real production functionality.
 
 If a backend integration is not configured, clearly identify it rather than pretending it works.

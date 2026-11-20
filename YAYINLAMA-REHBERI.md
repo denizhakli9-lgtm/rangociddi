@@ -112,7 +112,7 @@ Kaporalar **PayTR iFrame API** ile alınır. Müşteri kart bilgisini PayTR'nin 
 **Kurulu olanlar (Supabase'e yüklendi):**
 - Edge Function'lar: `paytr-token` (ödeme sayfası), `paytr-callback` (PayTR Bildirim URL), `paytr-status` (PayTR durum sorgusu ile yedek kontrol), `paytr-refund` (admin iadesi PayTR'ye gider).
 - Gizli anahtarlar Supabase → Edge Functions → Secrets altında: `PAYTR_MERCHANT_ID`, `PAYTR_MERCHANT_KEY`, `PAYTR_MERCHANT_SALT`. Kodda veya GitHub'da **yoktur**.
-- Veritabanı: `supabase/migrations/20261120120000_paytr_iframe_payments.sql` ve `20261120140000_paytr_refunds_reconcile_admin_mode.sql`.
+- Veritabanı: `supabase/migrations/20261120120000_paytr_iframe_payments.sql`, `20261120140000_paytr_refunds_reconcile_admin_mode.sql`, `20261120150000_paytr_testers.sql`, `20261120160000_paytr_review_fixes.sql`.
 - Site: ödeme sayfası (sitede iframe, uygulamada uygulama içi tarayıcı), admin **Ayarlar → Ödeme altyapısı** ile mod değiştirme, admin **İadeler** ekranında PayTR iadesi.
 
 **Ödeme modları (Yönetim → Ayarlar → Ödeme altyapısı):**
@@ -127,6 +127,10 @@ Kaporalar **PayTR iFrame API** ile alınır. Müşteri kart bilgisini PayTR'nin 
 2. Site "PayTR test" modundayken bir test ödemesi yapın. PayTR panelinde İşlem & Rapor → İşlemler sayfasında işlemin "Başarılı" göründüğünü kontrol edin ("Devam Ediyor" görünüyorsa Bildirim URL'yi kontrol edin).
 3. Canlıya geçiş: PayTR panelinde Destek & Kurulum → Canlı Mod → "Evet, Entegrasyonu Tamamladım" → "Canlı Moda Geçiş Talebi Gönder".
 4. PayTR'den canlı mod SMS/e-postası gelince Yönetim → Ayarlar → Ödeme altyapısı → **PayTR canlı**.
+
+**Test edildi (20 Kasım 2026, PayTR test modu):** ödeme sayfası, test kartıyla ödeme, PayTR bildirimiyle randevu onayı (birkaç saniye), müşteri iptali → otomatik iade talebi, admin iadesinin PayTR İade API ile gönderilmesi, PayTR durum sorgusu ve sitede iframe içinden ödeme (PayTR ödeme sonrası ana pencereyi `odeme-sonuc.html` sayfasına yönlendirir, o da müşteriyi ödeme sayfasına geri getirir).
+
+**Test hesapları:** Platform "Test (kartsız)" modundayken bile belirli hesaplar PayTR'yi (her zaman PayTR test modunda) kullanabilir: `INSERT INTO private.paytr_testers (user_id) VALUES ('<kullanıcı id>');` Silmek için `DELETE FROM private.paytr_testers WHERE user_id = '<kullanıcı id>';`
 
 **İadeler:** Yönetim → İadeler ekranında PayTR ile alınmış bir ödemenin iadesini onayladığınızda tutar PayTR üzerinden karta gönderilir. PayTR iadeyi mağaza bakiyenizden yapar; bakiye yetersizse (hata 010) iade reddedilir ve ekranda PayTR'nin mesajı görünür. Aynı iade iki kez gönderilmez.
 

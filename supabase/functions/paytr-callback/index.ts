@@ -64,6 +64,9 @@ Deno.serve(async (req: Request) => {
   const paymentAmount = field('payment_amount');
   const amountKurus = Number(/^\d+$/.test(paymentAmount) ? paymentAmount : totalAmount);
   const reason = [field('failed_reason_code'), field('failed_reason_msg')].filter(Boolean).join(' - ');
+  // PayTR marks test transactions (store in test mode, or test_mode=1) with test_mode=1. Not part of the hash,
+  // so it is only ever used to downgrade a payment to a test payment, never to upgrade one.
+  const paytrTest = field('test_mode') === '1';
 
   const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
   const { data, error } = await admin.rpc('paytr_apply_callback', {
@@ -71,6 +74,7 @@ Deno.serve(async (req: Request) => {
     p_success: status === 'success',
     p_amount_kurus: amountKurus,
     p_reason: reason,
+    p_test: paytrTest,
   });
   if (error) {
     console.error('paytr-callback: apply failed', merchantOid, error);

@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabase';
 import type { Appointment } from '@/lib/types';
 
 // Card details are not selected: no owner screen shows them (KVKK data minimisation).
-const OWNER_APPT_COLUMNS = '*, payments(id, status, amount, provider_payment_id)';
+const OWNER_APPT_COLUMNS = '*, payments(id, status, amount, provider_payment_id, payment_type)';
 
 type CustomerContact = {
   customer_id: string;

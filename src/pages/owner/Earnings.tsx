@@ -22,7 +22,7 @@ export default function Earnings() {
     const [records, payments, payout, settings] = await Promise.all([
       supabase.from('commission_records').select('*').eq('business_id', business.id).order('created_at', { ascending: false }),
       // Card brand/last 4 are not needed here, so they are not read (KVKK data minimisation).
-      supabase.from('payments').select('id, appointment_id, amount, status, refunded_amount, provider_payment_id, created_at').eq('business_id', business.id).order('created_at', { ascending: false }),
+      supabase.from('payments').select('id, appointment_id, amount, status, refunded_amount, provider_payment_id, payment_type, created_at').eq('business_id', business.id).order('created_at', { ascending: false }),
       supabase.from('business_payout_accounts').select('*').eq('business_id', business.id).maybeSingle(),
       // Only used to label test payments; the page still works if it cannot be read.
       supabase.from('platform_settings').select('payment_mode').eq('id', 1).maybeSingle(),
@@ -41,12 +41,13 @@ export default function Earnings() {
     const commission = records.reduce((s, r) => s + Number(r.commission_amount), 0);
     const owed = records.filter((r) => r.status !== 'paid').reduce((s, r) => s + Number(r.commission_amount), 0);
     // Zero-deposit bookings get a ₺0 'paid' row; no deposit existed, so they are not counted as test deposits.
-    const captured = payments.filter((p) => ['paid', 'refund_pending', 'refunded'].includes(p.status) && Number(p.amount) > 0);
+    // An overpayment (a second payment for a paid booking) is always refunded to the customer: not the business's money.
+    const captured = payments.filter((p) => p.payment_type !== 'overpayment' && ['paid', 'refund_pending', 'refunded'].includes(p.status) && Number(p.amount) > 0);
     // Test payments never charged a card, so they are kept out of the collected totals.
     const realPayments = captured.filter((p) => !isTestPayment(p, data?.paymentMode));
     const testPayments = captured.filter((p) => isTestPayment(p, data?.paymentMode));
     const deposits = realPayments.reduce((s, p) => s + Number(p.amount), 0);
-    const refunded = payments.filter((p) => !isTestPayment(p, data?.paymentMode)).reduce((s, p) => s + Number(p.refunded_amount ?? 0), 0);
+    const refunded = payments.filter((p) => p.payment_type !== 'overpayment' && !isTestPayment(p, data?.paymentMode)).reduce((s, p) => s + Number(p.refunded_amount ?? 0), 0);
     const testTotal = testPayments.reduce((s, p) => s + Number(p.amount), 0);
 
     // Month buckets follow İstanbul time, matching invoices and the rest of the app.

@@ -112,7 +112,7 @@ Kaporalar **PayTR iFrame API** ile alınır. Müşteri kart bilgisini PayTR'nin 
 **Kurulu olanlar (Supabase'e yüklendi):**
 - Edge Function'lar: `paytr-token` (ödeme sayfası), `paytr-callback` (PayTR Bildirim URL), `paytr-status` (PayTR durum sorgusu ile yedek kontrol), `paytr-refund` (admin iadesi PayTR'ye gider).
 - Gizli anahtarlar Supabase → Edge Functions → Secrets altında: `PAYTR_MERCHANT_ID`, `PAYTR_MERCHANT_KEY`, `PAYTR_MERCHANT_SALT`. Kodda veya GitHub'da **yoktur**.
-- Veritabanı: `supabase/migrations/20261120120000_paytr_iframe_payments.sql`, `20261120140000_paytr_refunds_reconcile_admin_mode.sql`, `20261120150000_paytr_testers.sql`, `20261120160000_paytr_review_fixes.sql`.
+- Veritabanı: `supabase/migrations/20261120120000_paytr_iframe_payments.sql`, `20261120140000_paytr_refunds_reconcile_admin_mode.sql`, `20261120150000_paytr_testers.sql`, `20261120160000_paytr_review_fixes.sql`, `20261120170000_paytr_security_fixes.sql`.
 - Site: ödeme sayfası (sitede iframe, uygulamada uygulama içi tarayıcı), admin **Ayarlar → Ödeme altyapısı** ile mod değiştirme, admin **İadeler** ekranında PayTR iadesi.
 
 **Ödeme modları (Yönetim → Ayarlar → Ödeme altyapısı):**

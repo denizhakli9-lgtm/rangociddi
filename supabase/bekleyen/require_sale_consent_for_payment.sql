@@ -34,7 +34,7 @@ DO $$
 BEGIN
   IF to_regclass('public.sale_consents') IS NULL
      OR to_regprocedure('public.record_sale_consent(uuid,text,text,text)') IS NULL THEN
-    RAISE EXCEPTION 'Önce 1. adım (record_sale_consent) uygulanmalı';
+    RAISE EXCEPTION 'Önce 1. adım ve 1b (record_sale_consent, 4 parametre) uygulanmalı';
   END IF;
   IF to_regclass('private.paytr_orders') IS NULL THEN
     RAISE EXCEPTION 'private.paytr_orders bulunamadı: önce PayTR güncellemeleri uygulanmalı';

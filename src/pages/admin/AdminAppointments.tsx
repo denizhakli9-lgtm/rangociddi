@@ -14,6 +14,7 @@ import { EmptyState, ErrorState, SkeletonList } from '@/components/ui/Feedback';
 import { PageHeader } from '@/components/layout/PageHeader';
 import type { Appointment, AppointmentStatus } from '@/lib/types';
 import { isTestPayment } from '@/pages/owner/ownerApi';
+import { depositPayment } from '@/lib/demo';
 
 const STATUSES = Object.keys(tr.appointmentStatus) as AppointmentStatus[];
 const ACTIVE = ['pending_payment', 'pending_approval', 'confirmed'];
@@ -29,7 +30,7 @@ export default function AdminAppointments() {
   const { data, loading, error, reload } = useAsync(async () => {
     const { data: rows, error: err } = await supabase
       .from('appointments')
-      .select('*, businesses(id, name, slug, cover_url, address, district, city, latitude, longitude, cancellation_hours, phone), profiles(full_name, phone, email), payments(id, status, amount, card_last4, provider_payment_id)')
+      .select('*, businesses(id, name, slug, cover_url, address, district, city, latitude, longitude, cancellation_hours, phone), profiles(full_name, phone, email), payments(id, status, amount, card_last4, provider_payment_id, payment_type)')
       .order('starts_at', { ascending: false })
       .limit(500);
     if (err) throw err;
@@ -118,10 +119,10 @@ export default function AdminAppointments() {
                   </td>
                   <td className="space-y-1 px-4 py-3">
                     <AppointmentStatusBadge status={a.status} />
-                    {a.payments?.[0] && (
+                    {depositPayment(a.payments) && (
                       <div className="flex flex-wrap gap-1">
-                        <PaymentStatusBadge status={a.payments[0].status} />
-                        {isTestPayment(a.payments[0]) && <TestBadge />}
+                        <PaymentStatusBadge status={depositPayment(a.payments)!.status} />
+                        {isTestPayment(depositPayment(a.payments)) && <TestBadge />}
                       </div>
                     )}
                   </td>

@@ -42,9 +42,16 @@ export function CancelModal({ appt, onClose, onDone, settings }: ModalProps & { 
 
   const submit = async () => {
     setBusy(true);
-    const { data, error } = await supabase.rpc('cancel_appointment', { p_appointment: appt.id, p_reason: reason.trim() });
+    // An unpaid hold is released with release_pending_hold, which never cancels a booking PayTR confirmed meanwhile.
+    const { data, error } = appt.status === 'pending_payment'
+      ? await supabase.rpc('release_pending_hold', { p_appointment: appt.id })
+      : await supabase.rpc('cancel_appointment', { p_appointment: appt.id, p_reason: reason.trim() });
     setBusy(false);
-    if (error) return toast(friendlyError(error), 'error');
+    if (error) {
+      toast(/VEYRA_ALREADY_PAID/.test(error.message ?? '') ? tx('Ödemeniz alınmış ve randevunuz kesinleşmiş; sayfayı yenileyip yeniden deneyin.', 'Your payment went through and the booking is confirmed; refresh and try again.') : friendlyError(error), 'error');
+      onDone();
+      return;
+    }
     toast(data === 'refund' && !testPayment ? tx('Randevu iptal edildi. Kapora iadeniz başlatıldı.', 'Booking cancelled. Your deposit refund has started.') : tx('Randevu iptal edildi.', 'Booking cancelled.'), 'success');
     onDone();
   };

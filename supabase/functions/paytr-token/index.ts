@@ -84,6 +84,27 @@ Deno.serve(async (req: Request) => {
     if (!userIp) return reply({ error: 'VEYRA_PAYMENT_PROVIDER' }, 400);
 
     const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+
+    // Before a new payment page: ask PayTR whether an earlier attempt of this booking was already paid
+    // (its notification may still be on the way), so the customer is never charged twice.
+    const { data: earlier } = await admin.rpc('paytr_orders_to_check', { p_user: auth.user.id, p_appointment: appointment });
+    for (const prev of (earlier ?? []) as { merchant_oid: string; amount_kurus: number }[]) {
+      const statusToken = await hmacBase64(merchantKey, merchantId + prev.merchant_oid + merchantSalt);
+      const statusResponse = await fetch('https://www.paytr.com/odeme/durum-sorgu', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ merchant_id: merchantId, merchant_oid: prev.merchant_oid, paytr_token: statusToken }),
+        signal: AbortSignal.timeout(15000),
+      }).catch(() => null);
+      const status = await statusResponse?.json().catch(() => null) as { status?: string; test_mode?: unknown } | null;
+      if (status?.status !== 'success') continue;
+      const { data: applied } = await admin.rpc('paytr_apply_callback', {
+        p_oid: prev.merchant_oid, p_success: true, p_amount_kurus: prev.amount_kurus, p_reason: 'durum-sorgu',
+        p_test: String(status.test_mode ?? '') === '1',
+      });
+      if (applied === 'paid' || applied === 'duplicate') return reply({ error: 'VEYRA_ALREADY_PAID' }, 409);
+    }
+
     const merchantOid = newMerchantOid();
     const { data: order, error: orderError } = await admin.rpc('paytr_begin_order', {
       p_user: auth.user.id, p_appointment: appointment, p_oid: merchantOid,

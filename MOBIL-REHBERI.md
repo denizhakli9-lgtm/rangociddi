@@ -30,7 +30,7 @@ npm install
 Bu komut Capacitor paketlerini yükler ve `package-lock.json` dosyasını günceller.
 **Güncellenen `package-lock.json` dosyasını GitHub'a da gönder.** Yoksa Hostinger'daki site derlemesi hata verebilir.
 
-`.env` dosyası sitedekiyle aynı olmalı (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`).
+`.env` dosyası sitedekiyle aynı olmalı (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`). `.env` yoksa `vite.config.ts` içindeki varsayılan değerler kullanılır.
 İstersen `VITE_SITE_URL=https://rango.com.tr` de ekleyebilirsin. Eklemezsen bu adres zaten varsayılan.
 
 Sonra telefon projelerini oluştur:

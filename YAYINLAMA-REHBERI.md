@@ -14,8 +14,16 @@ Aşağıdaki adımları **sırayla** uygulayın.
    - Derleme komutu: `npm run build`
    - Çıktı klasörü: `dist`
    - Node sürümü: **22.x** (en az 20.19)
+   - Kök dizin (Root directory): **boş** ya da `/` (depo kökü). Bu alan yalnızca uygulama oluşturulurken (içe aktarılırken) seçilebilir.
+
+   > **Git ile dağıtım notu:** Kök dizin `.bolt` olarak kalırsa `.bolt/package.json` köprüsü devreye girer: Hostinger derlemeyi `.bolt` içinde başlattığında asıl projeyi depo kökünde kurup derler ve çıktıyı `.bolt/dist` klasörüne koyar. Kalıcı çözüm, uygulamayı kök dizin boş (ya da `/`) olacak şekilde GitHub'dan yeniden içe aktarmaktır.
+   >
+   > - Supabase ayarları şu sırayla okunur: `.env` dosyası ya da `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` ortam değişkenleri → Hostinger'ın "Veritabanı bağla → Supabase" sihirbazının yazdığı `SUPABASE_URL` + `SUPABASE_ANON_KEY` → `vite.config.ts` içindeki varsayılan (herkese açık) değerler. Adres ve anahtar her zaman birlikte verilmelidir; gizli (`service_role` / `sb_secret_`) anahtar verilirse derleme durur.
+   > - Varsayılan anahtar Supabase'in eski (legacy) anon anahtarıdır ve Supabase'e göre 2026 sonunda çalışmayı bırakır. Yeni `sb_publishable_` anahtarına geçerken Bolt'taki `.env` dosyasını ve `vite.config.ts` içindeki varsayılanı birlikte güncelleyin.
+   > - Köprü kullanılırken Hostinger'ın güvenlik taraması yalnızca bağımlılığı olmayan `.bolt` klasörünü görür. Gerçek bağımlılıkların `npm audit` özeti derleme günlüğünün sonunda yer alır.
+
 4. Dağıtımdan sonra kontrol edin:
-   - Güvenlik taraması (Vulnerabilities) **0 açık** göstermeli.
+   - Güvenlik taraması (Vulnerabilities) **0 açık** göstermeli (köprü kullanılıyorsa derleme günlüğündeki `npm audit` özetine bakın).
    - `https://rango.com.tr/kesfet` sayfasını açıp **yenileyin**; 404 vermemeli.
    - `https://rango.com.tr/yasal/aydinlatma-metni` açılmalı.
 

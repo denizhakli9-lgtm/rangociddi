@@ -1,0 +1,13 @@
+{
+  "name": "rango-hostinger-build",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Hostinger köprüsü: kök dizin .bolt olarak ayarlıyken asıl projeyi depo kökünden derler ve çıktıyı .bolt/dist klasörüne koyar.",
+  "type": "module",
+  "scripts": {
+    "build": "node hostinger-build.mjs"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  }
+}

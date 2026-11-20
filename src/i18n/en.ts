@@ -94,6 +94,7 @@ export const en: Dictionary = {
     VEYRA_INVALID_STATE: 'The booking’s current status does not allow this.',
     VEYRA_PAYMENT_EXPIRED: 'The payment time ran out. Please make the booking again.',
     VEYRA_PROVIDER_REQUIRED: 'Online payment is not set up yet.',
+    VEYRA_CONSENT_REQUIRED: 'Please tick the purchase confirmation before paying.',
     VEYRA_RESCHEDULE_LIMIT: 'You have used all reschedules for this booking.',
     VEYRA_POLICY_WINDOW: 'The business’s cancellation/reschedule window has passed, so this is not possible.',
     VEYRA_TOO_EARLY: 'This can only be done once the appointment time has come.',

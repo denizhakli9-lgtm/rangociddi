@@ -118,6 +118,14 @@ Gerçek ödeme almak için:
 2. Sağlayıcının kendi ödeme sayfası entegre edilmeli.
 3. Ödeme onayı yalnızca sunucu tarafındaki geri bildirimle (webhook) verilmeli.
 
+### Satış onayı (PayTR sözleşmesi md. 7.2, 6.4, 10.3)
+
+- Ödeme ekranında müşteri **satış onayı** kutusunu işaretlemeden ödeme yapılamaz.
+- Onay, sözleşme sürümü ve tutarlarla birlikte `sale_consents` tablosuna kaydedilir; `pay_deposit` onay kaydı olmadan ödemeyi kabul etmez.
+- Sözleşme metni: `/yasal/satis-sozlesmesi`. Metin değişirse `src/lib/legal.ts` içindeki `LEGAL_VERSIONS.sale` güncellenmeli.
+- Site altbilgisinde ve ödeme ekranında PayTR cümlesi ve paytr.com bağlantısı gösterilir.
+- **Önemli:** `supabase/migrations/20261120120000_record_sale_consent.sql` veritabanına, yeni site sürümü yayınlanmadan **önce** uygulanmalı. Aksi halde test ödemeleri "satış onayı" adımında hata verir.
+
 Bu ayrı bir geliştirme işidir.
 
 ---

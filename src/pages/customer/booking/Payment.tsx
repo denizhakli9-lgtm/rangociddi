@@ -9,7 +9,7 @@ import { formatDateTime, formatDuration, formatTRY } from '@/lib/format';
 import { fullAddress } from '@/lib/maps';
 import { businessCover } from '@/lib/placeholderImages';
 import { PlaceholderTag } from '@/components/ui/PlaceholderTag';
-import { COMPANY, legalPath } from '@/lib/legal';
+import { COMPANY, LEGAL_VERSIONS, PAYMENT_PROVIDER, SALE_CONSENT_TEXT, SALE_CONSENT_TEXT_EN, legalPath } from '@/lib/legal';
 import { useToast } from '@/contexts/ToastContext';
 import { Input } from '@/components/ui/Field';
 import { Button } from '@/components/ui/Button';
@@ -31,6 +31,46 @@ const TEST_CARD = { name: 'TEST KULLANICI', number: '4242 4242 4242 4242', expir
 const LIVE_CHECKOUT_READY = false;
 
 const linkCls = 'text-gold-400 underline-offset-2 hover:underline';
+
+/**
+ * Satış onayı (PAYTR Çerçeve Ödeme Hizmeti Sözleşmesi md. 7.2): the customer confirms the purchase
+ * before paying, and the confirmation is recorded server-side (record_sale_consent) with the terms
+ * version and amounts. pay_deposit refuses to complete a payment without it.
+ */
+function SaleConsent({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div className="rounded-xl border border-line bg-coal px-4 py-3">
+      <label className="flex cursor-pointer items-start gap-3 text-xs leading-relaxed text-mist">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+          aria-describedby="on-bilgilendirme satis-onayi-belgeler"
+          className="mt-0.5 h-4 w-4 shrink-0 accent-[#D4AF37]"
+        />
+        <span>
+          <span className="font-semibold text-white">{tx('Satış onayı: ', 'Purchase confirmation: ')}</span>
+          {tx(SALE_CONSENT_TEXT, SALE_CONSENT_TEXT_EN)}
+        </span>
+      </label>
+      <p id="satis-onayi-belgeler" className="mt-2 pl-7 text-xs text-mist-2">
+        <Link to={legalPath('satis-sozlesmesi')} target="_blank" rel="noopener" className={linkCls}>{tx('Mesafeli Hizmet Satış Sözleşmesi', 'Distance Service Sales Agreement')}</Link> ·{' '}
+        <Link to={legalPath('iptal-iade')} target="_blank" rel="noopener" className={linkCls}>{tx('İptal ve İade Koşulları', 'Cancellation & Refund Policy')}</Link> ·{' '}
+        <Link to={legalPath('aydinlatma-metni')} target="_blank" rel="noopener" className={linkCls}>{tx('KVKK Aydınlatma Metni', 'Privacy Notice')}</Link>
+      </p>
+    </div>
+  );
+}
+
+/** PAYTR sözleşmesi md. 10.3: the provider sentence and a link to its website. */
+function ProviderNotice() {
+  return (
+    <p className="text-center text-xs leading-relaxed text-mist-2">
+      {PAYMENT_PROVIDER.disclosure}{' '}
+      <a href={PAYMENT_PROVIDER.website} target="_blank" rel="noopener noreferrer" className={linkCls}>{PAYMENT_PROVIDER.website.replace('https://', '')}</a>
+    </p>
+  );
+}
 
 function InfoRow({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -61,6 +101,9 @@ function PreContractInfo({ appt, address, testMode, policyHours }: { appt: Appoi
           {COMPANY.legalName}
           <span className="block text-xs"><Link to={legalPath('kunye')} className={linkCls}>{tx('Künye ve iletişim bilgileri', 'Company and contact details')}</Link></span>
         </InfoRow>
+        <InfoRow label={tx('Ödeme kuruluşu', 'Payment institution')}>
+          {testMode ? tx('Test modu: ödeme kuruluşuna işlem gönderilmez.', 'Test mode: nothing is sent to the payment institution.') : PAYMENT_PROVIDER.name}
+        </InfoRow>
         <InfoRow label={tx('Hizmet', 'Service')}>{appt.service_name} · {formatDuration(appt.duration_minutes)} · {appt.employee_name}</InfoRow>
         <InfoRow label={tx('Tarih ve saat', 'Date and time')}>{formatDateTime(appt.starts_at)}</InfoRow>
         <InfoRow label={tx('Toplam hizmet bedeli', 'Total service price')}>{formatTRY(appt.total_price)}</InfoRow>
@@ -72,7 +115,8 @@ function PreContractInfo({ appt, address, testMode, policyHours }: { appt: Appoi
         </InfoRow>
       </dl>
       <p className="mt-4 text-xs text-mist">
-        {tx('Ayrıntılı bilgi:', 'Details:')} <Link to={legalPath('iptal-iade')} className={linkCls}>{tx('İptal ve İade Koşulları', 'Cancellation & Refund Policy')}</Link> ·{' '}
+        {tx('Ayrıntılı bilgi:', 'Details:')} <Link to={legalPath('satis-sozlesmesi')} className={linkCls}>{tx('Mesafeli Hizmet Satış Sözleşmesi', 'Distance Service Sales Agreement')}</Link> ·{' '}
+        <Link to={legalPath('iptal-iade')} className={linkCls}>{tx('İptal ve İade Koşulları', 'Cancellation & Refund Policy')}</Link> ·{' '}
         <Link to={legalPath('kullanim-kosullari')} className={linkCls}>{tx('Kullanım Koşulları', 'Terms of Use')}</Link>
       </p>
     </section>
@@ -94,7 +138,7 @@ export default function Payment() {
 
   const [paying, setPaying] = useState(false);
   const [releasing, setReleasing] = useState(false);
-  const [preInfoAccepted, setPreInfoAccepted] = useState(false);
+  const [saleAccepted, setSaleAccepted] = useState(false);
   const [remaining, setRemaining] = useState<number | null>(null);
 
   useEffect(() => {
@@ -123,7 +167,18 @@ export default function Payment() {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!testMode || paying) return;
+    if (!saleAccepted) {
+      toast(tx('Ödemeye geçmeden önce satış onayını işaretleyin.', 'Please tick the purchase confirmation before paying.'), 'error');
+      return;
+    }
     setPaying(true);
+    const { error: consentErr } = await supabase.rpc('record_sale_consent', { p_appointment: appt.id, p_version: LEGAL_VERSIONS.sale });
+    if (consentErr) {
+      setPaying(false);
+      toast(friendlyError(consentErr), 'error');
+      if (/VEYRA_(INVALID_STATE|NOT_FOUND)/.test(consentErr.message ?? '')) reload();
+      return;
+    }
     const { error: err } = await supabase.rpc('pay_deposit', {
       p_appointment: appt.id,
       p_card_last4: TEST_CARD.number.replace(/\D/g, '').slice(-4),
@@ -197,7 +252,8 @@ export default function Payment() {
               <Input label={tx('Son kullanma (test)', 'Expiry (test)')} id="test-odeme-tarih" autoComplete="off" readOnly value={TEST_CARD.expiry} />
               <Input label="CVC (test)" id="test-odeme-kod" autoComplete="off" readOnly value={TEST_CARD.cvc} />
             </div>
-            <Button type="submit" full size="lg" loading={paying} icon={<Lock className="h-4 w-4" />}>
+            <SaleConsent checked={saleAccepted} onChange={setSaleAccepted} />
+            <Button type="submit" full size="lg" loading={paying} disabled={!saleAccepted} icon={<Lock className="h-4 w-4" />}>
               {tx('Test ödemesini tamamla', 'Complete test payment')}
             </Button>
             <p className="text-center text-xs text-mist-2">{tx('Kartınızdan ücret çekilmez ve hiçbir ödeme kuruluşuna kart bilgisi gönderilmez.', 'Nothing is charged and no card details are sent to any payment provider.')}</p>
@@ -207,19 +263,12 @@ export default function Payment() {
             <p className="rounded-xl border border-info-500/30 bg-info-900/40 px-4 py-3 text-sm leading-relaxed text-info-300">
               {tx('Online kapora ödemesi henüz aktif değil. Ödeme altyapısı devreye alındığında bu adımda lisanslı ödeme kuruluşunun güvenli ödeme sayfasına yönlendirileceksiniz. Şimdilik ayrılan saati serbest bırakıp daha sonra yeniden randevu oluşturabilirsiniz.', 'Online deposit payment is not active yet. Once it is, this step will take you to the secure page of a licensed payment provider. For now you can release the held time and book again later.')}
             </p>
-            <label className="flex cursor-pointer items-start gap-3 text-xs text-mist">
-              <input
-                type="checkbox"
-                checked={preInfoAccepted}
-                onChange={(e) => setPreInfoAccepted(e.target.checked)}
-                aria-describedby="on-bilgilendirme"
-                className="mt-0.5 h-4 w-4 shrink-0 accent-[#D4AF37]"
-              />
-              <span>{tx('Ön bilgilendirme bilgilerini okudum, onaylıyorum.', 'I have read and accept the pre-contract information.')}</span>
-            </label>
-            <Button type="button" full size="lg" disabled={!preInfoAccepted || !LIVE_CHECKOUT_READY} icon={<Lock className="h-4 w-4" />}>
+            <SaleConsent checked={saleAccepted} onChange={setSaleAccepted} />
+            {/* When LIVE_CHECKOUT_READY: call record_sale_consent first, then open the PAYTR payment page. */}
+            <Button type="button" full size="lg" disabled={!saleAccepted || !LIVE_CHECKOUT_READY} icon={<Lock className="h-4 w-4" />}>
               {tx('Kaporayı öde', 'Pay deposit')}
             </Button>
+            <ProviderNotice />
             <Button full size="lg" variant="outline" loading={releasing} onClick={releaseHold}>{tx('Ayrılan saati serbest bırak', 'Release the held time')}</Button>
           </div>
         )}

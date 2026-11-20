@@ -1,4 +1,6 @@
-import { COMPANY, LEGAL_UPDATED_AT, filled, type LegalSlug } from '@/lib/legal';
+import { COMPANY, LEGAL_UPDATED_AT, LEGAL_VERSIONS, PAYMENT_PROVIDER, SALE_CONSENT_TEXT, filled, type LegalSlug } from '@/lib/legal';
+
+const PAYTR_PAGE = `${PAYMENT_PROVIDER.shortName}’nin güvenli ödeme sayfasında (${PAYMENT_PROVIDER.website.replace('https://', '')})`;
 
 export type LegalBlock =
   | { kind: 'p'; text: string }
@@ -275,6 +277,92 @@ const cerez: LegalDocument = {
   ],
 };
 
+const satis: LegalDocument = {
+  slug: 'satis-sozlesmesi',
+  eyebrow: 'Sözleşme',
+  title: 'Mesafeli Hizmet Satış Sözleşmesi ve Satış Onayı',
+  summary: `Kapora ödemeli randevularda müşteri, hizmet sağlayıcı işletme ve ${COMPANY.brand} arasındaki satış koşulları. Sürüm: ${LEGAL_VERSIONS.sale}.`,
+  sections: [
+    {
+      title: '1. Taraflar',
+      blocks: [
+        ul(
+          'Hizmet Sağlayıcı: Ödeme ekranındaki ön bilgilendirmede adı ve adresi gösterilen, randevu alınan hizmeti sunan işletme.',
+          `Aracı Hizmet Sağlayıcı: ${controller}. ${COMPANY.brand}, 6563 sayılı Kanun kapsamında aracı hizmet sağlayıcıdır; randevu ve kapora tahsilatına aracılık eder. Adres: ${COMPANY.address}, e-posta: ${COMPANY.email}.`,
+          'Alıcı: Platform üzerinden randevu oluşturan ve kaporayı ödeyen kullanıcı (“Müşteri”).',
+          `Ödeme Kuruluşu: Ödemeler, 6493 sayılı Kanun kapsamında lisanslı ${PAYMENT_PROVIDER.name} (“${PAYMENT_PROVIDER.shortName}”) altyapısıyla alınır. ${PAYMENT_PROVIDER.shortName} bu sözleşmenin tarafı değildir; yalnızca ödeme hizmeti sağlar.`,
+        ),
+      ],
+    },
+    {
+      title: '2. Sözleşmenin konusu',
+      blocks: [
+        p('Bu sözleşmenin konusu, Müşteri’nin platform üzerinden seçtiği hizmet için belirlenen tarih ve saatte randevu ayrılması ve bunun karşılığında kapora ödenmesidir. Hizmetin kendisi Hizmet Sağlayıcı tarafından, işletme adresinde sunulur; hizmetin kalitesi, içeriği, ifası ve yasal belgelerinin (fatura vb.) düzenlenmesinden Hizmet Sağlayıcı sorumludur.'),
+      ],
+    },
+    {
+      title: '3. Hizmet, bedel ve kapora',
+      blocks: [
+        ul(
+          'Hizmetin adı, süresi, uzmanı, tarihi ve saati, toplam hizmet bedeli, kapora tutarı, işletmede ödenecek kalan tutar ve ücretsiz iptal süresi, ödeme öncesinde ön bilgilendirmede gösterilir ve bu sözleşmenin ayrılmaz parçasıdır.',
+          'Tüm tutarlar Türk Lirası (₺) cinsindendir ve vergiler dahildir.',
+          `Kapora, Hizmet Sağlayıcı adına ve hesabına ${COMPANY.brand} aracılığıyla ${PAYMENT_PROVIDER.shortName} üzerinden tahsil edilir ve hizmet bedelinden düşülür. Kalan tutar hizmetten sonra doğrudan işletmeye ödenir.`,
+          'Platform test modunda çalıştığı sürece karttan herhangi bir tutar çekilmez ve hizmet bedelinin tamamı işletmede ödenir; ödeme ekranında bu durum açıkça belirtilir.',
+        ),
+      ],
+    },
+    {
+      title: '4. Ödeme ve kart bilgilerinin güvenliği',
+      blocks: [
+        ul(
+          `Kart ile ödeme, ${PAYTR_PAGE} gerçekleştirilir. Kart numarası, son kullanma tarihi, CVV/CVC ve 3D Secure şifresi gibi bilgiler ${COMPANY.brand} veya Hizmet Sağlayıcı tarafından görülmez, işlenmez ve saklanmaz.`,
+          `${COMPANY.brand} yalnızca ödeme sonucunu, ${PAYMENT_PROVIDER.shortName} işlem numarasını, kart markasını ve kartın son 4 hanesini kaydeder.`,
+          'Ödeme, kartı çıkaran bankanın 3D Secure doğrulaması ve onayıyla tamamlanır. Banka veya ödeme kuruluşunca onaylanmayan işlemlerde randevu kesinleşmez ve ayrılan saat süre sonunda serbest kalır.',
+          'Kartın yetkisiz kullanımı halinde Müşteri, kartı çıkaran bankaya başvurma hakkına sahiptir.',
+        ),
+      ],
+    },
+    {
+      title: '5. Satış onayı ve kaydı',
+      blocks: [
+        p('Müşteri, ödeme ekranında aşağıdaki satış onayını işaretleyerek bu sözleşmeyi elektronik ortamda kabul eder:'),
+        p(`“${SALE_CONSENT_TEXT}”`),
+        p(`Satış onayı; onay tarihi ve saati, kabul edilen sözleşme sürümü, randevu ve tutar bilgileriyle birlikte ${COMPANY.brand} sistemlerinde kaydedilir ve işlem tarihinden itibaren 10 yıl saklanır. Onay kaydı olmadan ödeme tamamlanmaz. Bu kayıt; harcama itirazı, iade talebi veya yetkili kurumların talebi halinde ${PAYMENT_PROVIDER.shortName}’ye, ilgili bankaya veya yetkili kurumlara sunulabilir.`),
+      ],
+    },
+    {
+      title: '6. İptal, cayma ve iade',
+      blocks: [
+        ul(
+          'Randevunun iptali, ertelenmesi ve kapora iadesi “İptal ve İade Koşulları” sayfasında ve ön bilgilendirmede gösterilen ücretsiz iptal süresine göre yapılır.',
+          'Mesafeli Sözleşmeler Yönetmeliği kapsamındaki cayma hakkına ilişkin hükümler ve istisnalar saklıdır.',
+          `İadeler, ödemede kullanılan karta ${PAYMENT_PROVIDER.shortName} aracılığıyla yapılır; tutarın kart hesabına yansıma süresi bankaya bağlıdır (genellikle 2–10 iş günü). Nakit iade yapılmaz.`,
+          'Hizmet Sağlayıcı’nın randevuyu reddetmesi, onaylamadan zaman aşımına uğraması veya iptal etmesi halinde kapora tamamen iade edilir.',
+        ),
+      ],
+    },
+    {
+      title: '7. Harcama itirazı',
+      blocks: [
+        p(`Müşteri, kartı çıkaran bankaya harcama itirazında bulunma hakkına sahiptir. İtiraz halinde ${COMPANY.brand} ve Hizmet Sağlayıcı; satış onayı kaydını, randevu, iptal ve hizmet kayıtlarını ${PAYMENT_PROVIDER.shortName} ve bankaya sunabilir. İtiraz sonuçlanana kadar ilgili tutar ödeme kuruluşu tarafından bloke edilebilir. Gerçek dışı işlem veya kartın başkası tarafından izinsiz kullanımı şüphesinde işlem durdurulabilir ve yetkili mercilere bildirilebilir.`),
+      ],
+    },
+    {
+      title: '8. Kişisel veriler',
+      blocks: [
+        p(`Ödemenin alınması ve sahtecilik önleme için gereken işlem bilgileri (ad soyad, e-posta, telefon, tutar, sipariş numarası) ${PAYMENT_PROVIDER.shortName} ile paylaşılır. Ayrıntılar KVKK Aydınlatma Metni’nde yer alır.`),
+      ],
+    },
+    {
+      title: '9. Yürürlük ve uyuşmazlıklar',
+      blocks: [
+        p('Bu sözleşme, Müşteri’nin ödeme ekranında satış onayını vermesiyle kurulur ve kaporanın ödenmesiyle yürürlüğe girer. Sözleşmenin bir örneği bu sayfada her zaman erişilebilir durumdadır; randevu bilgileri Randevularım sayfasında saklanır.'),
+        p('Bu sözleşme Türk hukukuna tabidir. Uyuşmazlıklarda, Ticaret Bakanlığınca her yıl ilan edilen parasal sınırlar dahilinde Müşteri’nin veya hizmetin yerleşim yerindeki Tüketici Hakem Heyetleri, bu sınırları aşan uyuşmazlıklarda Tüketici Mahkemeleri yetkilidir.'),
+      ],
+    },
+  ],
+};
+
 const iade: LegalDocument = {
   slug: 'iptal-iade',
   eyebrow: 'Ödeme',
@@ -395,6 +483,7 @@ export const LEGAL_DOCUMENTS: Record<LegalSlug, LegalDocument> = {
   'aydinlatma-metni': aydinlatma,
   'kullanim-kosullari': kosullar,
   'cerez-politikasi': cerez,
+  'satis-sozlesmesi': satis,
   'iptal-iade': iade,
   'kvkk-basvuru': basvuru,
   kunye,

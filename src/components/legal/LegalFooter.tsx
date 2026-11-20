@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { COMPANY, LEGAL_LINKS, isPlaceholder, legalPath } from '@/lib/legal';
+import { COMPANY, LEGAL_LINKS, PAYMENT_PROVIDER, isPlaceholder, legalPath } from '@/lib/legal';
 import { tx } from '@/i18n/locale';
 
 export function LegalFooter({ className = '' }: { className?: string }) {
@@ -14,7 +14,14 @@ export function LegalFooter({ className = '' }: { className?: string }) {
           </Link>
         ))}
       </nav>
-      <p className="mt-4 text-mist-3">© {year} {owner}. {tx('Tüm hakları saklıdır.', 'All rights reserved.')}</p>
+      {/* PAYTR Çerçeve Ödeme Hizmeti Sözleşmesi md. 10.3: provider sentence and a link to its website. */}
+      <p className="mt-4 leading-relaxed">
+        {PAYMENT_PROVIDER.disclosure}{' '}
+        <a href={PAYMENT_PROVIDER.website} target="_blank" rel="noopener noreferrer" className="underline-offset-2 transition hover:text-white hover:underline">
+          {PAYMENT_PROVIDER.website.replace('https://', '')}
+        </a>
+      </p>
+      <p className="mt-2 text-mist-3">© {year} {owner}. {tx('Tüm hakları saklıdır.', 'All rights reserved.')}</p>
     </footer>
   );
 }

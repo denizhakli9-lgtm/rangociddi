@@ -92,6 +92,7 @@ export const tr = {
     VEYRA_INVALID_STATE: 'Randevunun mevcut durumu bu işleme izin vermiyor.',
     VEYRA_PAYMENT_EXPIRED: 'Ödeme süresi doldu. Lütfen randevuyu yeniden oluşturun.',
     VEYRA_PROVIDER_REQUIRED: 'Ödeme sağlayıcısı henüz yapılandırılmadı.',
+    VEYRA_CONSENT_REQUIRED: 'Ödemeye geçmeden önce satış onayını işaretleyin.',
     VEYRA_RESCHEDULE_LIMIT: 'Bu randevu için erteleme hakkınız doldu.',
     VEYRA_POLICY_WINDOW: 'İşletmenin iptal/erteleme süresi geçtiği için bu işlem yapılamaz.',
     VEYRA_TOO_EARLY: 'Randevu saati gelmeden bu işlem yapılamaz.',

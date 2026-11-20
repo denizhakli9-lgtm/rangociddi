@@ -77,10 +77,12 @@ Deno.serve(async (req: Request) => {
     const { data: auth, error: authError } = await client.auth.getUser();
     if (authError || !auth.user || auth.user.is_anonymous) return reply({ error: 'VEYRA_AUTH_REQUIRED' }, 401);
 
-    const body = await req.json().catch(() => null) as { appointment?: unknown; platform?: unknown } | null;
+    const body = await req.json().catch(() => null) as { appointment?: unknown; platform?: unknown; lang?: unknown } | null;
     const appointment = typeof body?.appointment === 'string' ? body.appointment : '';
     if (!UUID.test(appointment)) return reply({ error: 'VEYRA_INVALID_INPUT' }, 400);
     const native = body?.platform === 'app';
+    // PayTR's payment and 3-D Secure pages exist in Turkish and English.
+    const lang = body?.lang === 'en' ? 'en' : 'tr';
 
     const userIp = clientIp(req);
     if (!userIp) return reply({ error: 'VEYRA_PAYMENT_PROVIDER' }, 400);
@@ -165,7 +167,7 @@ Deno.serve(async (req: Request) => {
       timeout_limit: String(timeoutMinutes),
       currency,
       test_mode: testMode,
-      lang: 'tr',
+      lang,
     });
 
     const response = await fetch('https://www.paytr.com/odeme/api/get-token', {

@@ -14,6 +14,7 @@ import { EmptyState, ErrorState, SkeletonList } from '@/components/ui/Feedback';
 import { PageHeader } from '@/components/layout/PageHeader';
 import type { RefundRequest, RefundStatus } from '@/lib/types';
 import { isTestPayment } from '@/pages/owner/ownerApi';
+import { EdgeFunctionError, invokeEdge } from '@/lib/functions';
 
 type Row = RefundRequest & {
   businesses: { name: string } | null;
@@ -23,6 +24,9 @@ type Row = RefundRequest & {
 };
 
 const TONE = { pending: 'warning', approved: 'success', rejected: 'error' } as const;
+
+/** Payments taken through PayTR are refunded through PayTR's İade API (paytr-refund), not only in our records. */
+const isPaytrPayment = (r: Row) => /^(TEST-)?PAYTR-/.test(r.payment?.provider_payment_id ?? '');
 const LABEL: Record<RefundStatus, string> = { pending: 'Bekliyor', approved: 'Onaylandı', rejected: 'Reddedildi' };
 
 export default function AdminRefunds() {
@@ -61,6 +65,27 @@ export default function AdminRefunds() {
   const resolve = async () => {
     if (!open) return;
     setBusy(true);
+    if (open.approve && isPaytrPayment(open.row)) {
+      try {
+        await invokeEdge<{ ok: boolean; test: boolean }>('paytr-refund', { request: open.row.id, note: note.trim() });
+      } catch (err) {
+        setBusy(false);
+        const detail = err instanceof EdgeFunctionError && err.detail ? ` (PayTR: ${err.detail})` : '';
+        toast(friendlyError(err) + detail, 'error');
+        reload();
+        return;
+      }
+      setBusy(false);
+      toast(
+        isTest(open.row)
+          ? 'PayTR test iadesi gönderildi. Test ödemesi olduğu için karttan tahsilat yapılmamıştı.'
+          : 'İade PayTR üzerinden müşterinin kartına gönderildi.',
+        'success',
+      );
+      closeModal();
+      reload();
+      return;
+    }
     const { error: err } = await supabase.rpc('admin_resolve_refund', { p_request: open.row.id, p_approve: open.approve, p_note: note.trim() });
     setBusy(false);
     if (err) return toast(friendlyError(err), 'error');
@@ -81,7 +106,7 @@ export default function AdminRefunds() {
       <PageHeader
         eyebrow="İadeler"
         title="İade talepleri"
-        text="Politika kapsamındaki iptaller ve işletme kaynaklı iptaller otomatik olarak iade talebi oluşturur. Test ödemelerinde karttan tahsilat yapılmadığı için iade yalnızca kayıtta tamamlanır; karta para gönderilmez."
+        text="Politika kapsamındaki iptaller ve işletme kaynaklı iptaller otomatik olarak iade talebi oluşturur. PayTR ile alınan ödemelerde onayladığınız iade PayTR üzerinden karta gönderilir. Test ödemelerinde karttan tahsilat yapılmadığı için karta para gönderilmez."
       />
       <div className="mb-6">
         <Segmented<RefundStatus>
@@ -152,6 +177,11 @@ export default function AdminRefunds() {
         }
       >
         <div className="space-y-4">
+          {open?.approve && isPaytrPayment(open.row) && !isTest(open.row) && (
+            <div className="rounded-xl border border-info-500/30 bg-info-900/40 p-3 text-xs leading-relaxed text-info-300">
+              Onayladığınızda {formatTRY(open.row.amount)} PayTR üzerinden müşterinin kartına iade edilir. Bu işlem geri alınamaz.
+            </div>
+          )}
           {open?.approve && isTest(open.row) && (
             <div className="flex flex-wrap items-center gap-2 rounded-xl border border-warning-500/30 bg-warning-900/40 p-3 text-xs leading-relaxed text-warning-300">
               <TestBadge />

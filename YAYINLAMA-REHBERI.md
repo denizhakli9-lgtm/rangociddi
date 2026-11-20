@@ -105,20 +105,32 @@ Kod tarafındaki uyum ekranları hazır: aydınlatma metni, kullanım koşullar�
 
 ---
 
-## 6. Ödeme – test modu
+## 6. Ödeme – PayTR iFrame API (20 Kasım 2026)
 
-Gerçek ödeme altyapısı (iyzico/PayTR) henüz **yok**. Site test modunda çalışır:
-- Ödeme ekranında büyük bir **TEST** uyarısı görünür.
-- Kart alanları sabit test kartıyla doludur, gerçek kart girilemez.
-- Müşteriye "kartınızdan tahsilat yapılmaz, ücretin tamamı işletmede ödenir" denir.
-- İşletme ve yönetici panelinde test ödemeleri **Test** etiketiyle gösterilir.
+Kaporalar **PayTR iFrame API** ile alınır. Müşteri kart bilgisini PayTR'nin güvenli ödeme sayfasına girer; kart bilgisi Rango'ya hiç gelmez. Ödeme yalnızca PayTR'nin sunucudan sunucuya gönderdiği bildirimle (ya da PayTR durum sorgusuyla) onaylanır.
 
-Gerçek ödeme almak için:
-1. iyzico/PayTR üye işyeri hesabı açılmalı.
-2. Sağlayıcının kendi ödeme sayfası entegre edilmeli.
-3. Ödeme onayı yalnızca sunucu tarafındaki geri bildirimle (webhook) verilmeli.
+**Kurulu olanlar (Supabase'e yüklendi):**
+- Edge Function'lar: `paytr-token` (ödeme sayfası), `paytr-callback` (PayTR Bildirim URL), `paytr-status` (PayTR durum sorgusu ile yedek kontrol), `paytr-refund` (admin iadesi PayTR'ye gider).
+- Gizli anahtarlar Supabase → Edge Functions → Secrets altında: `PAYTR_MERCHANT_ID`, `PAYTR_MERCHANT_KEY`, `PAYTR_MERCHANT_SALT`. Kodda veya GitHub'da **yoktur**.
+- Veritabanı: `supabase/migrations/20261120120000_paytr_iframe_payments.sql` ve `20261120140000_paytr_refunds_reconcile_admin_mode.sql`.
+- Site: ödeme sayfası (sitede iframe, uygulamada uygulama içi tarayıcı), admin **Ayarlar → Ödeme altyapısı** ile mod değiştirme, admin **İadeler** ekranında PayTR iadesi.
 
-Bu ayrı bir geliştirme işidir.
+**Ödeme modları (Yönetim → Ayarlar → Ödeme altyapısı):**
+- **Test (kartsız):** Eski test akışı, hiçbir ödeme kuruluşuna bağlanılmaz.
+- **PayTR test:** Müşteri PayTR sayfasına gider, PayTR test modundadır; test kartı sayfada hazır gelir ("Ödeme Yap" → 3D sayfasında "Gönder"). Gerçek tahsilat yoktur.
+- **PayTR canlı:** Gerçek tahsilat. Yalnızca PayTR mağazanız canlıya alındıktan sonra açın.
+
+**Sizin yapmanız gerekenler (PayTR paneli):**
+1. **Bildirim URL (zorunlu):** PayTR Mağaza Paneli → Destek & Kurulum → Ayarlar → Bildirim URL:
+   `https://ocgqkdhrmjesrbksnrlh.supabase.co/functions/v1/paytr-callback`
+   Bu girilmezse PayTR ödemeyi "Devam Ediyor" olarak bekletir: para mağaza hesabınıza aktarılmaz ve iade yapılamaz (PayTR hata 007).
+2. Site "PayTR test" modundayken bir test ödemesi yapın. PayTR panelinde İşlem & Rapor → İşlemler sayfasında işlemin "Başarılı" göründüğünü kontrol edin ("Devam Ediyor" görünüyorsa Bildirim URL'yi kontrol edin).
+3. Canlıya geçiş: PayTR panelinde Destek & Kurulum → Canlı Mod → "Evet, Entegrasyonu Tamamladım" → "Canlı Moda Geçiş Talebi Gönder".
+4. PayTR'den canlı mod SMS/e-postası gelince Yönetim → Ayarlar → Ödeme altyapısı → **PayTR canlı**.
+
+**İadeler:** Yönetim → İadeler ekranında PayTR ile alınmış bir ödemenin iadesini onayladığınızda tutar PayTR üzerinden karta gönderilir. PayTR iadeyi mağaza bakiyenizden yapar; bakiye yetersizse (hata 010) iade reddedilir ve ekranda PayTR'nin mesajı görünür. Aynı iade iki kez gönderilmez.
+
+**Önemli – pazaryeri modeli:** Rango kaporayı işletmeler adına tahsil ediyor. Standart PayTR mağazasında para yalnızca vergi levhasındaki hesaba (Rango'ya) ödenir. İşletmelere ödeme dağıtmak için PayTR'nin **Pazaryeri çözümü** (Platform Transfer) veya TCMB lisansı gerekebilir. Canlıya geçmeden PayTR temsilcinize ve bir hukukçuya danışın.
 
 ---
 

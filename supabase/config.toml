@@ -1,2 +1,15 @@
 [functions.support-ai]
 verify_jwt = true
+
+[functions.paytr-token]
+verify_jwt = true
+
+# PayTR calls this directly (no Supabase token); requests are verified by PayTR's HMAC hash.
+[functions.paytr-callback]
+verify_jwt = false
+
+[functions.paytr-status]
+verify_jwt = true
+
+[functions.paytr-refund]
+verify_jwt = true

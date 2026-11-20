@@ -1,6 +1,7 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
-import { AlertTriangle, CalendarClock, CreditCard, Lock, MapPin, Timer } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Browser } from '@capacitor/browser';
+import { AlertTriangle, CalendarClock, CreditCard, Loader2, Lock, MapPin, Timer, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { fetchSettings } from '@/lib/api';
 import { useAsync } from '@/lib/useAsync';
@@ -16,6 +17,8 @@ import { Button } from '@/components/ui/Button';
 import { EmptyState, ErrorState, PageLoader } from '@/components/ui/Feedback';
 import type { Appointment } from '@/lib/types';
 import { tx } from '@/i18n/locale';
+import { isNative } from '@/lib/platform';
+import { invokeEdge } from '@/lib/functions';
 
 /**
  * Test card shown read-only in test mode. No real card data is ever typed into this page:
@@ -23,12 +26,33 @@ import { tx } from '@/i18n/locale';
  */
 const TEST_CARD = { name: 'TEST KULLANICI', number: '4242 4242 4242 4242', expiry: '12/30', cvc: '123' };
 
+/** How often the page re-checks the booking while the customer is on PayTR's payment page. */
+const PAYMENT_POLL_MS = 3000;
+/** Every this many polls the server also asks PayTR directly (paytr-status), in case PayTR's notification is late. */
+const RECONCILE_EVERY = 7;
+
 /**
- * No licensed provider (iyzico/PayTR) is integrated yet, so the live-mode pay button stays
- * disabled even after the pre-contract confirmation. Set this only together with the
- * provider-hosted checkout and a server-side payment callback.
+ * Asks the paytr-token Edge Function for PayTR's hosted payment page. The deposit is confirmed only on the
+ * server: by PayTR's notification (paytr-callback) or PayTR's status service (paytr-status), never by this
+ * page or by PayTR's return URL.
  */
-const LIVE_CHECKOUT_READY = false;
+async function startPaytrCheckout(appointmentId: string): Promise<{ url: string; test: boolean }> {
+  const data = await invokeEdge<{ url?: unknown; test?: unknown }>('paytr-token', {
+    appointment: appointmentId,
+    platform: isNative ? 'app' : 'web',
+  });
+  if (!data || typeof data.url !== 'string' || !data.url.startsWith('https://www.paytr.com/')) throw new Error('VEYRA_PAYMENT_PROVIDER');
+  return { url: data.url, test: data.test === true };
+}
+
+/** Lets the server ask PayTR about this booking's unfinished payments; errors are ignored (polling continues). */
+async function reconcilePaytr(appointmentId: string): Promise<void> {
+  try {
+    await invokeEdge('paytr-status', { appointment: appointmentId });
+  } catch {
+    /* PayTR's notification and the status polling still apply */
+  }
+}
 
 const linkCls = 'text-gold-400 underline-offset-2 hover:underline';
 
@@ -96,6 +120,55 @@ export default function Payment() {
   const [releasing, setReleasing] = useState(false);
   const [preInfoAccepted, setPreInfoAccepted] = useState(false);
   const [remaining, setRemaining] = useState<number | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const paytrReturn = searchParams.get('paytr');
+  const [startingCheckout, setStartingCheckout] = useState(false);
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
+  const [awaitingPayment, setAwaitingPayment] = useState(false);
+  const failureShown = useRef(false);
+
+  // Coming back from PayTR: "ok" waits for the callback; "hata" tells the customer and lets them retry.
+  useEffect(() => {
+    if (paytrReturn === 'ok') {
+      setAwaitingPayment(true);
+      void reconcilePaytr(id);
+    }
+    if (paytrReturn === 'hata' && !failureShown.current) {
+      failureShown.current = true;
+      setAwaitingPayment(false);
+      setCheckoutUrl(null);
+      toast(tx('Ödeme tamamlanamadı. Kartınızdan tahsilat yapılmadı; tekrar deneyebilirsiniz.', 'The payment was not completed. Nothing was charged; you can try again.'), 'error');
+      setSearchParams({}, { replace: true });
+    }
+  }, [paytrReturn, setSearchParams, toast, id]);
+
+  // While the customer is paying, follow the booking: PayTR's callback moves it out of pending_payment.
+  const checkPaid = useCallback(async () => {
+    const { data: row } = await supabase.from('appointments').select('status').eq('id', id).maybeSingle();
+    if (row && row.status !== 'pending_payment') {
+      if (isNative) void Browser.close().catch(() => undefined);
+      navigate(`/onay/${id}`, { replace: true });
+    }
+  }, [id, navigate]);
+
+  useEffect(() => {
+    if (!awaitingPayment) return;
+    let ticks = 0;
+    void checkPaid();
+    const timer = setInterval(() => {
+      ticks += 1;
+      if (ticks % RECONCILE_EVERY === 0) void reconcilePaytr(id).then(checkPaid);
+      else void checkPaid();
+    }, PAYMENT_POLL_MS);
+    return () => clearInterval(timer);
+  }, [awaitingPayment, checkPaid, id]);
+
+  // In the app PayTR opens in an in-app browser sheet; check right away when the customer closes it.
+  useEffect(() => {
+    if (!isNative || !awaitingPayment) return;
+    const listener = Browser.addListener('browserFinished', () => void reconcilePaytr(id).then(checkPaid));
+    return () => void listener.then((l) => l.remove());
+  }, [awaitingPayment, checkPaid, id]);
 
   useEffect(() => {
     if (!data?.appt) return;
@@ -113,6 +186,8 @@ export default function Payment() {
   if (appt.status !== 'pending_payment') return <Navigate to={`/onay/${appt.id}`} replace />;
 
   const testMode = settings.payment_mode === 'test';
+  const paytrReady = settings.payment_provider === 'paytr';
+  const paytrTest = paytrReady && settings.paytr_test_mode !== false;
   const expired = remaining === 0;
   const b = appt.businesses;
   const cover = b ? businessCover(b) : null;
@@ -138,7 +213,31 @@ export default function Payment() {
     navigate(`/onay/${appt.id}`, { replace: true });
   };
 
-  // Live mode has no provider integration yet: let the customer release the held slot instead of dead-ending.
+  const payWithPaytr = async () => {
+    if (startingCheckout || !preInfoAccepted) return;
+    setStartingCheckout(true);
+    try {
+      const { url } = await startPaytrCheckout(appt.id);
+      if (isNative) {
+        await Browser.open({ url, presentationStyle: 'fullscreen' });
+      } else {
+        setCheckoutUrl(url);
+      }
+      setAwaitingPayment(true);
+    } catch (err) {
+      toast(friendlyError(err), 'error');
+      if (/VEYRA_(PAYMENT_EXPIRED|INVALID_STATE)/.test(err instanceof Error ? err.message : '')) reload();
+    } finally {
+      setStartingCheckout(false);
+    }
+  };
+
+  const closeCheckout = () => {
+    setCheckoutUrl(null);
+    setAwaitingPayment(false);
+  };
+
+  // Live mode without a payment provider: let the customer release the held slot instead of dead-ending.
   const releaseHold = async () => {
     setReleasing(true);
     const { error: err } = await supabase.rpc('cancel_appointment', { p_appointment: appt.id, p_reason: '' });
@@ -202,11 +301,52 @@ export default function Payment() {
             </Button>
             <p className="text-center text-xs text-mist-2">{tx('Kartınızdan ücret çekilmez ve hiçbir ödeme kuruluşuna kart bilgisi gönderilmez.', 'Nothing is charged and no card details are sent to any payment provider.')}</p>
           </form>
+        ) : checkoutUrl ? (
+          <div className="mt-8 space-y-3">
+            <p className="flex items-center gap-2 text-xs text-mist-2">
+              <Lock className="h-3.5 w-3.5 shrink-0 text-gold-500" />
+              {tx('Kart bilgileriniz PayTR güvenli ödeme sayfasında işlenir, Rango kart bilgilerinizi görmez ve saklamaz.', 'Your card is processed on PayTR’s secure page; Rango never sees or stores your card details.')}
+            </p>
+            <div className="overflow-hidden rounded-2xl border border-line bg-white">
+              <iframe
+                src={checkoutUrl}
+                title={tx('PayTR güvenli ödeme', 'PayTR secure payment')}
+                className="block h-[max(560px,80vh)] w-full sm:h-[680px]"
+              />
+            </div>
+            <p className="flex items-center gap-2 text-xs text-mist">
+              <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
+              {tx('Ödeme onaylandığında otomatik olarak onay sayfasına geçeceksiniz.', 'Once the payment is confirmed you will be taken to the confirmation page automatically.')}
+            </p>
+            <Button full variant="outline" icon={<X className="h-4 w-4" />} onClick={closeCheckout}>{tx('Ödeme sayfasını kapat', 'Close the payment page')}</Button>
+          </div>
+        ) : awaitingPayment ? (
+          <div className="mt-8 space-y-4">
+            <p className="flex items-center gap-3 rounded-xl border border-gold-500/30 bg-gold-500/5 px-4 py-3 text-sm text-gold-200">
+              <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+              {tx('Ödemeniz doğrulanıyor. Bu birkaç saniye sürebilir, lütfen sayfayı kapatmayın.', 'Verifying your payment. This can take a few seconds, please keep this page open.')}
+            </p>
+            {isNative && paytrReturn !== 'ok' && (
+              <Button full size="lg" variant="outline" loading={startingCheckout} onClick={payWithPaytr}>{tx('Ödeme sayfasını yeniden aç', 'Open the payment page again')}</Button>
+            )}
+            <Button full variant="ghost" onClick={closeCheckout}>{tx('Ödemeyi tamamlamadım, geri dön', 'I did not finish the payment, go back')}</Button>
+          </div>
         ) : (
           <div className="mt-8 space-y-4">
-            <p className="rounded-xl border border-info-500/30 bg-info-900/40 px-4 py-3 text-sm leading-relaxed text-info-300">
-              {tx('Online kapora ödemesi henüz aktif değil. Ödeme altyapısı devreye alındığında bu adımda lisanslı ödeme kuruluşunun güvenli ödeme sayfasına yönlendirileceksiniz. Şimdilik ayrılan saati serbest bırakıp daha sonra yeniden randevu oluşturabilirsiniz.', 'Online deposit payment is not active yet. Once it is, this step will take you to the secure page of a licensed payment provider. For now you can release the held time and book again later.')}
-            </p>
+            {!paytrReady ? (
+              <p className="rounded-xl border border-info-500/30 bg-info-900/40 px-4 py-3 text-sm leading-relaxed text-info-300">
+                {tx('Online kapora ödemesi henüz aktif değil. Ödeme altyapısı devreye alındığında bu adımda lisanslı ödeme kuruluşunun güvenli ödeme sayfasına yönlendirileceksiniz. Şimdilik ayrılan saati serbest bırakıp daha sonra yeniden randevu oluşturabilirsiniz.', 'Online deposit payment is not active yet. Once it is, this step will take you to the secure page of a licensed payment provider. For now you can release the held time and book again later.')}
+              </p>
+            ) : paytrTest ? (
+              <p className="rounded-xl border border-warning-500/40 bg-warning-900/40 px-4 py-3 text-sm leading-relaxed text-warning-300">
+                {tx('PayTR test modu: test kartı PayTR ödeme sayfasında hazır gelir. "Ödeme Yap"a, ardından 3D Secure test sayfasında "Gönder"e basın. Kartınızdan gerçek tahsilat yapılmaz.', 'PayTR test mode: the test card is prefilled on PayTR’s page. Press “Ödeme Yap”, then “Gönder” on the 3D Secure test page. Nothing is actually charged.')}
+              </p>
+            ) : (
+              <p className="flex items-center gap-2 text-xs text-mist-2">
+                <Lock className="h-3.5 w-3.5 shrink-0 text-gold-500" />
+                {tx('Ödemeniz PayTR güvenli ödeme sayfasında, 3D Secure ile alınır.', 'You pay on PayTR’s secure page with 3D Secure.')}
+              </p>
+            )}
             <label className="flex cursor-pointer items-start gap-3 text-xs text-mist">
               <input
                 type="checkbox"
@@ -217,7 +357,7 @@ export default function Payment() {
               />
               <span>{tx('Ön bilgilendirme bilgilerini okudum, onaylıyorum.', 'I have read and accept the pre-contract information.')}</span>
             </label>
-            <Button type="button" full size="lg" disabled={!preInfoAccepted || !LIVE_CHECKOUT_READY} icon={<Lock className="h-4 w-4" />}>
+            <Button type="button" full size="lg" disabled={!preInfoAccepted || !paytrReady} loading={startingCheckout} icon={<Lock className="h-4 w-4" />} onClick={payWithPaytr}>
               {tx('Kaporayı öde', 'Pay deposit')}
             </Button>
             <Button full size="lg" variant="outline" loading={releasing} onClick={releaseHold}>{tx('Ayrılan saati serbest bırak', 'Release the held time')}</Button>

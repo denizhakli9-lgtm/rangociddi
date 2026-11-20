@@ -339,7 +339,7 @@ const satis: LegalDocument = {
       blocks: [
         ul(
           `Kart ile ödeme, ${PAYTR_PAGE} gerçekleştirilir. Kart numarası, son kullanma tarihi, CVV/CVC ve 3D Secure şifresi gibi bilgiler ${COMPANY.brand} veya Hizmet Sağlayıcı tarafından görülmez, işlenmez ve saklanmaz.`,
-          `${COMPANY.brand} yalnızca ödeme sonucunu, ${PAYMENT_PROVIDER.shortName} işlem numarasını, kart markasını ve kartın son 4 hanesini kaydeder.`,
+          `${COMPANY.brand} yalnızca ödeme sonucunu ve sipariş/işlem numarasını kaydeder; kart bilgisi kaydetmez.`,
           'Ödeme, kartı çıkaran bankanın 3D Secure doğrulaması ve onayıyla tamamlanır. Banka veya ödeme kuruluşunca onaylanmayan işlemlerde randevu kesinleşmez ve ayrılan saat süre sonunda serbest kalır.',
           'Kartın yetkisiz kullanımı halinde Müşteri, kartı çıkaran bankaya başvurma hakkına sahiptir.',
         ),

@@ -33,7 +33,7 @@ private.pay_deposit definition from 20261114200000_rango_security_hardening.sql 
 DO $$
 BEGIN
   IF to_regclass('public.sale_consents') IS NULL
-     OR to_regprocedure('public.record_sale_consent(uuid,text,text)') IS NULL THEN
+     OR to_regprocedure('public.record_sale_consent(uuid,text,text,text)') IS NULL THEN
     RAISE EXCEPTION 'Önce 1. adım (record_sale_consent) uygulanmalı';
   END IF;
   IF to_regclass('private.paytr_orders') IS NULL THEN

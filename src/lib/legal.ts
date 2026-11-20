@@ -43,14 +43,15 @@ export const LEGAL_UPDATED_AT = '20 Kasım 2026';
 
 /**
  * Sürüm biçimi `YYYY-AA-GG` (yayın tarihi; ileri bir tarih yazmayın). Aynı gün ikinci bir değişiklik için
- * `YYYY-AA-GG.2` … `.9` kullanılır. Başka biçimler derlemede (typecheck) hata verir; `sale` için veritabanı da
- * reddeder ve satış onayı kaydedilemediği için hiçbir ödeme tamamlanamaz.
+ * `YYYY-AA-GG.2` … `.9` kullanılır. `sale` yanlış biçimdeyse `vite.config.ts` derlemeyi durdurur; veritabanı da
+ * reddeder ve satış onayı kaydedilemediği için hiçbir ödeme tamamlanamaz. (Aşağıdaki tür yalnızca kaba bir denetimdir.)
  */
 type LegalVersion = `${number}-${number}-${number}`;
 
 export const LEGAL_VERSIONS = {
-  terms: '2026-11-20',
-  privacy: '2026-11-20',
+  // .2: bu tarihte ikinci kez değişti (önce PayTR, sonra satış onayı metinleri).
+  terms: '2026-11-20.2',
+  privacy: '2026-11-20.2',
   cookies: '2026-11-20',
   /**
    * Ödeme ekranında birlikte kabul edilen metinlerin ortak sürümü: Mesafeli Hizmet Satış Sözleşmesi,

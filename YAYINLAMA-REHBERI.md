@@ -143,15 +143,15 @@ Kaporalar **PayTR iFrame API** ile alınır. Müşteri kart bilgisini PayTR'nin 
 
 **Ne yapar:**
 - Ödeme ekranında müşteri **satış onayı** kutusunu işaretlemeden ödeme başlatılamaz (ne test ödemesi ne de PayTR ödeme sayfası).
-- Onay; sözleşme sürümü, dili ve onay anındaki ön bilgilendirme bilgileriyle (işletme adı ve adresi, hizmet, uzman, tarih, tutarlar, iptal süresi) `sale_consents` tablosuna kaydedilir. Kayıtlar 10 yıl saklanır; sitede ve servis anahtarıyla elle değiştirilemez.
+- Onay; sözleşme sürümü, dili, gösterilen onay cümlesi (test ya da gerçek) ve onay anındaki ön bilgilendirme bilgileriyle (işletme adı ve adresi, hizmet, uzman, tarih, tutarlar, iptal süresi) `sale_consents` tablosuna kaydedilir. Her onay ayrı satırdır; müşteri tekrar onaylarsa önceki kayıt silinmez. Kayıtlar 10 yıl saklanır; sitede ve servis anahtarıyla elle değiştirilemez.
 - Aşağıdaki 2. adım uygulandıktan sonra `pay_deposit` ve PayTR siparişleri, onay kaydı olmayan ödemeyi başlatmaz.
 - Sözleşme metni: `/yasal/satis-sozlesmesi`. İptal ve İade Koşulları ile birlikte kabul edilir.
 - Site altbilgisinde ve ödeme ekranında PayTR cümlesi ve www.paytr.com bağlantısı gösterilir (md. 10.3).
 - Müşterinin "Verilerimi indir" dosyasında kendi satış onayları da yer alır.
 
-**Metin değişirse:** `src/lib/legal.ts` → `LEGAL_VERSIONS.sale` değerini yayın tarihiyle `YYYY-AA-GG` biçiminde güncelleyin (ör. `2026-12-01`; aynı gün ikinci bir değişiklik için `2026-12-01.2`). İleri bir tarih yazmayın. Başka biçimde yazılan sürüm veritabanınca reddedilir: satış onayı kaydedilemez ve hiçbir ödeme tamamlanamaz.
+**Metin değişirse:** Satış sözleşmesi, İptal ve İade Koşulları, ödeme ekranındaki ön bilgilendirme (`src/pages/customer/booking/Payment.tsx` → `PreContractInfo`) ya da onay cümleleri (`SALE_CONSENT_TEXT*`) esaslı şekilde değişirse `src/lib/legal.ts` → `LEGAL_VERSIONS.sale` değerini yayın tarihiyle `YYYY-AA-GG` biçiminde güncelleyin (ör. `2026-12-01`; aynı gün ikinci bir değişiklik için `2026-12-01.2`). İleri bir tarih yazmayın. Başka biçimde yazılan sürümde derleme durur (`vite.config.ts`); veritabanı da reddeder, çünkü öyle bir sürümle satış onayı kaydedilemez ve hiçbir ödeme tamamlanamaz.
 
-**Veritabanı güncellemesi iki adımdır ve sıra önemlidir.** Dosyaları tek tek SQL Editor'de (ya da Supabase bağlantısıyla) uygulayın. `supabase db push` kullanmayın: bekleyen bütün dosyaları birlikte uygular.
+**Veritabanı güncellemesi iki adımdır ve sıra önemlidir.** Dosyaları tek tek Supabase bağlantısıyla (migration olarak) uygulayın; böylece sürüm numarası kaydedilir ve dosya adı o numarayla eşitlenir. SQL Editor'de çalıştırırsanız sürüm kaydı oluşmaz; o durumda dosyayı çalıştırdığınız anın damgasıyla (YYYYAAGGSSDDss, UTC) adlandırın. `supabase db push` kullanmayın: bekleyen bütün dosyaları birlikte uygular.
 1. `supabase/migrations/…_record_sale_consent.sql` (onay tablosu ve kayıt fonksiyonu). Yeni site yayınlanmadan **önce** uygulanır ve eski siteyi etkilemez. Kontrol sorgusu `true` döndürmeli:
    `select to_regclass('public.sale_consents') is not null and to_regprocedure('public.record_sale_consent(uuid,text,text)') is not null;`
 2. `supabase/bekleyen/require_sale_consent_for_payment.sql` (onaysız ödemeyi reddetme). Aşağıdakilerin **hepsi** doğrulandıktan sonra uygulanır. Erken uygulanırsa eski kodla açılmış ödeme ekranlarında ödemeler "Bir sorun oluştu" hatasıyla durur.
@@ -160,28 +160,37 @@ Kaporalar **PayTR iFrame API** ile alınır. Müşteri kart bilgisini PayTR'nin 
    - Gizli pencerede `https://rango.com.tr/yasal/satis-sozlesmesi` açılmalı. Başlık "Mesafeli Hizmet Satış Sözleşmesi ve Satış Onayı" olmalı, özette "Sürüm: 2026-11-20" yazmalı. Eski site bu adresi KVKK Aydınlatma Metni'ne yönlendirir. Sayfanın altında PAYTR cümlesi ve www.paytr.com bağlantısı olmalı.
    - Deneme müşteri hesabıyla, kendi deneme işletmenizde bir test ödemesi yapın (gerçek bir işletmeye bildirim gitmesin). "Satış onayı" kutusu görünmeli ve ödeme tamamlanmalı. `select appointment_id, sale_terms_version, consent_locale, payment_mode, accepted_at from sale_consents order by accepted_at desc limit 1;` sorgusu bu randevuyu göstermeli. Ardından randevuyu iptal edin.
    - Yeni site yayına çıktıktan sonra en az 15 dakika (ödeme bekleme süresi) geçmiş olmalı. `select count(*) from appointments where status = 'pending_payment' and created_at > now() - interval '15 minutes';` sonucu 0 olmalı.
-   - Dağıtılmış bir mobil uygulama varsa o da satış onayını içeren koddan derlenmiş olmalı. Uygulama site kodunu kendi içinde taşır (`capacitor.config.ts` → `webDir: 'dist'`); eski koddan derlenmiş bir uygulama 2. adımdan sonra ödeme yapamaz.
+   - Dağıtılmış bir mobil uygulama varsa o da satış onayını içeren koddan derlenmiş olmalı. Uygulama site kodunu kendi içinde taşır (`capacitor.config.ts` → `webDir: 'dist'`); eski koddan derlenmiş bir uygulama 2. adımdan sonra ödeme yapamaz. **Dikkat:** `claude/festive-noether-h1cugu` dalında hazırlanan Play Store paketi (`rango-1.0.0.aab`) PayTR ve satış onayından önceki koddan derlendi. Bu paketi test kullanıcılarına ya da mağazaya göndermeyin. Uygulamayı birleştirmeden sonraki `main`'den yeniden derleyin (yeni versionCode).
 
    Uyguladıktan sonra test ödemesini bir kez daha yapın; ödeme tamamlanmalı. Ardından dosyayı, Supabase'in kaydettiği sürüm numarasıyla `supabase/migrations/` klasörüne taşıyın.
 - **Geri alma:** 2. adım uygulandıktan sonra site satış onayı olmayan eski bir sürüme döndürülecekse önce 2. adımı geri alın. Bu durumlar: Netlify'da (veya Hostinger'da) eski bir dağıtımı yeniden yayınlamak, GitHub'da geri almak ya da Bolt'tan eski kodu yayınlamak. Geri alma adımları dosyanın başındaki "Rollback" notundadır. Geri alınmazsa bütün ödemeler durur.
 - **Not:** `20261114200000_rango_security_hardening.sql` yeniden çalıştırılırsa `pay_deposit` satış onayı kontrolü olmadan eski haline döner. O durumda 2. adım dosyasını hemen ardından yeniden çalıştırın.
 
-**PayTR veya banka belge isterse (md. 6.4 ve 7.3: 2 iş günü içinde):** Supabase SQL Editor'de aşağıdaki sorguyu randevu koduyla çalıştırın. Sonucu, o sürümdeki sözleşme metniyle birlikte gönderin. O sürümün metni, GitHub'da `src/pages/legal/legalContent.ts` ve `src/lib/legal.ts` dosyalarının o tarihteki halidir.
+**PayTR veya banka belge isterse (md. 6.4 ve 7.3: 2 iş günü içinde):** Supabase SQL Editor'de aşağıdaki sorguları randevu koduyla çalıştırın. Sonuçları, o sürümün metinleriyle birlikte gönderin. Metinler şu dosyalardadır: `src/pages/legal/legalContent.ts`, `src/lib/legal.ts` ve `src/pages/customer/booking/Payment.tsx` (ön bilgilendirme). Bu dosyaların, o sırada yayında olan sürümdeki hallerini kullanın. Yayınlanan sürümü tarihle değil, yayınlanan commit ya da etiketle (ör. `git tag satis-2026-11-20 <commit>`) belirleyin; aynı gün birden fazla değişiklik olabilir.
 
 ```sql
-SELECT a.booking_code, c.accepted_at, c.sale_terms_version, c.consent_locale, c.payment_mode, c.payment_provider,
+-- 1) Müşterinin verdiği bütün satış onayları (her onay ayrı satır)
+SELECT a.booking_code, c.accepted_at, c.sale_terms_version, c.consent_locale, c.consent_wording, c.payment_mode,
        c.business_name, c.business_address, c.service_name, c.employee_name, c.starts_at, c.duration_minutes,
-       c.total_price, c.deposit_amount, c.pay_at_business, c.cancellation_hours,
-       p.provider_payment_id, p.status AS payment_status, p.paid_at, p.card_brand, p.card_last4,
-       a.status AS appointment_status, a.cancelled_by, a.cancelled_at
+       c.total_price, c.deposit_amount, c.pay_at_business, c.cancellation_hours
 FROM public.sale_consents c
 JOIN public.appointments a ON a.id = c.appointment_id
-LEFT JOIN public.payments p ON p.appointment_id = c.appointment_id
-WHERE a.booking_code = 'VY…';
+WHERE a.booking_code = 'VY…'
+ORDER BY c.accepted_at;
+
+-- 2) Ödeme denemeleri ve sonuç (her PayTR siparişinden önceki son onay, o ödemenin onayıdır)
+SELECT o.merchant_oid, o.created_at AS order_created_at, o.status, o.result, o.confirmed_via, o.amount_kurus, o.test_mode,
+       p.provider_payment_id, p.status AS payment_status, p.paid_at,
+       a.status AS appointment_status, a.cancelled_by, a.cancelled_at
+FROM public.appointments a
+LEFT JOIN private.paytr_orders o ON o.appointment_id = a.id
+LEFT JOIN public.payments p ON p.id = o.payment_id
+WHERE a.booking_code = 'VY…'
+ORDER BY o.created_at;
 ```
 
 **"PayTR canlı"ya geçmeden önce yapılması gerekenler (hukuki):**
-1. **Cayma hakkı:** Sözleşme ve ön bilgilendirme, Mesafeli Sözleşmeler Yönetmeliği'ne göre 14 günlük cayma hakkını yazar; bu hak hizmete başlanana kadar geçerlidir. Gerçek tahsilatta iptal kuralı da buna uymalıdır. Müşteri cayma süresi içinde ve randevu başlamadan iptal ederse kapora iade edilmelidir. Bunun için `cancel_appointment` ve iptal penceresindeki uyarı güncellenmelidir. Kuaför ve güzellik hizmetlerinde istisna (md. 15/1-g) uygulanabileceğini düşünüyorsanız bunu bir avukatla netleştirin; o durumda metinler de değişmelidir (yeni sürüm).
+1. **Cayma hakkı:** Sözleşme ve ön bilgilendirme, Mesafeli Sözleşmeler Yönetmeliği'ne göre 14 günlük cayma hakkını yazar; bu hak hizmete başlanana kadar geçerlidir. Gerçek tahsilatta iptal kuralı da buna uymalıdır. Müşteri cayma süresi içinde ve randevu başlamadan iptal ederse kapora iade edilmelidir. Bunun için `cancel_appointment`, iptal penceresindeki uyarı ve iptal bildirimi güncellenmelidir. Bildirimdeki "kapora iade edilmeyecektir" cümlesi test ödemelerinde de gidiyor; test ödemesinde "tahsilat yapılmadığından iade gerekmez" denmelidir. Ayrıca randevuya gelinmeyen (no-show) durumda cayma hakkının nasıl uygulanacağı netleşmelidir; şu anki metinde bu belirsiz kalıyor. Kuaför ve güzellik hizmetlerinde istisna (md. 15/1-g) uygulanabileceğini düşünüyorsanız bunu bir avukatla netleştirin; o durumda metinler de değişmelidir (yeni sürüm).
 2. **Sözleşme örneğinin iletilmesi:** Ödemeden sonra müşteriye ön bilgilendirme ve sözleşmenin onayladığı sürümü e-postayla gönderilmelidir. E-posta bir "kalıcı veri saklayıcı"dır (TKHK md. 4, MSY md. 7). Şu an otomatik gönderim yok; isteyen müşteriye destekten gönderilir.
 3. **Hizmet sağlayıcı kimliği:** Ön bilgilendirmede işletmenin unvanı, vergi numarası, açık adresi ve telefonu gösterilmelidir (MSY md. 5/1-b, c). Bu bilgiler işletmelerden toplanmalıdır; PayTR alt işyeri tanımı için de gerekir.
 4. **Rango künyesi:** `src/lib/legal.ts` dosyasında `COMPANY.legalName`, vergi levhası ve PayTR sözleşmesindeki unvanla birebir aynı olmalıdır. `COMPANY.address` açık adres olmalıdır (mahalle, cadde/sokak, no, ilçe/il).

@@ -114,8 +114,24 @@ function assertPublicSupabase({ url, key, source }: SupabaseSettings): void {
   }
 }
 
+/**
+ * LEGAL_VERSIONS.sale her satış onayıyla sunucuya gider ve veritabanı yalnızca `YYYY-AA-GG` ya da
+ * `YYYY-AA-GG.2`…`.9` biçimini kabul eder. Biçim yanlışsa hiçbir ödeme tamamlanamaz; bu yüzden derleme durur.
+ */
+function assertSaleTermsVersion(): void {
+  const source = readFileSync(fileURLToPath(new URL('./src/lib/legal.ts', import.meta.url)), 'utf8');
+  const match = source.match(/^\s*sale:\s*'([^']*)'/m);
+  if (!match) throw new Error('[rango] src/lib/legal.ts: LEGAL_VERSIONS.sale bulunamadı.');
+  const version = match[1];
+  const date = new Date(`${version.slice(0, 10)}T00:00:00Z`);
+  if (!/^\d{4}-\d{2}-\d{2}(\.[2-9])?$/.test(version) || Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== version.slice(0, 10)) {
+    throw new Error(`[rango] src/lib/legal.ts: LEGAL_VERSIONS.sale "${version}" geçersiz. Yayın tarihini YYYY-AA-GG biçiminde yazın (aynı gün ikinci değişiklik için YYYY-AA-GG.2).`);
+  }
+}
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
+  assertSaleTermsVersion();
   const env = loadEnv(mode, process.cwd(), 'VITE_');
   const supabase = resolveSupabase(env);
   assertPublicSupabase(supabase);

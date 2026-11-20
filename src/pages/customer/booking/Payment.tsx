@@ -154,6 +154,7 @@ function InfoRow({ label, children }: { label: string; children: ReactNode }) {
  * deposit step: who provides the service and who acts for it, what is booked, the price with taxes, the
  * deposit, approval, cancellation and withdrawal (cayma) rules, and where to send requests and complaints.
  * It is part of the sales agreement the customer confirms, so it is set at a readable size (16px).
+ * Its wording is covered by LEGAL_VERSIONS.sale: a substantive change here needs a new sale version.
  */
 function PreContractInfo({ appt, address, testMode, policyHours, needsApproval }: { appt: Appointment; address: string; testMode: boolean; policyHours: number; needsApproval: boolean }) {
   const b = appt.businesses;
@@ -187,12 +188,15 @@ function PreContractInfo({ appt, address, testMode, policyHours, needsApproval }
         )}
         <InfoRow label={tx('Ücretsiz iptal', 'Free cancellation')}>
           {tx(`Randevudan ${policyHours} saat öncesine kadar ücretsiz iptal edebilirsiniz.`, `You can cancel free of charge up to ${policyHours} hours before the appointment.`)}
-          {!testMode && tx(' Cayma süresi sona erdikten sonra, bu süreden geç yapılan iptallerde ve randevuya gelinmediğinde kapora iade edilmez.', ' Once the withdrawal period has ended, the deposit is not refunded for later cancellations or if you do not attend.')}
+          {!testMode && tx(` Cayma süreniz sona ermişse, randevuya ${policyHours} saatten az kala yapılan iptallerde ve randevuya gelinmediğinde kapora iade edilmez.`, ` Once your withdrawal period has ended, the deposit is not refunded for cancellations less than ${policyHours} hours before the appointment or if you do not attend.`)}
         </InfoRow>
         <InfoRow label={tx('Cayma hakkı', 'Right of withdrawal')}>
           {tx('Randevuyu aldığınız günden itibaren 14 gün içinde ve hizmete başlanmadan önce, gerekçe göstermeden ve cezai şart ödemeden cayabilirsiniz.', 'You can withdraw within 14 days of booking and before the service starts, without giving a reason and without a penalty.')}
           {!testMode && tx(' Ödediğiniz kapora, cayma bildiriminizin ulaştığı tarihten itibaren en geç 14 gün içinde kartınıza iade edilir.', ' The deposit you paid is refunded to your card within 14 days of receiving your notice.')}
           {tx(` Cayma bildirimini Randevularım sayfasındaki “İptal et” seçeneğiyle veya ${COMPANY.email} adresine e-posta göndererek yapabilirsiniz. Hizmete başlandığında cayma hakkı sona erer.`, ` You can give notice with “Cancel” on the My bookings page or by e-mail to ${COMPANY.email}. The right ends once the service has started.`)}
+        </InfoRow>
+        <InfoRow label={tx('Uyuşmazlık', 'Disputes')}>
+          {tx('Ticaret Bakanlığınca her yıl ilan edilen parasal sınırlar dahilinde Tüketici Hakem Heyetine, bu sınırları aşan uyuşmazlıklarda arabuluculuğa başvurduktan sonra Tüketici Mahkemesine başvurabilirsiniz.', 'Within the yearly limits set by the Ministry of Trade you can apply to the Consumer Arbitration Committee; above them, to the Consumer Court after mandatory mediation.')}
         </InfoRow>
         <InfoRow label={tx('Talep ve şikâyet', 'Requests and complaints')}>
           {tx(`Hizmet Sağlayıcı’ya veya ${COMPANY.brand} destek merkezine (Destek sayfası) ve ${COMPANY.email} adresine iletebilirsiniz.`, `Contact the service provider, or ${COMPANY.brand} through the Support page or at ${COMPANY.email}.`)}
@@ -223,6 +227,9 @@ export default function Payment() {
   const [paying, setPaying] = useState(false);
   const [releasing, setReleasing] = useState(false);
   const [saleAccepted, setSaleAccepted] = useState(false);
+  // The tick belongs to the sentence it was given for: if the payment mode (and so the wording) changes, ask again.
+  const consentWording = data?.settings.payment_mode === 'test' ? 'test' : 'live';
+  useEffect(() => setSaleAccepted(false), [consentWording]);
   const [remaining, setRemaining] = useState<number | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const paytrReturn = searchParams.get('paytr');
@@ -361,6 +368,7 @@ export default function Payment() {
       p_version: LEGAL_VERSIONS.sale,
       // Language of the confirmation sentence shown (tx() follows locale()).
       p_locale: locale(),
+      p_wording: consentWording,
     });
     if (consentErr) throw consentErr;
   };
@@ -622,7 +630,7 @@ export default function Payment() {
               <CalendarClock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gold-500" />
               <span>
                 {tx(`Randevudan ${policyHours} saat öncesine kadar ücretsiz iptal.`, `Free cancellation up to ${policyHours} hours before.`)}
-                {!testMode && tx(' Cayma süresi sona erdikten sonra, bu süreden geç yapılan iptallerde kapora iade edilmez.', ' Once the withdrawal period has ended, the deposit is not refunded for later cancellations.')}{' '}
+                {!testMode && tx(` Cayma süreniz sona ermişse, randevuya ${policyHours} saatten az kala yapılan iptallerde kapora iade edilmez.`, ` Once your withdrawal period has ended, the deposit is not refunded for cancellations less than ${policyHours} hours before.`)}{' '}
                 <Link to={legalPath('iptal-iade')} className={linkCls}>{tx('İptal ve İade Koşulları', 'Cancellation & Refund Policy')}</Link>
               </span>
             </p>

@@ -114,7 +114,7 @@ const aydinlatma: LegalDocument = {
       blocks: [
         ul(
           'Randevu aldığınız işletme: ad soyad, telefon, e-posta, randevu ve not bilgileriniz, hizmetin sunulabilmesi ve sizinle iletişim kurulabilmesi için (sözleşmenin ifası).',
-          `Lisanslı ödeme kuruluşu ${PAYMENT_PROVIDER.name}: kaporanın tahsili ve iadesi, ödeme ve sahtecilik önleme hizmetlerinin sunulması ve harcama itirazı (chargeback) süreçlerinin yürütülmesi için ad soyad, e-posta, telefon, ödeme anındaki IP adresi, adres bilgisi (ilçe/il) ve sipariş bilgileri (sipariş numarası, tutar, hizmet adı); harcama itirazı veya iade uyuşmazlığında ayrıca satış onayı kaydı ile randevu, iptal ve hizmet kayıtları. ${PAYMENT_PROVIDER.shortName} bu bilgileri harcama itirazı sürecinde kartı çıkaran bankaya ve iş ortağı bankalara iletebilir. Kart bilgileriniz ${COMPANY.brand}’ya uğramadan doğrudan ${PAYMENT_PROVIDER.shortName}’nin güvenli ödeme sayfasında işlenir (sözleşmenin kurulması ve ifası, hukuki yükümlülük, bir hakkın tesisi, kullanılması veya korunması).`,
+          `Lisanslı ödeme kuruluşu ${PAYMENT_PROVIDER.name}: kaporanın tahsili ve iadesi, ödeme ve sahtecilik önleme hizmetlerinin sunulması ve harcama itirazı (chargeback) süreçlerinin yürütülmesi için ad soyad, e-posta, telefon, ödeme anındaki IP adresi, profilinizdeki il/ilçe bilgisi ve sipariş bilgileri (sipariş numarası, tutar, işletme ve hizmet adı); harcama itirazı veya iade uyuşmazlığında ayrıca satış onayı kaydı ile randevu, iptal ve hizmet kayıtları. ${PAYMENT_PROVIDER.shortName} bu bilgileri harcama itirazı sürecinde kartı çıkaran bankaya ve iş ortağı bankalara iletebilir. Kart bilgileriniz ${COMPANY.brand}’ya uğramadan doğrudan ${PAYMENT_PROVIDER.shortName}’nin güvenli ödeme sayfasında işlenir (sözleşmenin kurulması ve ifası, hukuki yükümlülük, bir hakkın tesisi, kullanılması veya korunması).`,
           'Altyapı ve barındırma hizmet sağlayıcıları: veritabanı, kimlik doğrulama, e-posta doğrulama gönderimi ve dosya depolama hizmeti veren Supabase, Inc. ile web barındırma hizmeti veren Hostinger; verileriniz bu hizmetler aracılığıyla saklanır.',
           'Yapay zekâ destek hizmeti sağlayıcısı (OpenAI, L.L.C.): yalnızca destek merkezinde yapay zekâ asistanı etkin olduğunda, yazdığınız mesaj içerikleri ön yanıt üretmek amacıyla iletilir. Gönderimden önce e-posta adresleri, telefon, IBAN, kart, kimlik numarası ve rezervasyon kodu gibi bilgiler otomatik olarak maskelenir; ödeme, iade, şifre, şikâyet, KVKK ve sağlık gibi konular tespit edildiğinde mesajınız yapay zekâya gönderilmeden temsilciye aktarılır. Ad ve adres gibi bilgileri destek mesajlarınıza yazmamanızı rica ederiz.',
           'Görsel içerik sağlayıcısı (Pexels): bazı tanıtım görselleri bu sağlayıcının sunucularından yüklenir; bu sırada tarayıcınız IP adresinizi iletir.',
@@ -287,6 +287,7 @@ const cerez: LegalDocument = {
       title: '2. Üçüncü taraf içerikler',
       blocks: [
         p('Bazı tanıtım görselleri Pexels sunucularından yüklenir. Bu sağlayıcı, görseli iletirken tarayıcınızın IP adresini görebilir; ancak tarafımızca bu sağlayıcıya çerez yerleştirme izni verilmemiştir. Yazı tipleri kendi sunucumuzdan yüklenir.'),
+        p('Kapora ödemesi sırasında ödeme sayfası lisanslı ödeme kuruluşu PayTR (www.paytr.com) tarafından, sitemizin içinde bir çerçevede veya uygulama içi tarayıcıda gösterilir. Bu sayfa, ödemenin güvenliği ve dolandırıcılığın önlenmesi için PayTR ve altyapı sağlayıcılarının kendi çerez ve benzeri teknolojilerini kullanabilir; bu kayıtlar PayTR’nin kendi politikalarına tabidir ve Rango tarafından okunmaz.'),
       ],
     },
     {
@@ -379,7 +380,7 @@ const satis: LegalDocument = {
     {
       title: '9. Kişisel veriler',
       blocks: [
-        p(`Ödemenin alınması, sahtecilik önleme ve harcama itirazı süreçleri için gereken işlem bilgileri (ad soyad, e-posta, telefon, ödeme anındaki IP adresi, adres bilgisi (ilçe/il), alınan hizmetin adı, tutar ve sipariş numarası) ${PAYMENT_PROVIDER.shortName} ile paylaşılır. Ayrıntılar KVKK Aydınlatma Metni’nde yer alır.`),
+        p(`Ödemenin alınması, sahtecilik önleme ve harcama itirazı süreçleri için gereken işlem bilgileri (ad soyad, e-posta, telefon, ödeme anındaki IP adresi, profildeki il/ilçe bilgisi, işletme ve hizmet adı, tutar ve sipariş numarası) ${PAYMENT_PROVIDER.shortName} ile paylaşılır. Ayrıntılar KVKK Aydınlatma Metni’nde yer alır.`),
       ],
     },
     {

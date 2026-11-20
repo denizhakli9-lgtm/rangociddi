@@ -36,12 +36,14 @@ function newMerchantOid(): string {
   return 'RG' + Date.now().toString(36).toUpperCase() + Array.from(random, (b) => b.toString(16).padStart(2, '0')).join('').toUpperCase();
 }
 
-/** PayTR wants the customer's public IP (at most 39 characters). */
+/**
+ * PayTR wants the customer's public IP (at most 39 characters). Only headers set by the platform's edge are
+ * used; X-Forwarded-For is not, because a caller can prepend any address to it.
+ */
 const IP = /^(?:\d{1,3}(?:\.\d{1,3}){3}|[0-9a-f:]{2,39})$/i;
 function clientIp(req: Request): string {
   const candidates = [
     req.headers.get('cf-connecting-ip'),
-    req.headers.get('x-forwarded-for')?.split(',')[0],
     req.headers.get('x-real-ip'),
   ];
   for (const candidate of candidates) {
@@ -84,6 +86,27 @@ Deno.serve(async (req: Request) => {
     if (!userIp) return reply({ error: 'VEYRA_PAYMENT_PROVIDER' }, 400);
 
     const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+
+    // Before a new payment page: ask PayTR whether an earlier attempt of this booking was already paid
+    // (its notification may still be on the way), so the customer is never charged twice.
+    const { data: earlier } = await admin.rpc('paytr_orders_to_check', { p_user: auth.user.id, p_appointment: appointment });
+    for (const prev of (earlier ?? []) as { merchant_oid: string; amount_kurus: number }[]) {
+      const statusToken = await hmacBase64(merchantKey, merchantId + prev.merchant_oid + merchantSalt);
+      const statusResponse = await fetch('https://www.paytr.com/odeme/durum-sorgu', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ merchant_id: merchantId, merchant_oid: prev.merchant_oid, paytr_token: statusToken }),
+        signal: AbortSignal.timeout(15000),
+      }).catch(() => null);
+      const status = await statusResponse?.json().catch(() => null) as { status?: string; test_mode?: unknown } | null;
+      if (status?.status !== 'success') continue;
+      const { data: applied } = await admin.rpc('paytr_apply_callback', {
+        p_oid: prev.merchant_oid, p_success: true, p_amount_kurus: prev.amount_kurus, p_reason: 'durum-sorgu',
+        p_test: String(status.test_mode ?? '') === '1',
+      });
+      if (applied === 'paid' || applied === 'duplicate') return reply({ error: 'VEYRA_ALREADY_PAID' }, 409);
+    }
+
     const merchantOid = newMerchantOid();
     const { data: order, error: orderError } = await admin.rpc('paytr_begin_order', {
       p_user: auth.user.id, p_appointment: appointment, p_oid: merchantOid,
@@ -93,6 +116,11 @@ Deno.serve(async (req: Request) => {
       if (!code) console.error('paytr-token: begin_order failed', orderError);
       return reply({ error: code ?? 'VEYRA_PAYMENT_PROVIDER' }, code ? 400 : 500);
     }
+
+    // PayTR needs the payer's real name and phone (fraud checks, disputes); nothing is invented.
+    const userName = clean(order.full_name, 60);
+    const userPhone = clean(order.phone, 20);
+    if (!userName || !userPhone) return reply({ error: 'VEYRA_PROFILE_INCOMPLETE' }, 400);
 
     const amount = String(order.amount_kurus);
     const testMode = order.test_mode ? '1' : '0';
@@ -129,9 +157,9 @@ Deno.serve(async (req: Request) => {
       debug_on: testMode,
       no_installment: noInstallment,
       max_installment: maxInstallment,
-      user_name: clean(order.full_name, 60) || 'Rango Müşterisi',
+      user_name: userName,
       user_address: clean(order.address, 400) || 'Türkiye',
-      user_phone: clean(order.phone, 20) || '05000000000',
+      user_phone: userPhone,
       merchant_ok_url: okUrl,
       merchant_fail_url: failUrl,
       timeout_limit: String(timeoutMinutes),

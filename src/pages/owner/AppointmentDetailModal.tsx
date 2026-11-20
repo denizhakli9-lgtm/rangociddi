@@ -10,6 +10,7 @@ import { friendlyError } from '@/lib/errors';
 import { useToast } from '@/contexts/ToastContext';
 import type { Appointment } from '@/lib/types';
 import { isTestPayment, ownerCancel, runOwnerAction, type OwnerAction } from './ownerApi';
+import { depositPayment } from '@/lib/demo';
 
 const ACTION_DONE: Record<OwnerAction, string> = {
   approve: 'Randevu onaylandı.',
@@ -31,7 +32,7 @@ export function AppointmentDetailModal({ appt, onClose, onDone }: { appt: Appoin
 
   if (!appt) return null;
   const started = new Date(appt.starts_at).getTime() <= Date.now();
-  const payment = appt.payments?.[0];
+  const payment = depositPayment(appt.payments);
   const testPayment = isTestPayment(payment);
 
   const act = async (action: OwnerAction) => {

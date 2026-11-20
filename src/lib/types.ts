@@ -164,6 +164,8 @@ export interface Payment {
   status: PaymentStatus;
   provider: string;
   provider_payment_id: string | null;
+  /** 'overpayment': a second PayTR payment for an already paid booking; it is always refunded. */
+  payment_type?: 'deposit' | 'overpayment';
   card_brand: string | null;
   card_last4: string | null;
   paid_at: string | null;

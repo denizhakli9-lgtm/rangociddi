@@ -7,6 +7,8 @@ Aşağıdaki adımları **sırayla** uygulayın.
 
 ## 1. Hostinger'a yükleme (site kodu)
 
+> **Not (20 Kasım 2026):** `rango.com.tr` şu anda **Netlify** üzerinden, Bolt'un yayınlama (Publish/Deploy) özelliğiyle sunuluyor. Sunucu yanıtında `server: Netlify` görünüyor. Bu yüzden GitHub'da `main`'e birleştirmek siteyi kendiliğinden güncellemez. Önce Bolt'taki projeyi GitHub'daki son `main` ile güncelleyin, sonra Bolt'tan yayınlayın. Aşağıdaki Hostinger adımları ancak site Hostinger'a taşınırsa geçerlidir.
+
 1. hPanel → **Web Siteleri → rango.com.tr → Node.js** bölümüne girin.
 2. Bu zip dosyasını yükleyin ve **Ayarlar ve yeniden dağıtma** ile yeniden dağıtın.
 3. Derleme ayarları:
@@ -112,7 +114,7 @@ Kaporalar **PayTR iFrame API** ile alınır. Müşteri kart bilgisini PayTR'nin 
 **Kurulu olanlar (Supabase'e yüklendi):**
 - Edge Function'lar: `paytr-token` (ödeme sayfası), `paytr-callback` (PayTR Bildirim URL), `paytr-status` (PayTR durum sorgusu ile yedek kontrol), `paytr-refund` (admin iadesi PayTR'ye gider).
 - Gizli anahtarlar Supabase → Edge Functions → Secrets altında: `PAYTR_MERCHANT_ID`, `PAYTR_MERCHANT_KEY`, `PAYTR_MERCHANT_SALT`. Kodda veya GitHub'da **yoktur**.
-- Veritabanı: `supabase/migrations/20261120120000_paytr_iframe_payments.sql` ve `20261120140000_paytr_refunds_reconcile_admin_mode.sql`.
+- Veritabanı: `supabase/migrations/20261120095952_paytr_iframe_payments.sql`, `20261120104422_paytr_refunds_reconcile_admin_mode.sql`, `20261120110336_paytr_testers.sql`, `20261120111919_paytr_review_fixes.sql`, `20261120112728_paytr_security_fixes.sql`.
 - Site: ödeme sayfası (sitede iframe, uygulamada uygulama içi tarayıcı), admin **Ayarlar → Ödeme altyapısı** ile mod değiştirme, admin **İadeler** ekranında PayTR iadesi.
 
 **Ödeme modları (Yönetim → Ayarlar → Ödeme altyapısı):**
@@ -127,6 +129,10 @@ Kaporalar **PayTR iFrame API** ile alınır. Müşteri kart bilgisini PayTR'nin 
 2. Site "PayTR test" modundayken bir test ödemesi yapın. PayTR panelinde İşlem & Rapor → İşlemler sayfasında işlemin "Başarılı" göründüğünü kontrol edin ("Devam Ediyor" görünüyorsa Bildirim URL'yi kontrol edin).
 3. Canlıya geçiş: PayTR panelinde Destek & Kurulum → Canlı Mod → "Evet, Entegrasyonu Tamamladım" → "Canlı Moda Geçiş Talebi Gönder".
 4. PayTR'den canlı mod SMS/e-postası gelince Yönetim → Ayarlar → Ödeme altyapısı → **PayTR canlı**.
+
+**Test edildi (20 Kasım 2026, PayTR test modu):** ödeme sayfası, test kartıyla ödeme, PayTR bildirimiyle randevu onayı (birkaç saniye), müşteri iptali → otomatik iade talebi, admin iadesinin PayTR İade API ile gönderilmesi, PayTR durum sorgusu ve sitede iframe içinden ödeme (PayTR ödeme sonrası ana pencereyi `odeme-sonuc.html` sayfasına yönlendirir, o da müşteriyi ödeme sayfasına geri getirir).
+
+**Test hesapları:** Platform "Test (kartsız)" modundayken bile belirli hesaplar PayTR'yi (her zaman PayTR test modunda) kullanabilir: `INSERT INTO private.paytr_testers (user_id) VALUES ('<kullanıcı id>');` Silmek için `DELETE FROM private.paytr_testers WHERE user_id = '<kullanıcı id>';`
 
 **İadeler:** Yönetim → İadeler ekranında PayTR ile alınmış bir ödemenin iadesini onayladığınızda tutar PayTR üzerinden karta gönderilir. PayTR iadeyi mağaza bakiyenizden yapar; bakiye yetersizse (hata 010) iade reddedilir ve ekranda PayTR'nin mesajı görünür. Aynı iade iki kez gönderilmez.
 
@@ -148,14 +154,15 @@ Kaporalar **PayTR iFrame API** ile alınır. Müşteri kart bilgisini PayTR'nin 
 1. `supabase/migrations/…_record_sale_consent.sql` (onay tablosu ve kayıt fonksiyonu). Yeni site yayınlanmadan **önce** uygulanır ve eski siteyi etkilemez. Kontrol sorgusu `true` döndürmeli:
    `select to_regclass('public.sale_consents') is not null and to_regprocedure('public.record_sale_consent(uuid,text,text)') is not null;`
 2. `supabase/bekleyen/require_sale_consent_for_payment.sql` (onaysız ödemeyi reddetme). Aşağıdakilerin **hepsi** doğrulandıktan sonra uygulanır. Erken uygulanırsa eski kodla açılmış ödeme ekranlarında ödemeler "Bir sorun oluştu" hatasıyla durur.
-   - hPanel → Node.js: `main` dalının son derlemesi başarılı. Yeni derleme başlamadıysa **Ayarlar ve yeniden dağıtma** ile başlatın. Derleme hata verirse eski site yayında kalır; o durumda 2. adımı uygulamayın.
+   - Site yeni kodla yayınlandı: Bolt'taki proje GitHub'daki son `main`'i içeriyor ve Bolt'tan yayınlandı (Netlify). Site Hostinger'dan sunuluyorsa hPanel → Node.js'teki son derleme başarılı olmalı. Yayın veya derleme hata verirse eski site yayında kalır; o durumda 2. adımı uygulamayın.
+   - Komut satırından kontrol: `curl -s https://rango.com.tr/ | grep -o 'assets/index-[A-Za-z0-9_-]*\.js'` komutunun verdiği dosyada (`curl -s https://rango.com.tr/assets/<dosya> | grep -c satis-sozlesmesi`) sonuç en az 1 olmalı (eski sitede 0).
    - Gizli pencerede `https://rango.com.tr/yasal/satis-sozlesmesi` açılmalı. Başlık "Mesafeli Hizmet Satış Sözleşmesi ve Satış Onayı" olmalı, özette "Sürüm: 2026-11-20" yazmalı. Eski site bu adresi KVKK Aydınlatma Metni'ne yönlendirir. Sayfanın altında PAYTR cümlesi ve www.paytr.com bağlantısı olmalı.
    - Deneme müşteri hesabıyla, kendi deneme işletmenizde bir test ödemesi yapın (gerçek bir işletmeye bildirim gitmesin). "Satış onayı" kutusu görünmeli ve ödeme tamamlanmalı. `select appointment_id, sale_terms_version, consent_locale, payment_mode, accepted_at from sale_consents order by accepted_at desc limit 1;` sorgusu bu randevuyu göstermeli. Ardından randevuyu iptal edin.
    - Yeni site yayına çıktıktan sonra en az 15 dakika (ödeme bekleme süresi) geçmiş olmalı. `select count(*) from appointments where status = 'pending_payment' and created_at > now() - interval '15 minutes';` sonucu 0 olmalı.
    - Dağıtılmış bir mobil uygulama varsa o da satış onayını içeren koddan derlenmiş olmalı. Uygulama site kodunu kendi içinde taşır (`capacitor.config.ts` → `webDir: 'dist'`); eski koddan derlenmiş bir uygulama 2. adımdan sonra ödeme yapamaz.
 
    Uyguladıktan sonra test ödemesini bir kez daha yapın; ödeme tamamlanmalı. Ardından dosyayı, Supabase'in kaydettiği sürüm numarasıyla `supabase/migrations/` klasörüne taşıyın.
-- **Geri alma:** 2. adım uygulandıktan sonra site satış onayı olmayan eski bir sürüme döndürülecekse önce 2. adımı geri alın. Bu durumlar: Hostinger'da eski dağıtımı yeniden yayınlamak, GitHub'da geri almak ya da Bolt'un eski kodu yazması. Geri alma adımları dosyanın başındaki "Rollback" notundadır. Geri alınmazsa bütün ödemeler durur.
+- **Geri alma:** 2. adım uygulandıktan sonra site satış onayı olmayan eski bir sürüme döndürülecekse önce 2. adımı geri alın. Bu durumlar: Netlify'da (veya Hostinger'da) eski bir dağıtımı yeniden yayınlamak, GitHub'da geri almak ya da Bolt'tan eski kodu yayınlamak. Geri alma adımları dosyanın başındaki "Rollback" notundadır. Geri alınmazsa bütün ödemeler durur.
 - **Not:** `20261114200000_rango_security_hardening.sql` yeniden çalıştırılırsa `pay_deposit` satış onayı kontrolü olmadan eski haline döner. O durumda 2. adım dosyasını hemen ardından yeniden çalıştırın.
 
 **PayTR veya banka belge isterse (md. 6.4 ve 7.3: 2 iş günü içinde):** Supabase SQL Editor'de aşağıdaki sorguyu randevu koduyla çalıştırın. Sonucu, o sürümdeki sözleşme metniyle birlikte gönderin. O sürümün metni, GitHub'da `src/pages/legal/legalContent.ts` ve `src/lib/legal.ts` dosyalarının o tarihteki halidir.
@@ -177,7 +184,8 @@ WHERE a.booking_code = 'VY…';
 2. **Sözleşme örneğinin iletilmesi:** Ödemeden sonra müşteriye ön bilgilendirme ve sözleşmenin onayladığı sürümü e-postayla gönderilmelidir. E-posta bir "kalıcı veri saklayıcı"dır (TKHK md. 4, MSY md. 7). Şu an otomatik gönderim yok; isteyen müşteriye destekten gönderilir.
 3. **Hizmet sağlayıcı kimliği:** Ön bilgilendirmede işletmenin unvanı, vergi numarası, açık adresi ve telefonu gösterilmelidir (MSY md. 5/1-b, c). Bu bilgiler işletmelerden toplanmalıdır; PayTR alt işyeri tanımı için de gerekir.
 4. **Rango künyesi:** `src/lib/legal.ts` dosyasında `COMPANY.legalName`, vergi levhası ve PayTR sözleşmesindeki unvanla birebir aynı olmalıdır. `COMPANY.address` açık adres olmalıdır (mahalle, cadde/sokak, no, ilçe/il).
-5. **İşletmelerle sözleşme (PayTR Platform ek hükümleri):** Kapora işletme adına tahsil edildiği için işletmelerle bir sözleşme gerekir. Bu sözleşme şu hükümleri içermelidir: ticari temsil (yetki), PayTR kurallarına uyum, belge ve onay kayıtları. Yukarıdaki "pazaryeri modeli" notuyla birlikte değerlendirin.
+5. **Barındırma sağlayıcısı (KVKK):** Site Netlify'dan sunulduğu sürece aydınlatma metninde barındırma sağlayıcısı olarak Netlify, Inc. (ABD) yazmalıdır. Şu an metinde Hostinger yazıyor. Yurt dışı aktarım bölümü ile standart sözleşme ve Kurum'a bildirim de buna göre güncellenmelidir.
+6. **İşletmelerle sözleşme (PayTR Platform ek hükümleri):** Kapora işletme adına tahsil edildiği için işletmelerle bir sözleşme gerekir. Bu sözleşme şu hükümleri içermelidir: ticari temsil (yetki), PayTR kurallarına uyum, belge ve onay kayıtları. Yukarıdaki "pazaryeri modeli" notuyla birlikte değerlendirin.
 
 ---
 
@@ -194,7 +202,7 @@ WHERE a.booking_code = 'VY…';
 
 Bu zip'i Bolt projenize **içe aktarın**. Aksi halde Bolt'taki eski kod, bu düzeltmelerin üzerine yazılır.
 
-Bolt'taki her kayıt ("update from bolt") doğrudan `main` dalına gider ve Hostinger siteyi bu daldan derler. Satış onayı `main`'e alındıktan sonra Bolt'ta değişiklik yapmadan önce projede şunların olduğunu kontrol edin:
+Bolt'taki her kayıt ("update from bolt") doğrudan `main` dalına gider. Site ise Bolt'un yayınlama düğmesiyle (Netlify) güncellenir. Satış onayı `main`'e alındıktan sonra Bolt'ta değişiklik yapmadan ya da yayınlamadan önce projede şunların olduğunu kontrol edin:
 - `src/pages/customer/booking/Payment.tsx` içinde `record_sale_consent`
 - `src/lib/legal.ts` içinde `PAYMENT_PROVIDER`
 

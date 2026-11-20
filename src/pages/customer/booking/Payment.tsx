@@ -39,6 +39,15 @@ const TEST_CARD = { name: 'TEST KULLANICI', number: '4242 4242 4242 4242', expir
 const PAYMENT_POLL_MS = 3000;
 /** Every this many polls the server also asks PayTR directly (paytr-status), in case PayTR's notification is late. */
 const RECONCILE_EVERY = 7;
+/** After the payment page closes, how long "checking your payment" is shown before the result is shown. */
+const CHECK_WINDOW_MS = 30000;
+
+/**
+ * PayTR checkout on this page: `open` while PayTR's page is shown (iframe / in-app browser), `checking` for a
+ * short while after it closes or PayTR sends the customer back, `unpaid` when no confirmation came.
+ * The booking is followed (polled) in every state but `idle`, so a late confirmation still moves the page on.
+ */
+type CheckoutPhase = 'idle' | 'open' | 'checking' | 'unpaid';
 
 /**
  * Asks the paytr-token Edge Function for PayTR's hosted payment page. The deposit is confirmed only on the
@@ -215,35 +224,47 @@ export default function Payment() {
   const paytrReturn = searchParams.get('paytr');
   const [startingCheckout, setStartingCheckout] = useState(false);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
-  const [awaitingPayment, setAwaitingPayment] = useState(false);
+  const [phase, setPhase] = useState<CheckoutPhase>('idle');
+  const [checkingSince, setCheckingSince] = useState(0);
+  const [unpaidReason, setUnpaidReason] = useState<string | null>(null);
   const failureShown = useRef(false);
+  const tracking = phase !== 'idle';
 
-  // Coming back from PayTR: "ok" waits for the callback; "hata" tells the customer and lets them retry.
-  useEffect(() => {
-    if (paytrReturn === 'ok') {
-      setAwaitingPayment(true);
-      void reconcilePaytr(id);
-    }
-    if (paytrReturn === 'hata' && !failureShown.current) {
-      failureShown.current = true;
-      setAwaitingPayment(false);
-      setCheckoutUrl(null);
-      toast(tx('Ödeme tamamlanamadı. Kartınızdan tahsilat yapılmadı; tekrar deneyebilirsiniz.', 'The payment was not completed. Nothing was charged; you can try again.'), 'error');
-      setSearchParams({}, { replace: true });
-    }
-  }, [paytrReturn, setSearchParams, toast, id]);
+  const startChecking = useCallback(() => {
+    setCheckoutUrl(null);
+    setCheckingSince(Date.now());
+    setPhase('checking');
+  }, []);
 
-  // While the customer is paying, follow the booking: PayTR's callback moves it out of pending_payment.
-  const checkPaid = useCallback(async () => {
+  // While a PayTR attempt is under way, follow the booking: PayTR's notification moves it out of pending_payment.
+  const checkPaid = useCallback(async (): Promise<boolean> => {
     const { data: row } = await supabase.from('appointments').select('status').eq('id', id).maybeSingle();
     if (row && row.status !== 'pending_payment') {
       if (isNative) void Browser.close().catch(() => undefined);
       navigate(`/onay/${id}`, { replace: true });
+      return true;
     }
+    return false;
   }, [id, navigate]);
 
+  // Coming back from PayTR: "ok" checks for the confirmation; "hata" tells the customer and lets them retry.
   useEffect(() => {
-    if (!awaitingPayment) return;
+    if (paytrReturn === 'ok') {
+      startChecking();
+      void reconcilePaytr(id).then(checkPaid);
+    }
+    if (paytrReturn === 'hata' && !failureShown.current) {
+      failureShown.current = true;
+      setCheckoutUrl(null);
+      setUnpaidReason(null);
+      setPhase('unpaid');
+      toast(tx('Ödeme tamamlanamadı. Kartınızdan tahsilat yapılmadı; tekrar deneyebilirsiniz.', 'The payment was not completed. Nothing was charged; you can try again.'), 'error');
+      setSearchParams({}, { replace: true });
+    }
+  }, [paytrReturn, setSearchParams, toast, id, startChecking, checkPaid]);
+
+  useEffect(() => {
+    if (!tracking) return;
     let ticks = 0;
     void checkPaid();
     const timer = setInterval(() => {
@@ -252,14 +273,44 @@ export default function Payment() {
       else void checkPaid();
     }, PAYMENT_POLL_MS);
     return () => clearInterval(timer);
-  }, [awaitingPayment, checkPaid, id]);
+  }, [tracking, checkPaid, id]);
+
+  // "Checking" is shown for a bounded time; then the latest attempt's result (failed / not finished) is shown.
+  useEffect(() => {
+    if (phase !== 'checking') return;
+    const timer = setTimeout(async () => {
+      await reconcilePaytr(id);
+      if (await checkPaid()) return;
+      const { data: attempt } = await supabase.rpc('paytr_attempt_status', { p_appointment: id });
+      const last = attempt as { status?: string; reason?: string | null } | null;
+      setUnpaidReason(last?.status === 'failed' && last.reason ? last.reason.replace(/^\d+\s*-\s*/, '') : null);
+      setPhase('unpaid');
+    }, Math.max(0, checkingSince + CHECK_WINDOW_MS - Date.now()));
+    return () => clearTimeout(timer);
+  }, [phase, checkingSince, checkPaid, id]);
 
   // In the app PayTR opens in an in-app browser sheet; check right away when the customer closes it.
   useEffect(() => {
-    if (!isNative || !awaitingPayment) return;
-    const listener = Browser.addListener('browserFinished', () => void reconcilePaytr(id).then(checkPaid));
+    if (!isNative || phase !== 'open') return;
+    const listener = Browser.addListener('browserFinished', () => {
+      startChecking();
+      void reconcilePaytr(id).then(checkPaid);
+    });
     return () => void listener.then((l) => l.remove());
-  }, [awaitingPayment, checkPaid, id]);
+  }, [phase, startChecking, checkPaid, id]);
+
+  // PayTR's page tells its host page when it expired (the only message we act on, and only from PayTR).
+  useEffect(() => {
+    if (!checkoutUrl) return;
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== 'https://www.paytr.com' || event.data !== 'expired') return;
+      setCheckoutUrl(null);
+      setUnpaidReason(tx('Ödeme sayfasının süresi doldu.', 'The payment page expired.'));
+      setPhase('unpaid');
+    };
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, [checkoutUrl]);
 
   useEffect(() => {
     if (!data?.appt) return;
@@ -287,6 +338,8 @@ export default function Payment() {
   const policyHours = appt.cancellation_hours ?? b?.cancellation_hours ?? 24;
   // Same rule as the server: only next-day-or-later bookings at auto-confirm businesses skip the approval step.
   const needsApproval = b?.auto_confirm !== true || dateKey(new Date(appt.starts_at)) <= dateKey();
+  const consentMissing = () =>
+    toast(tx('Ödemeye geçmeden önce satış onayını işaretleyin.', 'Please tick the purchase confirmation before paying.'), 'error');
 
   /** Records the satış onayı on the server (PayTR md. 7.2). Throws the server error so callers show it. */
   const recordSaleConsent = async () => {
@@ -302,7 +355,7 @@ export default function Payment() {
     e.preventDefault();
     if (!testMode || paying) return;
     if (!saleAccepted) {
-      toast(tx('Ödemeye geçmeden önce satış onayını işaretleyin.', 'Please tick the purchase confirmation before paying.'), 'error');
+      consentMissing();
       return;
     }
     setPaying(true);
@@ -328,45 +381,68 @@ export default function Payment() {
     navigate(`/onay/${appt.id}`, { replace: true });
   };
 
+  // Releases an unpaid hold only; if PayTR confirmed it meanwhile, the confirmation page is shown instead.
+  const releaseUnpaidHold = async (): Promise<boolean> => {
+    const { error: err } = await supabase.rpc('release_pending_hold', { p_appointment: appt.id });
+    if (!err) return true;
+    if (/VEYRA_ALREADY_PAID/.test(err.message ?? '')) {
+      toast(tx('Ödemeniz alınmış, randevunuz kesinleşti.', 'Your payment went through and your booking is confirmed.'), 'success');
+      void checkPaid();
+    } else {
+      toast(friendlyError(err), 'error');
+    }
+    return false;
+  };
+
   const payWithPaytr = async () => {
     if (startingCheckout) return;
     if (!saleAccepted) {
-      toast(tx('Ödemeye geçmeden önce satış onayını işaretleyin.', 'Please tick the purchase confirmation before paying.'), 'error');
+      consentMissing();
       return;
     }
+    failureShown.current = false;
     setStartingCheckout(true);
     try {
       // The satış onayı is recorded first; the server refuses to start a PayTR order without it.
       await recordSaleConsent();
       const { url } = await startPaytrCheckout(appt.id);
+      setUnpaidReason(null);
       if (isNative) {
         await Browser.open({ url, presentationStyle: 'fullscreen' });
       } else {
         setCheckoutUrl(url);
       }
-      setAwaitingPayment(true);
+      setPhase('open');
     } catch (err) {
-      toast(friendlyError(err), 'error');
-      if (/VEYRA_(PAYMENT_EXPIRED|INVALID_STATE|NOT_FOUND)/.test(errorMessage(err))) reload();
+      const code = errorMessage(err);
+      if (/VEYRA_ALREADY_PAID/.test(code)) {
+        void checkPaid();
+      } else if (/VEYRA_PAYMENT_TOO_LATE/.test(code)) {
+        // Too little time left to pay: free the slot right away and let the customer pick a time again.
+        if (await releaseUnpaidHold()) {
+          toast(tx('Ödeme için ayrılan süre bitmek üzereydi; saat serbest bırakıldı. Lütfen yeniden saat seçin.', 'The time held for payment was almost up, so it was released. Please choose a time again.'), 'info');
+          navigate(`/i/${b?.slug ?? ''}/randevu`, { replace: true });
+        }
+      } else {
+        toast(friendlyError(err), 'error');
+        if (/VEYRA_(PAYMENT_EXPIRED|INVALID_STATE|NOT_FOUND)/.test(code)) reload();
+      }
     } finally {
       setStartingCheckout(false);
     }
   };
 
   const closeCheckout = () => {
-    setCheckoutUrl(null);
-    setAwaitingPayment(false);
+    startChecking();
+    void reconcilePaytr(appt.id).then(checkPaid);
   };
 
-  // Lets the customer give the held slot back (and correct a wrong choice by booking again) instead of dead-ending.
+  // Lets the customer release the held slot instead of dead-ending (never cancels a booking paid meanwhile).
   const releaseHold = async () => {
     setReleasing(true);
-    const { error: err } = await supabase.rpc('cancel_appointment', { p_appointment: appt.id, p_reason: '' });
+    const released = await releaseUnpaidHold();
     setReleasing(false);
-    if (err) {
-      toast(friendlyError(err), 'error');
-      return;
-    }
+    if (!released) return;
     toast(tx('Ayrılan saat serbest bırakıldı.', 'The held time has been released.'), 'success');
     navigate('/randevularim', { replace: true });
   };
@@ -443,16 +519,29 @@ export default function Payment() {
             </p>
             <Button full variant="outline" icon={<X className="h-4 w-4" />} onClick={closeCheckout}>{tx('Ödeme sayfasını kapat', 'Close the payment page')}</Button>
           </div>
-        ) : awaitingPayment ? (
+        ) : phase === 'open' || phase === 'checking' ? (
           <div className="mt-8 space-y-4">
             <p className="flex items-center gap-3 rounded-xl border border-gold-500/30 bg-gold-500/5 px-4 py-3 text-sm text-gold-200">
               <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
-              {tx('Ödemeniz doğrulanıyor. Bu birkaç saniye sürebilir, lütfen sayfayı kapatmayın.', 'Verifying your payment. This can take a few seconds, please keep this page open.')}
+              {phase === 'open'
+                ? tx('PayTR ödeme sayfası açık. Ödemeyi tamamlayınca bu ekrana dönün; onay otomatik gelir.', 'The PayTR payment page is open. Come back here when you have paid; the confirmation appears automatically.')
+                : tx('Ödemeniz kontrol ediliyor. Bu birkaç saniye sürebilir, lütfen sayfayı kapatmayın.', 'Checking your payment. This can take a few seconds, please keep this page open.')}
             </p>
-            {isNative && paytrReturn !== 'ok' && (
-              <Button full size="lg" variant="outline" loading={startingCheckout} onClick={payWithPaytr}>{tx('Ödeme sayfasını yeniden aç', 'Open the payment page again')}</Button>
+            {phase === 'open' && isNative && (
+              <Button full variant="ghost" onClick={startChecking}>{tx('Ödeme sayfasını kapattım', 'I have closed the payment page')}</Button>
             )}
-            <Button full variant="ghost" onClick={closeCheckout}>{tx('Ödemeyi tamamlamadım, geri dön', 'I did not finish the payment, go back')}</Button>
+          </div>
+        ) : phase === 'unpaid' ? (
+          <div className="mt-8 space-y-4">
+            <div role="status" className="rounded-xl border border-warning-500/40 bg-warning-900/40 px-4 py-3 text-sm leading-relaxed text-warning-300">
+              <p className="font-semibold">{tx('Ödeme tamamlanmadı', 'The payment was not completed')}</p>
+              <p className="mt-1">{unpaidReason ?? tx('Ödeme onayı gelmedi. Kartınızdan çekim yapıldıysa randevunuz birkaç dakika içinde otomatik olarak onaylanır; bu sayfayı açık tutabilirsiniz.', 'No confirmation arrived. If your card was charged, the booking is confirmed automatically within a few minutes; you can keep this page open.')}</p>
+            </div>
+            {!saleAccepted && <SaleConsent checked={saleAccepted} onChange={setSaleAccepted} testMode={false} disabled={startingCheckout} />}
+            <Button type="button" full size="lg" disabled={!saleAccepted} loading={startingCheckout} icon={<Lock className="h-4 w-4" />} onClick={payWithPaytr}>
+              {tx('Tekrar dene', 'Try again')}
+            </Button>
+            <Button full size="lg" variant="outline" loading={releasing} onClick={releaseHold}>{tx('Ayrılan saati serbest bırak', 'Release the held time')}</Button>
           </div>
         ) : (
           <div className="mt-8 space-y-4">

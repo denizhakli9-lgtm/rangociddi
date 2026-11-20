@@ -72,9 +72,12 @@ Deno.serve(async (req: Request) => {
         console.error('paytr-status: durum-sorgu request failed', order.merchant_oid, err);
         return null;
       });
-      const status = await response?.json().catch(() => null) as { status?: string; payment_amount?: unknown } | null;
+      const status = await response?.json().catch(() => null) as { status?: string; payment_amount?: unknown; test_mode?: unknown; err_no?: unknown } | null;
       // "success" means PayTR holds a successful payment for this order; "error" 004 means there is none (yet).
-      if (status?.status !== 'success') continue;
+      if (status?.status !== 'success') {
+        console.log('paytr-status: no successful payment', order.merchant_oid, status?.status ?? 'no response', status?.err_no ?? '');
+        continue;
+      }
 
       const paid = parseAmountKurus(status.payment_amount);
       const { data: applied, error: applyError } = await admin.rpc('paytr_apply_callback', {
@@ -82,6 +85,7 @@ Deno.serve(async (req: Request) => {
         p_success: true,
         p_amount_kurus: paid ?? order.amount_kurus,
         p_reason: 'durum-sorgu',
+        p_test: String(status.test_mode ?? '') === '1',
       });
       if (applyError) {
         console.error('paytr-status: apply failed', order.merchant_oid, applyError);

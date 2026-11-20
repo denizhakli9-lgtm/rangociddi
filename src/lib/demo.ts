@@ -15,6 +15,12 @@ export function isDemoBusiness(b: { owner_id?: string | null } | null | undefine
  * or a payment row created by the test stub (provider_payment_id 'TEST-...'). No money moves
  * in either case, so the UI must never say that a card was charged or refunded.
  */
+/** The booking's deposit payment row; a refunded second (over)payment is never shown as the deposit. */
+export function depositPayment<T extends { amount: number | string; payment_type?: string | null }>(payments: T[] | null | undefined): T | undefined {
+  const list = (payments ?? []).filter((p) => p.payment_type !== 'overpayment');
+  return list.find((p) => Number(p.amount) > 0) ?? list[0];
+}
+
 export function isTestPayment(payment: object | null | undefined, settings?: Pick<PlatformSettings, 'payment_mode'> | null): boolean {
   const ref = payment && 'provider_payment_id' in payment ? (payment as { provider_payment_id?: unknown }).provider_payment_id : null;
   // A real PayTR capture stays real even if the platform is switched back to test mode later.

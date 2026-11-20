@@ -51,7 +51,7 @@ type LegalVersion = `${number}-${number}-${number}`;
 export const LEGAL_VERSIONS = {
   terms: '2026-11-20',
   privacy: '2026-11-20',
-  cookies: '2026-11-14',
+  cookies: '2026-11-20',
   /**
    * Ödeme ekranında birlikte kabul edilen metinlerin ortak sürümü: Mesafeli Hizmet Satış Sözleşmesi,
    * İptal ve İade Koşulları, ön bilgilendirme ve satış onayı cümleleri (`SALE_CONSENT_TEXT*`). Bunlardan

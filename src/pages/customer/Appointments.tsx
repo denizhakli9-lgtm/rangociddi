@@ -4,7 +4,7 @@ import { CalendarDays, CalendarX2, Clock, CreditCard, MapPin, RefreshCw, Repeat,
 import { supabase } from '@/lib/supabase';
 import { fetchSettings } from '@/lib/api';
 import { useAsync } from '@/lib/useAsync';
-import { isDemoBusiness, isTestPayment } from '@/lib/demo';
+import { depositPayment, isDemoBusiness, isTestPayment } from '@/lib/demo';
 import { isExpiredHold } from '@/lib/homeData';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatDate, formatTime, formatTRY } from '@/lib/format';
@@ -33,7 +33,7 @@ export default function Appointments() {
       supabase
         .from('appointments')
         // owner_id marks seeded demo businesses (isDemoBusiness), which must not be re-booked or rescheduled.
-        .select('*, businesses(id, owner_id, name, slug, cover_url, address, district, city, latitude, longitude, cancellation_hours), payments(id, status, amount, card_last4, provider_payment_id), reviews(id)')
+        .select('*, businesses(id, owner_id, name, slug, cover_url, address, district, city, latitude, longitude, cancellation_hours), payments(id, status, amount, card_last4, provider_payment_id, payment_type), reviews(id)')
         .eq('customer_id', profile!.id)
         .order('starts_at', { ascending: false }),
       fetchSettings().catch(() => null),
@@ -84,7 +84,7 @@ export default function Appointments() {
           <div className="space-y-4">
             {list.map((a, i) => {
               // Zero-deposit bookings also carry a 0 ₺ "paid" row: only real deposits are shown.
-              const payment = a.payments?.find((p) => Number(p.amount) > 0);
+              const payment = depositPayment(a.payments?.filter((p) => Number(p.amount) > 0));
               const testPayment = !!payment && isTestPayment(payment, settings);
               const reviewed = (a.reviews?.length ?? 0) > 0;
               const expiredHold = isExpiredHold(a, settings);

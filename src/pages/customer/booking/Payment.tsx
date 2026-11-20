@@ -25,7 +25,7 @@ import { Input } from '@/components/ui/Field';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, ErrorState, PageLoader } from '@/components/ui/Feedback';
 import type { Appointment } from '@/lib/types';
-import { isEnglish, tx } from '@/i18n/locale';
+import { locale, tx } from '@/i18n/locale';
 import { isNative, newTabClick } from '@/lib/platform';
 import { invokeEdge } from '@/lib/functions';
 
@@ -49,6 +49,9 @@ const CHECK_WINDOW_MS = 30000;
  */
 type CheckoutPhase = 'idle' | 'open' | 'checking' | 'unpaid';
 
+/** Heights PayTR's own embed script gives its iframe for these step messages (3-D Secure, saved cards...). */
+const PAYTR_FRAME_HEIGHTS: Record<string, number> = { shrink: 1000, fastpay: 1100, bex: 650, 'bex-cancel': 850, shrink_eft: 500 };
+
 /**
  * Asks the paytr-token Edge Function for PayTR's hosted payment page. The deposit is confirmed only on the
  * server: by PayTR's notification (paytr-callback) or PayTR's status service (paytr-status), never by this
@@ -58,6 +61,7 @@ async function startPaytrCheckout(appointmentId: string): Promise<{ url: string;
   const data = await invokeEdge<{ url?: unknown; test?: unknown }>('paytr-token', {
     appointment: appointmentId,
     platform: isNative ? 'app' : 'web',
+    lang: locale(),
   });
   if (!data || typeof data.url !== 'string' || !data.url.startsWith('https://www.paytr.com/')) throw new Error('VEYRA_PAYMENT_PROVIDER');
   return { url: data.url, test: data.test === true };
@@ -228,6 +232,8 @@ export default function Payment() {
   const [checkingSince, setCheckingSince] = useState(0);
   const [unpaidReason, setUnpaidReason] = useState<string | null>(null);
   const failureShown = useRef(false);
+  const frameRef = useRef<HTMLIFrameElement>(null);
+  const [frameHeight, setFrameHeight] = useState<number | null>(null);
   const tracking = phase !== 'idle';
 
   const startChecking = useCallback(() => {
@@ -258,7 +264,8 @@ export default function Payment() {
       setCheckoutUrl(null);
       setUnpaidReason(null);
       setPhase('unpaid');
-      toast(tx('Ödeme tamamlanamadı. Kartınızdan tahsilat yapılmadı; tekrar deneyebilirsiniz.', 'The payment was not completed. Nothing was charged; you can try again.'), 'error');
+      // PayTR's fail return is not a final result (only its notification is): neutral wording, keep following the booking.
+      toast(tx('Ödeme tamamlanamamış görünüyor. Kesin sonuç birkaç dakika içinde burada görünür; kartınızdan çekim yapıldıysa tekrar ödemeyin.', 'The payment seems not to have completed. The final result appears here within a few minutes; if your card was charged, do not pay again.'), 'error');
       setSearchParams({}, { replace: true });
     }
   }, [paytrReturn, setSearchParams, toast, id, startChecking, checkPaid]);
@@ -299,14 +306,20 @@ export default function Payment() {
     return () => void listener.then((l) => l.remove());
   }, [phase, startChecking, checkPaid, id]);
 
-  // PayTR's page tells its host page when it expired (the only message we act on, and only from PayTR).
+  // PayTR's page talks to its host page: it expired, or a step needs another height. Only PayTR's origin counts.
   useEffect(() => {
     if (!checkoutUrl) return;
     const onMessage = (event: MessageEvent) => {
-      if (event.origin !== 'https://www.paytr.com' || event.data !== 'expired') return;
-      setCheckoutUrl(null);
-      setUnpaidReason(tx('Ödeme sayfasının süresi doldu.', 'The payment page expired.'));
-      setPhase('unpaid');
+      if (event.origin !== 'https://www.paytr.com' || typeof event.data !== 'string') return;
+      if (event.data === 'expired') {
+        setCheckoutUrl(null);
+        setUnpaidReason(tx('Ödeme sayfasının süresi doldu.', 'The payment page expired.'));
+        setPhase('unpaid');
+        return;
+      }
+      const height = PAYTR_FRAME_HEIGHTS[event.data];
+      if (height) setFrameHeight(height);
+      if (height || event.data === 'focus_popup') frameRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
     };
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
@@ -346,7 +359,8 @@ export default function Payment() {
     const { error: consentErr } = await supabase.rpc('record_sale_consent', {
       p_appointment: appt.id,
       p_version: LEGAL_VERSIONS.sale,
-      p_locale: isEnglish() ? 'en' : 'tr',
+      // Language of the confirmation sentence shown (tx() follows locale()).
+      p_locale: locale(),
     });
     if (consentErr) throw consentErr;
   };
@@ -407,6 +421,7 @@ export default function Payment() {
       await recordSaleConsent();
       const { url } = await startPaytrCheckout(appt.id);
       setUnpaidReason(null);
+      setFrameHeight(null);
       if (isNative) {
         await Browser.open({ url, presentationStyle: 'fullscreen' });
       } else {
@@ -508,9 +523,11 @@ export default function Payment() {
             </p>
             <div className="overflow-hidden rounded-2xl border border-line bg-white">
               <iframe
+                ref={frameRef}
                 src={checkoutUrl}
                 title={tx('PayTR güvenli ödeme', 'PayTR secure payment')}
                 className="block h-[max(560px,80vh)] w-full sm:h-[680px]"
+                style={frameHeight ? { height: frameHeight } : undefined}
               />
             </div>
             <p className="flex items-center gap-2 text-xs text-mist">

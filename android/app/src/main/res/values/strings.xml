@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Rango</string>
+    <string name="title_activity_main">Rango</string>
+    <string name="package_name">tr.com.rango.app</string>
+    <string name="custom_url_scheme">tr.com.rango.app</string>
+</resources>

@@ -1,5 +1,8 @@
 # Rango – Mobil Uygulama Rehberi (Android & iOS)
 
+> **Android hazır:** `android/` klasörü, konum izinleri, simge/açılış ekranı ve imzalı derleme ayarları yapıldı
+> (aşağıdaki 1, 2 ve 4. adımların Android kısmı tamam). Play Store'a yükleme adımları: **PLAY-STORE-REHBERI.md**
+
 Rango'nun mobil uygulaması **Capacitor** ile yapılır. Sitenin React kodu (`src/`) olduğu gibi telefona gömülür.
 Site ile uygulama **aynı kodu** kullanır: bir şeyi düzelttiğinde ikisinde birden düzelir.
 

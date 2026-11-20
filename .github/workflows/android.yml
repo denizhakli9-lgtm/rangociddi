@@ -1,0 +1,75 @@
+# Rango Android derlemesi.
+# GitHub → Actions → "Android (Play Store)" → Run workflow ile elle çalıştırılır.
+# Çıktılar (Artifacts):
+#   rango-play-store-aab : Play Console'a yüklenecek imzalı .aab dosyası
+#   rango-test-apk       : Telefona doğrudan kurup denemek için .apk
+# İmza için depo ayarlarında (Settings → Secrets and variables → Actions) şu
+# gizli değerler tanımlı olmalı: RANGO_KEYSTORE_BASE64, RANGO_KEYSTORE_PASSWORD,
+# RANGO_KEY_ALIAS, RANGO_KEY_PASSWORD. Ayrıntılar: PLAY-STORE-REHBERI.md
+name: Android (Play Store)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Web uygulamasını derle ve Android'e kopyala
+        run: |
+          npm ci
+          npm run build
+          npx cap sync android
+
+      - name: İmza anahtarını hazırla
+        env:
+          RANGO_KEYSTORE_BASE64: ${{ secrets.RANGO_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$RANGO_KEYSTORE_BASE64" ]; then
+            echo "::error::RANGO_KEYSTORE_BASE64 gizli değeri tanımlı değil. PLAY-STORE-REHBERI.md'deki adımları izleyin."
+            exit 1
+          fi
+          echo "$RANGO_KEYSTORE_BASE64" | base64 --decode > android/rango-upload.jks
+
+      - name: AAB ve APK derle
+        working-directory: android
+        env:
+          RANGO_KEYSTORE_FILE: rango-upload.jks
+          RANGO_KEYSTORE_PASSWORD: ${{ secrets.RANGO_KEYSTORE_PASSWORD }}
+          RANGO_KEY_ALIAS: ${{ secrets.RANGO_KEY_ALIAS }}
+          RANGO_KEY_PASSWORD: ${{ secrets.RANGO_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon bundleRelease assembleRelease
+
+      - name: İmza anahtarını sil
+        if: always()
+        run: rm -f android/rango-upload.jks
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rango-play-store-aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rango-test-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error

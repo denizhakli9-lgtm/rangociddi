@@ -28,3 +28,10 @@ android/.gradle
 ios/App/Pods
 ios/App/App/public
 android/app/src/main/assets/public
+
+# Derlenmiş uygulama dosyaları ve imza anahtarları depoya girmez
+*.aab
+*.apk
+*.jks
+*.keystore
+keystore.properties

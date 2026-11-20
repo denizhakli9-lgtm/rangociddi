@@ -354,6 +354,19 @@ const basvuru: LegalDocument = {
         p('Başvurunuz, talebin niteliğine göre en kısa sürede ve en geç 30 gün içinde ücretsiz olarak sonuçlandırılır. İşlemin ayrıca bir maliyet gerektirmesi halinde Kişisel Verileri Koruma Kurulunca belirlenen tarifedeki ücret alınabilir. Başvurunuzun reddedilmesi, verilen cevabı yetersiz bulmanız veya süresinde cevap verilmemesi halinde Kişisel Verileri Koruma Kuruluna şikâyette bulunabilirsiniz.'),
       ],
     },
+    {
+      title: '4. Rango hesabınızı ve verilerinizi silme',
+      blocks: [
+        p('Rango hesabınızı (web sitesi ve Android/iOS uygulaması aynı hesaptır) iki yoldan silebilirsiniz:'),
+        ul(
+          'Uygulamada veya sitede: giriş yapın, Profil → Hesabımı sil adımlarını izleyin. Hesabınız hemen kapatılır.',
+          `Uygulamaya erişemiyorsanız: hesabınızda kayıtlı e-posta adresinizden ${COMPANY.kvkkEmail} adresine "Hesap silme talebi" konulu bir e-posta gönderin. Talebiniz en geç 30 gün içinde sonuçlandırılır. Bu talep için yukarıdaki kimlik bilgileri istenmez.`,
+        ),
+        p('Silinen veriler: ad soyad, e-posta, telefon, konum tercihi, favoriler, bildirimler ve oturum bilgileri hemen silinir; randevu notlarınız temizlenir, yorumlarınız anonimleştirilir ve ileri tarihli randevularınız iptal edilir.'),
+        p('Saklanan veriler: geçmiş randevu, ödeme ve iade kayıtları yasal saklama süreleri boyunca (ör. Mesafeli Sözleşmeler Yönetmeliği uyarınca 3 yıl) kimliğinizle ilişkilendirilmeden tutulur, süre sonunda silinir.'),
+        p('İşletme hesapları, açık ödeme ve yükümlülükler nedeniyle destek ekibi üzerinden kapatılır.'),
+      ],
+    },
   ],
 };
 

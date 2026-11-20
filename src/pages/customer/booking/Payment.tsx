@@ -363,13 +363,18 @@ export default function Payment() {
 
   /** Records the satış onayı on the server (PayTR md. 7.2). Throws the server error so callers show it. */
   const recordSaleConsent = async () => {
-    const { error: consentErr } = await supabase.rpc('record_sale_consent', {
+    const args = {
       p_appointment: appt.id,
       p_version: LEGAL_VERSIONS.sale,
       // Language of the confirmation sentence shown (tx() follows locale()).
       p_locale: locale(),
-      p_wording: consentWording,
-    });
+    };
+    let { error: consentErr } = await supabase.rpc('record_sale_consent', { ...args, p_wording: consentWording });
+    // Until the database update that adds p_wording (supabase/bekleyen/sale_consents_append_only.sql) is applied,
+    // the server only knows the 3-argument form; fall back to it so payments never break on deploy order.
+    if (consentErr && (consentErr.code === 'PGRST202' || /Could not find the function/i.test(consentErr.message ?? ''))) {
+      ({ error: consentErr } = await supabase.rpc('record_sale_consent', args));
+    }
     if (consentErr) throw consentErr;
   };
 

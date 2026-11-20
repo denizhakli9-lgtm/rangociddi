@@ -148,7 +148,7 @@ export interface Appointment {
    */
   cancellation_hours?: number | null;
   created_at: string;
-  businesses?: Pick<Business, 'id' | 'name' | 'slug' | 'cover_url' | 'address' | 'district' | 'city' | 'latitude' | 'longitude' | 'cancellation_hours'> & Partial<Pick<Business, 'owner_id' | 'phone'>> | null;
+  businesses?: Pick<Business, 'id' | 'name' | 'slug' | 'cover_url' | 'address' | 'district' | 'city' | 'latitude' | 'longitude' | 'cancellation_hours'> & Partial<Pick<Business, 'owner_id' | 'phone' | 'auto_confirm'>> | null;
   profiles?: Pick<Profile, 'full_name' | 'phone' | 'email' | 'gender'> | null;
   payments?: Pick<Payment, 'id' | 'status' | 'amount' | 'card_last4' | 'provider_payment_id'>[];
   reviews?: { id: string }[];
@@ -240,6 +240,8 @@ export interface PlatformSettings {
   commission_rate: number;
   payment_mode: 'test' | 'live';
   payment_provider: string;
+  /** PayTR orders go out with test_mode=1 (PayTR test cards, no real charge) while true. */
+  paytr_test_mode?: boolean;
   pending_payment_minutes: number;
   slot_interval_minutes: number;
   min_lead_minutes: number;

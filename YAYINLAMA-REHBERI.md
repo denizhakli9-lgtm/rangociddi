@@ -105,30 +105,79 @@ Kod tarafındaki uyum ekranları hazır: aydınlatma metni, kullanım koşullar�
 
 ---
 
-## 6. Ödeme – test modu
+## 6. Ödeme – PayTR iFrame API (20 Kasım 2026)
 
-Gerçek ödeme altyapısı (iyzico/PayTR) henüz **yok**. Site test modunda çalışır:
-- Ödeme ekranında büyük bir **TEST** uyarısı görünür.
-- Kart alanları sabit test kartıyla doludur, gerçek kart girilemez.
-- Müşteriye "kartınızdan tahsilat yapılmaz, ücretin tamamı işletmede ödenir" denir.
-- İşletme ve yönetici panelinde test ödemeleri **Test** etiketiyle gösterilir.
+Kaporalar **PayTR iFrame API** ile alınır. Müşteri kart bilgisini PayTR'nin güvenli ödeme sayfasına girer; kart bilgisi Rango'ya hiç gelmez. Ödeme yalnızca PayTR'nin sunucudan sunucuya gönderdiği bildirimle (ya da PayTR durum sorgusuyla) onaylanır.
 
-Gerçek ödeme almak için:
-1. iyzico/PayTR üye işyeri hesabı açılmalı.
-2. Sağlayıcının kendi ödeme sayfası entegre edilmeli.
-3. Ödeme onayı yalnızca sunucu tarafındaki geri bildirimle (webhook) verilmeli.
+**Kurulu olanlar (Supabase'e yüklendi):**
+- Edge Function'lar: `paytr-token` (ödeme sayfası), `paytr-callback` (PayTR Bildirim URL), `paytr-status` (PayTR durum sorgusu ile yedek kontrol), `paytr-refund` (admin iadesi PayTR'ye gider).
+- Gizli anahtarlar Supabase → Edge Functions → Secrets altında: `PAYTR_MERCHANT_ID`, `PAYTR_MERCHANT_KEY`, `PAYTR_MERCHANT_SALT`. Kodda veya GitHub'da **yoktur**.
+- Veritabanı: `supabase/migrations/20261120120000_paytr_iframe_payments.sql` ve `20261120140000_paytr_refunds_reconcile_admin_mode.sql`.
+- Site: ödeme sayfası (sitede iframe, uygulamada uygulama içi tarayıcı), admin **Ayarlar → Ödeme altyapısı** ile mod değiştirme, admin **İadeler** ekranında PayTR iadesi.
 
-### Satış onayı (PayTR sözleşmesi md. 7.2, 6.4, 10.3)
+**Ödeme modları (Yönetim → Ayarlar → Ödeme altyapısı):**
+- **Test (kartsız):** Eski test akışı, hiçbir ödeme kuruluşuna bağlanılmaz.
+- **PayTR test:** Müşteri PayTR sayfasına gider, PayTR test modundadır; test kartı sayfada hazır gelir ("Ödeme Yap" → 3D sayfasında "Gönder"). Gerçek tahsilat yoktur.
+- **PayTR canlı:** Gerçek tahsilat. Yalnızca PayTR mağazanız canlıya alındıktan sonra açın.
 
-- Ödeme ekranında müşteri **satış onayı** kutusunu işaretlemeden ödeme yapılamaz.
-- Onay, sözleşme sürümü ve tutarlarla birlikte `sale_consents` tablosuna kaydedilir; `pay_deposit` onay kaydı olmadan ödemeyi kabul etmez.
-- Sözleşme metni: `/yasal/satis-sozlesmesi`. Metin değişirse `src/lib/legal.ts` içindeki `LEGAL_VERSIONS.sale` güncellenmeli.
-- Site altbilgisinde ve ödeme ekranında PayTR cümlesi ve paytr.com bağlantısı gösterilir.
-- Veritabanı güncellemesi iki adımdır ve sıra önemlidir:
-  1. `20261120120000_record_sale_consent.sql` (onay tablosu ve kayıt fonksiyonu): yeni site yayınlanmadan **önce** uygulanır. Eski siteyi etkilemez.
-  2. `20261120130000_require_sale_consent_for_payment.sql` (onaysız ödemeyi reddetme): yeni site yayına çıktıktan **sonra** uygulanır. Erken uygulanırsa eski sitedeki test ödemeleri durur.
+**Sizin yapmanız gerekenler (PayTR paneli):**
+1. **Bildirim URL (zorunlu):** PayTR Mağaza Paneli → Destek & Kurulum → Ayarlar → Bildirim URL:
+   `https://ocgqkdhrmjesrbksnrlh.supabase.co/functions/v1/paytr-callback`
+   Bu girilmezse PayTR ödemeyi "Devam Ediyor" olarak bekletir: para mağaza hesabınıza aktarılmaz ve iade yapılamaz (PayTR hata 007).
+2. Site "PayTR test" modundayken bir test ödemesi yapın. PayTR panelinde İşlem & Rapor → İşlemler sayfasında işlemin "Başarılı" göründüğünü kontrol edin ("Devam Ediyor" görünüyorsa Bildirim URL'yi kontrol edin).
+3. Canlıya geçiş: PayTR panelinde Destek & Kurulum → Canlı Mod → "Evet, Entegrasyonu Tamamladım" → "Canlı Moda Geçiş Talebi Gönder".
+4. PayTR'den canlı mod SMS/e-postası gelince Yönetim → Ayarlar → Ödeme altyapısı → **PayTR canlı**.
 
-Bu ayrı bir geliştirme işidir.
+**İadeler:** Yönetim → İadeler ekranında PayTR ile alınmış bir ödemenin iadesini onayladığınızda tutar PayTR üzerinden karta gönderilir. PayTR iadeyi mağaza bakiyenizden yapar; bakiye yetersizse (hata 010) iade reddedilir ve ekranda PayTR'nin mesajı görünür. Aynı iade iki kez gönderilmez.
+
+**Önemli – pazaryeri modeli:** Rango kaporayı işletmeler adına tahsil ediyor. Standart PayTR mağazasında para yalnızca vergi levhasındaki hesaba (Rango'ya) ödenir. İşletmelere ödeme dağıtmak için PayTR'nin **Pazaryeri çözümü** (Platform Transfer) veya TCMB lisansı gerekebilir. Canlıya geçmeden PayTR temsilcinize ve bir hukukçuya danışın.
+
+### Satış onayı (PayTR sözleşmesi md. 7.2, 6.4, 7.3, 10.3)
+
+**Ne yapar:**
+- Ödeme ekranında müşteri **satış onayı** kutusunu işaretlemeden ödeme başlatılamaz (ne test ödemesi ne de PayTR ödeme sayfası).
+- Onay; sözleşme sürümü, dili ve onay anındaki ön bilgilendirme bilgileriyle (işletme adı ve adresi, hizmet, uzman, tarih, tutarlar, iptal süresi) `sale_consents` tablosuna kaydedilir. Kayıtlar 10 yıl saklanır; sitede ve servis anahtarıyla elle değiştirilemez.
+- Aşağıdaki 2. adım uygulandıktan sonra `pay_deposit` ve PayTR siparişleri, onay kaydı olmayan ödemeyi başlatmaz.
+- Sözleşme metni: `/yasal/satis-sozlesmesi`. İptal ve İade Koşulları ile birlikte kabul edilir.
+- Site altbilgisinde ve ödeme ekranında PayTR cümlesi ve www.paytr.com bağlantısı gösterilir (md. 10.3).
+- Müşterinin "Verilerimi indir" dosyasında kendi satış onayları da yer alır.
+
+**Metin değişirse:** `src/lib/legal.ts` → `LEGAL_VERSIONS.sale` değerini yayın tarihiyle `YYYY-AA-GG` biçiminde güncelleyin (ör. `2026-12-01`; aynı gün ikinci bir değişiklik için `2026-12-01.2`). İleri bir tarih yazmayın. Başka biçimde yazılan sürüm veritabanınca reddedilir: satış onayı kaydedilemez ve hiçbir ödeme tamamlanamaz.
+
+**Veritabanı güncellemesi iki adımdır ve sıra önemlidir.** Dosyaları tek tek SQL Editor'de (ya da Supabase bağlantısıyla) uygulayın. `supabase db push` kullanmayın: bekleyen bütün dosyaları birlikte uygular.
+1. `supabase/migrations/…_record_sale_consent.sql` (onay tablosu ve kayıt fonksiyonu). Yeni site yayınlanmadan **önce** uygulanır ve eski siteyi etkilemez. Kontrol sorgusu `true` döndürmeli:
+   `select to_regclass('public.sale_consents') is not null and to_regprocedure('public.record_sale_consent(uuid,text,text)') is not null;`
+2. `supabase/bekleyen/require_sale_consent_for_payment.sql` (onaysız ödemeyi reddetme). Aşağıdakilerin **hepsi** doğrulandıktan sonra uygulanır. Erken uygulanırsa eski kodla açılmış ödeme ekranlarında ödemeler "Bir sorun oluştu" hatasıyla durur.
+   - hPanel → Node.js: `main` dalının son derlemesi başarılı. Yeni derleme başlamadıysa **Ayarlar ve yeniden dağıtma** ile başlatın. Derleme hata verirse eski site yayında kalır; o durumda 2. adımı uygulamayın.
+   - Gizli pencerede `https://rango.com.tr/yasal/satis-sozlesmesi` açılmalı. Başlık "Mesafeli Hizmet Satış Sözleşmesi ve Satış Onayı" olmalı, özette "Sürüm: 2026-11-20" yazmalı. Eski site bu adresi KVKK Aydınlatma Metni'ne yönlendirir. Sayfanın altında PAYTR cümlesi ve www.paytr.com bağlantısı olmalı.
+   - Deneme müşteri hesabıyla, kendi deneme işletmenizde bir test ödemesi yapın (gerçek bir işletmeye bildirim gitmesin). "Satış onayı" kutusu görünmeli ve ödeme tamamlanmalı. `select appointment_id, sale_terms_version, consent_locale, payment_mode, accepted_at from sale_consents order by accepted_at desc limit 1;` sorgusu bu randevuyu göstermeli. Ardından randevuyu iptal edin.
+   - Yeni site yayına çıktıktan sonra en az 15 dakika (ödeme bekleme süresi) geçmiş olmalı. `select count(*) from appointments where status = 'pending_payment' and created_at > now() - interval '15 minutes';` sonucu 0 olmalı.
+   - Dağıtılmış bir mobil uygulama varsa o da satış onayını içeren koddan derlenmiş olmalı. Uygulama site kodunu kendi içinde taşır (`capacitor.config.ts` → `webDir: 'dist'`); eski koddan derlenmiş bir uygulama 2. adımdan sonra ödeme yapamaz.
+
+   Uyguladıktan sonra test ödemesini bir kez daha yapın; ödeme tamamlanmalı. Ardından dosyayı, Supabase'in kaydettiği sürüm numarasıyla `supabase/migrations/` klasörüne taşıyın.
+- **Geri alma:** 2. adım uygulandıktan sonra site satış onayı olmayan eski bir sürüme döndürülecekse önce 2. adımı geri alın. Bu durumlar: Hostinger'da eski dağıtımı yeniden yayınlamak, GitHub'da geri almak ya da Bolt'un eski kodu yazması. Geri alma adımları dosyanın başındaki "Rollback" notundadır. Geri alınmazsa bütün ödemeler durur.
+- **Not:** `20261114200000_rango_security_hardening.sql` yeniden çalıştırılırsa `pay_deposit` satış onayı kontrolü olmadan eski haline döner. O durumda 2. adım dosyasını hemen ardından yeniden çalıştırın.
+
+**PayTR veya banka belge isterse (md. 6.4 ve 7.3: 2 iş günü içinde):** Supabase SQL Editor'de aşağıdaki sorguyu randevu koduyla çalıştırın. Sonucu, o sürümdeki sözleşme metniyle birlikte gönderin. O sürümün metni, GitHub'da `src/pages/legal/legalContent.ts` ve `src/lib/legal.ts` dosyalarının o tarihteki halidir.
+
+```sql
+SELECT a.booking_code, c.accepted_at, c.sale_terms_version, c.consent_locale, c.payment_mode, c.payment_provider,
+       c.business_name, c.business_address, c.service_name, c.employee_name, c.starts_at, c.duration_minutes,
+       c.total_price, c.deposit_amount, c.pay_at_business, c.cancellation_hours,
+       p.provider_payment_id, p.status AS payment_status, p.paid_at, p.card_brand, p.card_last4,
+       a.status AS appointment_status, a.cancelled_by, a.cancelled_at
+FROM public.sale_consents c
+JOIN public.appointments a ON a.id = c.appointment_id
+LEFT JOIN public.payments p ON p.appointment_id = c.appointment_id
+WHERE a.booking_code = 'VY…';
+```
+
+**"PayTR canlı"ya geçmeden önce yapılması gerekenler (hukuki):**
+1. **Cayma hakkı:** Sözleşme ve ön bilgilendirme, Mesafeli Sözleşmeler Yönetmeliği'ne göre 14 günlük cayma hakkını yazar; bu hak hizmete başlanana kadar geçerlidir. Gerçek tahsilatta iptal kuralı da buna uymalıdır. Müşteri cayma süresi içinde ve randevu başlamadan iptal ederse kapora iade edilmelidir. Bunun için `cancel_appointment` ve iptal penceresindeki uyarı güncellenmelidir. Kuaför ve güzellik hizmetlerinde istisna (md. 15/1-g) uygulanabileceğini düşünüyorsanız bunu bir avukatla netleştirin; o durumda metinler de değişmelidir (yeni sürüm).
+2. **Sözleşme örneğinin iletilmesi:** Ödemeden sonra müşteriye ön bilgilendirme ve sözleşmenin onayladığı sürümü e-postayla gönderilmelidir. E-posta bir "kalıcı veri saklayıcı"dır (TKHK md. 4, MSY md. 7). Şu an otomatik gönderim yok; isteyen müşteriye destekten gönderilir.
+3. **Hizmet sağlayıcı kimliği:** Ön bilgilendirmede işletmenin unvanı, vergi numarası, açık adresi ve telefonu gösterilmelidir (MSY md. 5/1-b, c). Bu bilgiler işletmelerden toplanmalıdır; PayTR alt işyeri tanımı için de gerekir.
+4. **Rango künyesi:** `src/lib/legal.ts` dosyasında `COMPANY.legalName`, vergi levhası ve PayTR sözleşmesindeki unvanla birebir aynı olmalıdır. `COMPANY.address` açık adres olmalıdır (mahalle, cadde/sokak, no, ilçe/il).
+5. **İşletmelerle sözleşme (PayTR Platform ek hükümleri):** Kapora işletme adına tahsil edildiği için işletmelerle bir sözleşme gerekir. Bu sözleşme şu hükümleri içermelidir: ticari temsil (yetki), PayTR kurallarına uyum, belge ve onay kayıtları. Yukarıdaki "pazaryeri modeli" notuyla birlikte değerlendirin.
 
 ---
 
@@ -144,3 +193,9 @@ Bu ayrı bir geliştirme işidir.
 ## 8. Bolt'ta çalışmaya devam edecekseniz
 
 Bu zip'i Bolt projenize **içe aktarın**. Aksi halde Bolt'taki eski kod, bu düzeltmelerin üzerine yazılır.
+
+Bolt'taki her kayıt ("update from bolt") doğrudan `main` dalına gider ve Hostinger siteyi bu daldan derler. Satış onayı `main`'e alındıktan sonra Bolt'ta değişiklik yapmadan önce projede şunların olduğunu kontrol edin:
+- `src/pages/customer/booking/Payment.tsx` içinde `record_sale_consent`
+- `src/lib/legal.ts` içinde `PAYMENT_PROVIDER`
+
+Bunlar yoksa önce GitHub'daki son `main`'i Bolt'a alın. Veritabanının 2. adımı uygulandıktan sonra ödeme ekranındaki satış onayı kaldırılırsa bütün ödemeler durur.

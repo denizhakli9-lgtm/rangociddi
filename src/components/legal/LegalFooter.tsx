@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { COMPANY, LEGAL_LINKS, PAYMENT_PROVIDER, isPlaceholder, legalPath } from '@/lib/legal';
 import { tx } from '@/i18n/locale';
+import { newTabClick } from '@/lib/platform';
 
 export function LegalFooter({ className = '' }: { className?: string }) {
   const year = new Date().getFullYear();
@@ -14,10 +15,10 @@ export function LegalFooter({ className = '' }: { className?: string }) {
           </Link>
         ))}
       </nav>
-      {/* PAYTR Çerçeve Ödeme Hizmeti Sözleşmesi md. 10.3: provider sentence and a link to its website. */}
-      <p className="mt-4 leading-relaxed">
+      {/* PAYTR Çerçeve Ödeme Hizmeti Sözleşmesi md. 10.3: provider sentence (binding Turkish wording) and a link to its website. */}
+      <p lang="tr" className="mt-4 leading-relaxed">
         {PAYMENT_PROVIDER.disclosure}{' '}
-        <a href={PAYMENT_PROVIDER.website} target="_blank" rel="noopener noreferrer" className="underline-offset-2 transition hover:text-white hover:underline">
+        <a href={PAYMENT_PROVIDER.website} target="_blank" rel="noopener noreferrer" onClick={newTabClick(PAYMENT_PROVIDER.website)} className="underline underline-offset-2 transition hover:text-white">
           {PAYMENT_PROVIDER.website.replace('https://', '')}
         </a>
       </p>

@@ -16,7 +16,9 @@ export function isDemoBusiness(b: { owner_id?: string | null } | null | undefine
  * in either case, so the UI must never say that a card was charged or refunded.
  */
 export function isTestPayment(payment: object | null | undefined, settings?: Pick<PlatformSettings, 'payment_mode'> | null): boolean {
-  if (settings?.payment_mode === 'test') return true;
   const ref = payment && 'provider_payment_id' in payment ? (payment as { provider_payment_id?: unknown }).provider_payment_id : null;
+  // A real PayTR capture stays real even if the platform is switched back to test mode later.
+  if (typeof ref === 'string' && ref.startsWith('PAYTR-')) return false;
+  if (settings?.payment_mode === 'test') return true;
   return typeof ref === 'string' && ref.startsWith('TEST-');
 }

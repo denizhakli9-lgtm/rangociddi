@@ -35,7 +35,7 @@ export function PrivacyPanel({ profile }: { profile: Profile }) {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-semibold text-white">{tx('Verilerimin kopyasını indir', 'Download a copy of my data')}</p>
-            <p className="mt-0.5 text-xs text-mist-2">{tx('Profil, randevu, ödeme, yorum, favori, bildirim ve destek kayıtlarınızı JSON dosyası olarak indirin.', 'Download your profile, bookings, payments, reviews, favourites, notifications and support records as a JSON file.')}</p>
+            <p className="mt-0.5 text-xs text-mist-2">{tx('Profil, randevu, ödeme, satış onayı, yorum, favori, bildirim ve destek kayıtlarınızı JSON dosyası olarak indirin.', 'Download your profile, bookings, payments, purchase confirmations, reviews, favourites, notifications and support records as a JSON file.')}</p>
           </div>
           <Button variant="outline" onClick={exportData} loading={exporting} icon={<Download className="h-4 w-4" />} className="shrink-0">
             {tx('İndir', 'Download')}

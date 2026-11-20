@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ShieldCheck } from 'lucide-react';
+import { Copy, ShieldCheck } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAsync } from '@/lib/useAsync';
 import { fetchSettings } from '@/lib/api';
@@ -8,6 +8,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { Button } from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Field';
 import { Badge } from '@/components/ui/Badge';
+import { Modal } from '@/components/ui/Modal';
 import { ErrorState, SkeletonList } from '@/components/ui/Feedback';
 import { PageHeader } from '@/components/layout/PageHeader';
 import type { PlatformSettings } from '@/lib/types';
@@ -109,6 +110,136 @@ function SettingsForm({ initial, onSaved }: { initial: PlatformSettings; onSaved
   );
 }
 
+type PaymentModeKey = 'test' | 'paytr_test' | 'paytr_live';
+
+const PAYMENT_MODES: { key: PaymentModeKey; label: string; text: string }[] = [
+  {
+    key: 'test',
+    label: 'Test (kartsız)',
+    text: 'Ödeme sayfasında sabit bir test kartı görünür, hiçbir ödeme kuruluşuna bağlanılmaz. Karttan tahsilat yapılmaz.',
+  },
+  {
+    key: 'paytr_test',
+    label: 'PayTR test',
+    text: 'Müşteri PayTR güvenli ödeme sayfasına gider, PayTR test modunda çalışır ve karttan tahsilat yapılmaz. Mağazanız canlıya alınmadan önceki entegrasyon testi için.',
+  },
+  {
+    key: 'paytr_live',
+    label: 'PayTR canlı',
+    text: 'Kaporalar PayTR üzerinden gerçek kartlardan tahsil edilir, iadeler PayTR üzerinden karta gönderilir. Yalnızca PayTR mağazanız canlı moda alındıktan sonra açın.',
+  },
+];
+
+function currentPaymentMode(s: PlatformSettings): PaymentModeKey | null {
+  if (s.payment_mode === 'test') return 'test';
+  if (s.payment_provider !== 'paytr') return null;
+  return s.paytr_test_mode === false ? 'paytr_live' : 'paytr_test';
+}
+
+/** PayTR posts payment results here; it is entered once in the PayTR merchant panel. */
+const PAYTR_CALLBACK_URL = `${String(import.meta.env.VITE_SUPABASE_URL ?? '').replace(/\/+$/, '')}/functions/v1/paytr-callback`;
+
+function PaymentModeCard({ settings, onChanged }: { settings: PlatformSettings; onChanged: (s: PlatformSettings) => void }) {
+  const { toast } = useToast();
+  const mode = currentPaymentMode(settings);
+  const [pending, setPending] = useState<PaymentModeKey | null>(null);
+  const [saving, setSaving] = useState(false);
+  const target = PAYMENT_MODES.find((m) => m.key === pending);
+
+  const apply = async () => {
+    if (!pending) return;
+    setSaving(true);
+    const { error } = await supabase.rpc('admin_set_payment_mode', { p_mode: pending });
+    setSaving(false);
+    if (error) return toast(friendlyError(error), 'error');
+    onChanged(
+      pending === 'test'
+        ? { ...settings, payment_mode: 'test' }
+        : { ...settings, payment_mode: 'live', payment_provider: 'paytr', paytr_test_mode: pending === 'paytr_test' },
+    );
+    setPending(null);
+    toast('Ödeme modu güncellendi.', 'success');
+  };
+
+  const copyCallbackUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(PAYTR_CALLBACK_URL);
+      toast('Bildirim URL kopyalandı.', 'success');
+    } catch {
+      toast(PAYTR_CALLBACK_URL, 'info');
+    }
+  };
+
+  return (
+    <div className="card p-5">
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="grid h-11 w-11 place-items-center rounded-xl border border-gold-400/30 bg-gold-400/5 text-gold-300">
+          <ShieldCheck className="h-5 w-5" />
+        </div>
+        <div className="flex-1">
+          <p className="font-medium text-white">Ödeme altyapısı</p>
+          <p className="text-xs text-mist-2">Kart bilgileri ödeme kuruluşunda işlenir, Rango'da saklanmaz. Değişiklik yeni ödemelere hemen uygulanır.</p>
+        </div>
+        <Badge tone={mode === 'paytr_live' ? 'success' : 'warning'}>
+          {mode === 'paytr_live' ? 'Canlı mod' : mode === 'paytr_test' ? 'PayTR test' : mode === 'test' ? 'Test modu' : 'Sağlayıcı yok'}
+        </Badge>
+      </div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-3" role="radiogroup" aria-label="Ödeme modu">
+        {PAYMENT_MODES.map((m) => (
+          <button
+            key={m.key}
+            type="button"
+            role="radio"
+            aria-checked={m.key === mode}
+            onClick={() => m.key !== mode && setPending(m.key)}
+            className={`rounded-xl border p-4 text-left transition-colors ${m.key === mode ? 'border-gold-400 bg-gold-400/10' : 'border-line hover:border-gold-500/50'}`}
+          >
+            <p className="font-medium text-white">{m.label}</p>
+            <p className="mt-1 text-xs leading-relaxed text-mist-2">{m.text}</p>
+          </button>
+        ))}
+      </div>
+      <div className="mt-4 rounded-xl border border-line-soft p-3 text-xs text-mist-2">
+        <p>PayTR Bildirim URL (PayTR Mağaza Paneli → Destek &amp; Kurulum → Ayarlar):</p>
+        <div className="mt-1 flex flex-wrap items-center gap-2">
+          <code className="break-all text-gold-300">{PAYTR_CALLBACK_URL}</code>
+          <Button size="sm" variant="ghost" icon={<Copy className="h-3.5 w-3.5" />} onClick={copyCallbackUrl}>
+            Kopyala
+          </Button>
+        </div>
+      </div>
+      <Modal
+        open={!!pending}
+        onClose={() => setPending(null)}
+        title="Ödeme modunu değiştir"
+        subtitle={target ? `Yeni mod: ${target.label}` : ''}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setPending(null)}>
+              Vazgeç
+            </Button>
+            <Button variant={pending === 'paytr_live' ? 'danger' : 'gold'} loading={saving} onClick={apply}>
+              Değiştir
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3 text-sm text-mist">
+          <p>{target?.text}</p>
+          {pending === 'paytr_live' && (
+            <p className="rounded-xl border border-warning-500/40 bg-warning-900/40 p-3 text-xs leading-relaxed text-warning-300">
+              Gerçek para çekilir. PayTR'den mağazanızın canlı moda alındığına dair SMS/e-posta almadıysanız bu modu açmayın; aksi halde ödemeler başarısız olur.
+            </p>
+          )}
+          {pending !== 'test' && (
+            <p className="text-xs text-mist-2">Bildirim URL'nin PayTR panelinde yukarıdaki adresle kayıtlı olduğundan emin olun; aksi halde ödemeler randevulara bağlanmayabilir.</p>
+          )}
+        </div>
+      </Modal>
+    </div>
+  );
+}
+
 export default function AdminSettings() {
   const { data, loading, error, reload, setData } = useAsync(fetchSettings, []);
 
@@ -121,20 +252,7 @@ export default function AdminSettings() {
         <ErrorState onRetry={reload} />
       ) : (
         <div className="space-y-6">
-          <div className="card flex flex-wrap items-center gap-4 p-5">
-            <div className="grid h-11 w-11 place-items-center rounded-xl border border-gold-400/30 bg-gold-400/5 text-gold-300">
-              <ShieldCheck className="h-5 w-5" />
-            </div>
-            <div className="flex-1">
-              <p className="font-medium text-white">Ödeme altyapısı: {data.payment_mode === 'live' ? data.payment_provider : 'test modu (sağlayıcı bağlı değil)'}</p>
-              <p className="text-xs text-mist-2">
-                {data.payment_mode === 'live'
-                  ? "Kart bilgileri sağlayıcıda işlenir, Rango'da saklanmaz."
-                  : 'Test modunda kartlardan gerçek tahsilat veya iade yapılmaz; test ödemeleri raporlarda “Test” olarak işaretlenir.'}
-              </p>
-            </div>
-            <Badge tone={data.payment_mode === 'live' ? 'success' : 'warning'}>{data.payment_mode === 'live' ? 'Canlı mod' : 'Test modu'}</Badge>
-          </div>
+          <PaymentModeCard settings={data} onChanged={(next) => setData(next)} />
           <SettingsForm key={JSON.stringify(data)} initial={data} onSaved={(s) => setData(s)} />
         </div>
       )}

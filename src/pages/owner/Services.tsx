@@ -196,7 +196,7 @@ function ServiceModal({ draft, businessId, sortOrder, onClose, onSaved }: { draf
           <Input label="Hizmet adı" value={form.name} error={errors.name} maxLength={120} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="ör. Fön & Şekillendirme" />
         </div>
         <Input
-          label="Fiyat (₺)"
+          label="Fiyat (₺, KDV dahil)"
           inputMode="decimal"
           value={form.price}
           error={errors.price}

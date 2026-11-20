@@ -124,7 +124,9 @@ Gerçek ödeme almak için:
 - Onay, sözleşme sürümü ve tutarlarla birlikte `sale_consents` tablosuna kaydedilir; `pay_deposit` onay kaydı olmadan ödemeyi kabul etmez.
 - Sözleşme metni: `/yasal/satis-sozlesmesi`. Metin değişirse `src/lib/legal.ts` içindeki `LEGAL_VERSIONS.sale` güncellenmeli.
 - Site altbilgisinde ve ödeme ekranında PayTR cümlesi ve paytr.com bağlantısı gösterilir.
-- **Önemli:** `supabase/migrations/20261120120000_record_sale_consent.sql` veritabanına, yeni site sürümü yayınlanmadan **önce** uygulanmalı. Aksi halde test ödemeleri "satış onayı" adımında hata verir.
+- Veritabanı güncellemesi iki adımdır ve sıra önemlidir:
+  1. `20261120120000_record_sale_consent.sql` (onay tablosu ve kayıt fonksiyonu): yeni site yayınlanmadan **önce** uygulanır. Eski siteyi etkilemez.
+  2. `20261120130000_require_sale_consent_for_payment.sql` (onaysız ödemeyi reddetme): yeni site yayına çıktıktan **sonra** uygulanır. Erken uygulanırsa eski sitedeki test ödemeleri durur.
 
 Bu ayrı bir geliştirme işidir.
 

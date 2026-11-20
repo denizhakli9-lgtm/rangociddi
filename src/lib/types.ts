@@ -240,6 +240,8 @@ export interface PlatformSettings {
   commission_rate: number;
   payment_mode: 'test' | 'live';
   payment_provider: string;
+  /** PayTR orders go out with test_mode=1 (PayTR test cards, no real charge) while true. */
+  paytr_test_mode?: boolean;
   pending_payment_minutes: number;
   slot_interval_minutes: number;
   min_lead_minutes: number;

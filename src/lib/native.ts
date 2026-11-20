@@ -1,4 +1,5 @@
 import { App } from '@capacitor/app';
+import { Browser } from '@capacitor/browser';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { isNative } from '@/lib/platform';
@@ -50,6 +51,13 @@ export function initNative() {
     try {
       const u = new URL(url);
       if (!SITE_HOSTS.includes(u.hostname)) return;
+      // PayTR's return page (see paytr-token): close the payment sheet and show the booking's payment screen.
+      if (u.pathname === '/odeme-sonuc.html') {
+        const id = u.searchParams.get('randevu') ?? '';
+        void Browser.close().catch(() => undefined);
+        if (/^[0-9a-f-]{36}$/i.test(id)) goTo(`/odeme/${id}?paytr=${u.searchParams.get('durum') === 'ok' ? 'ok' : 'hata'}`);
+        return;
+      }
       const path = u.pathname + u.search + u.hash;
       // Auth links (password reset, e-mail confirmation) carry tokens that Supabase only reads
       // when the app starts, so those reload the app at that address; others just navigate.

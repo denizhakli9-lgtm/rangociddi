@@ -26,7 +26,7 @@ Options -Indexes
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
   Header always set Permissions-Policy "geolocation=(self), camera=(), microphone=(), payment=(), usb=(), interest-cohort=()"
   Header always set Cross-Origin-Opener-Policy "same-origin"
-  Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://__SUPABASE_HOST__ https://images.pexels.com; font-src 'self' data:; connect-src 'self' https://__SUPABASE_HOST__ wss://__SUPABASE_HOST__; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://__SUPABASE_HOST__ https://images.pexels.com; font-src 'self' data:; connect-src 'self' https://__SUPABASE_HOST__ wss://__SUPABASE_HOST__; frame-src https://www.paytr.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
 
   # index.html her zaman güncel gelsin, hash'li dosyalar uzun süre önbellekte kalsın
   <FilesMatch "index\.html$">

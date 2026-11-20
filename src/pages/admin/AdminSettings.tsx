@@ -228,7 +228,7 @@ function PaymentModeCard({ settings, onChanged }: { settings: PlatformSettings; 
           <p>{target?.text}</p>
           {pending === 'paytr_live' && (
             <p className="rounded-xl border border-warning-500/40 bg-warning-900/40 p-3 text-xs leading-relaxed text-warning-300">
-              Gerçek para çekilir. PayTR'den mağazanızın canlı moda alındığına dair SMS/e-posta almadıysanız bu modu açmayın; aksi halde ödemeler başarısız olur.
+              Gerçek para çekilir. PayTR'den mağazanızın canlı moda alındığına dair SMS/e-posta almadıysanız bu modu açmayın: PayTR o zamana kadar ödemeleri test işlemi olarak alır ve Rango bu ödemelerle randevu onaylamaz.
             </p>
           )}
           {pending !== 'test' && (

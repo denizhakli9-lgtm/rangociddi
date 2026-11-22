@@ -5,6 +5,8 @@ import { Logo, Avatar } from '@/components/ui/Brand';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUnreadCount } from '@/lib/useUnreadCount';
 import { useT } from '@/i18n/I18nProvider';
+import { WhatsAppFab, WhatsAppIcon } from '@/components/WhatsAppSupport';
+import { WHATSAPP_SUPPORT, whatsAppLinkProps } from '@/lib/whatsapp';
 
 export interface DashNavItem {
   to: string;
@@ -18,15 +20,21 @@ interface Props {
   title: string;
   items: DashNavItem[];
   notificationsPath?: string;
+  /**
+   * Shows the 24/7 WhatsApp support line (button on computers, menu entry on phones) and
+   * pre-fills this text in the chat. Leave out to hide the line.
+   */
+  whatsAppMessage?: string;
 }
 
-export function DashboardLayout({ title, items, notificationsPath }: Props) {
+export function DashboardLayout({ title, items, notificationsPath, whatsAppMessage }: Props) {
   const t = useT();
   const { profile, signOut } = useAuth();
   const unread = useUnreadCount();
   const navigate = useNavigate();
   const [drawer, setDrawer] = useState(false);
   const primary = items.filter((i) => i.primary).slice(0, 4);
+  const whatsApp = whatsAppMessage !== undefined ? whatsAppLinkProps(whatsAppMessage) : null;
 
   const handleSignOut = async () => {
     await signOut();
@@ -97,7 +105,7 @@ export function DashboardLayout({ title, items, notificationsPath }: Props) {
             </button>
           </div>
         </header>
-        <main className="mx-auto max-w-6xl px-4 pb-28 pt-6 sm:px-6 lg:pb-12">
+        <main className={`mx-auto max-w-6xl px-4 pb-28 pt-6 sm:px-6 ${whatsApp ? '' : 'lg:pb-12'}`}>
           <Outlet />
         </main>
       </div>
@@ -113,6 +121,23 @@ export function DashboardLayout({ title, items, notificationsPath }: Props) {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto">{navList(() => setDrawer(false))}</div>
+            {/* Outside the scrolling list so it is always in view on short phone screens. */}
+            {whatsApp && (
+              <a
+                {...whatsApp}
+                onClick={(e) => {
+                  whatsApp.onClick(e);
+                  setDrawer(false);
+                }}
+                className="mt-4 flex items-center gap-3 rounded-xl border border-[#25D366]/40 bg-[#25D366]/10 px-3.5 py-2.5 text-sm text-white transition hover:bg-[#25D366]/15"
+              >
+                <WhatsAppIcon className="h-[18px] w-[18px] text-[#25D366]" />
+                <span className="flex-1">
+                  <span className="block">WhatsApp Destek · 7/24</span>
+                  <span className="block text-xs text-mist-2">{WHATSAPP_SUPPORT.display}</span>
+                </span>
+              </a>
+            )}
             <button onClick={handleSignOut} className="mt-4 flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm text-error-300 hover:bg-error-500/10">
               <LogOut className="h-4 w-4" />
               {t.nav.signOut}
@@ -120,6 +145,8 @@ export function DashboardLayout({ title, items, notificationsPath }: Props) {
           </div>
         </div>
       )}
+
+      {whatsApp && <WhatsAppFab message={whatsAppMessage} from="lg" />}
 
       <nav className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-line-soft bg-ink/95 backdrop-blur-xl lg:hidden">
         <div className="grid" style={{ gridTemplateColumns: `repeat(${primary.length + 1}, minmax(0, 1fr))` }}>

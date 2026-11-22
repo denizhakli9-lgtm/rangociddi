@@ -85,7 +85,7 @@ export default function Profile() {
               </Link>
               {/* The 24/7 WhatsApp line; on phones this is the only way in (the floating button is computer-only). */}
               {to === '/destek' && (
-                <a {...whatsAppLinkProps} className="flex items-center gap-3 px-5 py-3.5 text-sm text-mist transition hover:bg-white/[0.03] hover:text-white">
+                <a {...whatsAppLinkProps()} className="flex items-center gap-3 px-5 py-3.5 text-sm text-mist transition hover:bg-white/[0.03] hover:text-white">
                   <WhatsAppIcon className="h-4 w-4 text-[#25D366]" />
                   <span className="flex-1">
                     <span className="block">{tx('WhatsApp Destek Hattı · 7/24', 'WhatsApp support · 24/7')}</span>

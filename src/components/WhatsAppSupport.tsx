@@ -11,17 +11,17 @@ export function WhatsAppIcon({ className = 'h-5 w-5' }: { className?: string }) 
 }
 
 /**
- * Floating "WhatsApp Destek · 7/24" button for the customer pages, on computers only
- * (from the `md` breakpoint, where the bottom tab bar disappears). On phones the line is
- * reached from the Profile page instead. While the cookie notice is open the button moves
- * up so the two never overlap.
+ * Floating "WhatsApp Destek · 7/24" button, on computers only: it appears from the breakpoint
+ * where the layout's bottom tab bar disappears (`md` on the customer pages, `lg` in the panels).
+ * On phones the line is reached from a menu instead. While the cookie notice is open the button
+ * moves up so the two never overlap. `message` is pre-filled in WhatsApp's message box.
  */
-export function WhatsAppFab() {
+export function WhatsAppFab({ message, from = 'md' }: { message?: string; from?: 'md' | 'lg' }) {
   return (
     <a
-      {...whatsAppLinkProps}
+      {...whatsAppLinkProps(message)}
       aria-label={tx(`WhatsApp destek hattı, 7/24 açık: ${WHATSAPP_SUPPORT.display}`, `WhatsApp support line, open 24/7: ${WHATSAPP_SUPPORT.display}`)}
-      className="fixed bottom-6 right-6 z-40 hidden h-14 items-center gap-2.5 rounded-full bg-[#25D366] pl-4 pr-5 text-sm font-semibold text-[#fff] shadow-[0_10px_30px_-8px_rgba(37,211,102,0.55)] transition hover:-translate-y-0.5 hover:bg-[#1EBE5B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-500 md:flex [body:has([data-cookie-notice])_&]:bottom-32"
+      className={`fixed bottom-6 right-6 z-40 hidden h-14 items-center gap-2.5 rounded-full bg-[#25D366] pl-4 pr-5 text-sm font-semibold text-[#fff] shadow-[0_10px_30px_-8px_rgba(37,211,102,0.55)] transition hover:-translate-y-0.5 hover:bg-[#1EBE5B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-500 ${from === 'lg' ? 'lg:flex' : 'md:flex'} [body:has([data-cookie-notice])_&]:bottom-32`}
     >
       <WhatsAppIcon className="h-6 w-6" />
       <span className="whitespace-nowrap">{tx('WhatsApp Destek · 7/24', 'WhatsApp Support · 24/7')}</span>

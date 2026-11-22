@@ -107,6 +107,7 @@ export const LEGAL_LINKS = [
   { slug: 'satis-sozlesmesi', label: 'Mesafeli Hizmet Satış Sözleşmesi', labelEn: 'Distance Service Sales Agreement' },
   { slug: 'iptal-iade', label: 'İptal ve İade Koşulları', labelEn: 'Cancellation & Refunds' },
   { slug: 'kvkk-basvuru', label: 'KVKK Başvuru', labelEn: 'Data Request (KVKK)' },
+  { slug: 'hesap-silme', label: 'Hesap Silme', labelEn: 'Account Deletion' },
   { slug: 'kunye', label: 'Künye ve İletişim', labelEn: 'Company & Contact' },
 ] as const;
 

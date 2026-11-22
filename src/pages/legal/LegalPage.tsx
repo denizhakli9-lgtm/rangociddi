@@ -43,6 +43,21 @@ function Block({ block }: { block: LegalBlock }) {
   );
 }
 
+function DeletionHelper() {
+  const target = COMPANY.kvkkEmail;
+  if (isPlaceholder(target)) return null;
+  const body = ['Merhaba,', '', 'Rango hesabımın silinmesini talep ediyorum.', '', 'Hesabımda kayıtlı e-posta adresi:', ''].join('\n');
+  const href = `mailto:${target}?subject=${encodeURIComponent('Hesap silme talebi')}&body=${encodeURIComponent(body)}`;
+  return (
+    <div className="card-gold flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-sm text-mist">{tx('Uygulamaya erişemiyorsanız silme talebinizi e-postayla iletebilirsiniz. Talebiniz en geç 30 gün içinde sonuçlandırılır.', 'If you cannot access the app, you can request deletion by email. Your request will be completed within 30 days.')}</p>
+      <a href={href} className="inline-flex shrink-0 items-center gap-2 rounded-full bg-gold-500 px-4 py-2 text-xs font-semibold text-ink transition hover:bg-gold-400">
+        <Mail className="h-4 w-4" /> {tx('Silme talebi gönder', 'Request deletion')}
+      </a>
+    </div>
+  );
+}
+
 function ApplicationHelper() {
   const target = COMPANY.kvkkEmail;
   if (isPlaceholder(target)) return null;
@@ -108,8 +123,9 @@ export default function LegalPage() {
           <p lang="en" className="flex items-start gap-2 rounded-2xl border border-gold-500/30 bg-gold-500/5 px-4 py-3 text-xs leading-relaxed text-mist">
             <Languages className="mt-0.5 h-4 w-4 shrink-0 text-gold-400" />
             <span>
-              This legal text is published in Turkish, which is the legally binding version. It has not been translated into English.
-              For questions, contact us using the details on the{' '}
+              This legal text is published in Turkish, which is the legally binding version.{' '}
+              {doc.slug === 'hesap-silme' ? 'An English summary is at the end of this page.' : 'It has not been translated into English.'}
+              {' '}For questions, contact us using the details on the{' '}
               <Link to={legalPath('kunye')} className="text-gold-400 hover:text-gold-300">Company &amp; Contact</Link> page.
             </span>
           </p>
@@ -121,6 +137,7 @@ export default function LegalPage() {
         </header>
 
         {doc.slug === 'kvkk-basvuru' && <ApplicationHelper />}
+        {doc.slug === 'hesap-silme' && <DeletionHelper />}
         {doc.slug === 'aydinlatma-metni' && (
           <p className="flex items-center gap-2 text-xs text-mist-2">
             <Download className="h-3.5 w-3.5 text-gold-500" />

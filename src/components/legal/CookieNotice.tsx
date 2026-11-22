@@ -36,6 +36,7 @@ export function CookieNotice() {
   return (
     <div
       role="region"
+      data-cookie-notice
       aria-label={tx('Çerez bilgilendirmesi', 'Cookie notice')}
       className="fixed inset-x-3 bottom-20 z-[80] mx-auto max-w-xl animate-fade-up rounded-2xl border border-gold-500/30 bg-coal/95 p-4 shadow-card backdrop-blur-xl md:bottom-5"
     >

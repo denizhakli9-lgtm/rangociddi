@@ -4,6 +4,7 @@ import { Bell, CalendarDays, Compass, Heart, MapPin, Search, User } from 'lucide
 import { Logo } from '@/components/ui/Brand';
 import { PageLoader } from '@/components/ui/Feedback';
 import { LegalFooter } from '@/components/legal/LegalFooter';
+import { WhatsAppFab } from '@/components/WhatsAppSupport';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { LanguageToggle } from '@/components/ui/LanguageToggle';
 import { useAuth } from '@/contexts/AuthContext';
@@ -82,12 +83,14 @@ export function CustomerLayout() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 pb-28 pt-6 sm:px-6 md:pb-16">
+      <main className="mx-auto max-w-6xl px-4 pb-28 pt-6 sm:px-6">
         <Suspense fallback={<PageLoader />}>
           <Outlet />
         </Suspense>
         <LegalFooter className="mt-16" />
       </main>
+
+      <WhatsAppFab />
 
       <nav className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-line-soft bg-ink/95 backdrop-blur-xl md:hidden">
         <div className="grid grid-cols-5">

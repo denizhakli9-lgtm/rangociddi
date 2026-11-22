@@ -9,6 +9,7 @@ import { DashboardLayout, type DashNavItem } from '@/components/layout/Dashboard
 import { ErrorState, PageLoader } from '@/components/ui/Feedback';
 import Notifications from '@/pages/Notifications';
 import type { Business } from '@/lib/types';
+import { businessSupportMessage } from '@/lib/whatsapp';
 import { OwnerContext } from './OwnerContext';
 import CreateBusiness from './CreateBusiness';
 import Overview from './Overview';
@@ -67,7 +68,7 @@ export default function OwnerArea() {
   return (
     <OwnerContext.Provider value={{ business: data, reload: refresh }}>
       <Routes>
-        <Route element={<DashboardLayout title={data.name} items={ITEMS} notificationsPath="/isletme/bildirimler" />}>
+        <Route element={<DashboardLayout title={data.name} items={ITEMS} notificationsPath="/isletme/bildirimler" whatsAppMessage={businessSupportMessage(data.name)} />}>
           <Route index element={<Overview />} />
           <Route path="randevular" element={<OwnerAppointments />} />
           <Route path="takvim" element={<OwnerCalendar />} />

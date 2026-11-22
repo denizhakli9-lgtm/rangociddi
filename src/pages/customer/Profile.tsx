@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { Fragment, useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Bell, CalendarDays, ChevronRight, Heart, LayoutDashboard, LogOut, MapPin, Phone, ShieldCheck, User } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -15,6 +15,8 @@ import { ThemeSelect } from '@/components/ui/ThemeSelect';
 import { LanguageSelect } from '@/components/ui/LanguageToggle';
 import { Input, Select } from '@/components/ui/Field';
 import type { Gender } from '@/lib/types';
+import { WhatsAppIcon } from '@/components/WhatsAppSupport';
+import { WHATSAPP_SUPPORT, whatsAppLinkProps } from '@/lib/whatsapp';
 import { PrivacyPanel } from './PrivacyPanel';
 import { tx } from '@/i18n/locale';
 
@@ -75,11 +77,24 @@ export default function Profile() {
         </div>
         <nav className="card divide-y divide-line overflow-hidden">
           {links.map(({ to, label, icon: Icon }) => (
-            <Link key={to} to={to} className="flex items-center gap-3 px-5 py-3.5 text-sm text-mist transition hover:bg-white/[0.03] hover:text-white">
-              <Icon className="h-4 w-4 text-gold-500" />
-              <span className="flex-1">{label}</span>
-              <ChevronRight className="h-4 w-4 text-mist-3" />
-            </Link>
+            <Fragment key={to}>
+              <Link to={to} className="flex items-center gap-3 px-5 py-3.5 text-sm text-mist transition hover:bg-white/[0.03] hover:text-white">
+                <Icon className="h-4 w-4 text-gold-500" />
+                <span className="flex-1">{label}</span>
+                <ChevronRight className="h-4 w-4 text-mist-3" />
+              </Link>
+              {/* The 24/7 WhatsApp line; on phones this is the only way in (the floating button is computer-only). */}
+              {to === '/destek' && (
+                <a {...whatsAppLinkProps()} className="flex items-center gap-3 px-5 py-3.5 text-sm text-mist transition hover:bg-white/[0.03] hover:text-white">
+                  <WhatsAppIcon className="h-4 w-4 text-[#25D366]" />
+                  <span className="flex-1">
+                    <span className="block">{tx('WhatsApp Destek Hattı · 7/24', 'WhatsApp support · 24/7')}</span>
+                    <span className="block text-xs text-mist-2">{WHATSAPP_SUPPORT.display}</span>
+                  </span>
+                  <ChevronRight className="h-4 w-4 text-mist-3" />
+                </a>
+              )}
+            </Fragment>
           ))}
           <button
             onClick={async () => {

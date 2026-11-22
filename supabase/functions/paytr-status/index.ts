@@ -7,6 +7,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2.119.0';
  * notification is late or the Bildirim URL is misconfigured. PayTR is the only source of truth here: the
  * customer cannot mark anything paid, and each order is checked at most once per 10 seconds.
  * Secrets: PAYTR_MERCHANT_ID, PAYTR_MERCHANT_KEY, PAYTR_MERCHANT_SALT.
+ * Supabase provides SUPABASE_URL, SUPABASE_PUBLISHABLE_KEYS and SUPABASE_SECRET_KEYS itself.
  */
 
 const corsHeaders = {
@@ -17,6 +18,24 @@ const corsHeaders = {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const encoder = new TextEncoder();
+
+/**
+ * The project's `default` publishable or secret API key. Supabase gives every Edge Function its API keys as JSON
+ * objects keyed by key name (SUPABASE_PUBLISHABLE_KEYS, SUPABASE_SECRET_KEYS). The legacy JWT-based SUPABASE_ANON_KEY
+ * and SUPABASE_SERVICE_ROLE_KEY are deliberately not used, not even as a fallback: they stop working once the legacy
+ * API keys are disabled, and a fallback would hide a missing key until then.
+ */
+function supabaseKey(variable: 'SUPABASE_PUBLISHABLE_KEYS' | 'SUPABASE_SECRET_KEYS'): string {
+  const prefix = variable === 'SUPABASE_SECRET_KEYS' ? 'sb_secret_' : 'sb_publishable_';
+  let key: unknown;
+  try {
+    key = JSON.parse(Deno.env.get(variable) ?? 'null')?.default;
+  } catch {
+    // Reported below.
+  }
+  if (typeof key !== 'string' || !key.startsWith(prefix)) throw new Error(`${variable} has no "default" ${prefix} key`);
+  return key;
+}
 
 async function hmacBase64(key: string, message: string): Promise<string> {
   const cryptoKey = await crypto.subtle.importKey('raw', encoder.encode(key), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
@@ -43,7 +62,7 @@ Deno.serve(async (req: Request) => {
     const merchantSalt = Deno.env.get('PAYTR_MERCHANT_SALT')?.trim();
     if (!merchantId || !merchantKey || !merchantSalt) return reply({ error: 'VEYRA_PROVIDER_REQUIRED' }, 503);
 
-    const client = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
+    const client = createClient(Deno.env.get('SUPABASE_URL')!, supabaseKey('SUPABASE_PUBLISHABLE_KEYS'), {
       global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } },
     });
     const { data: auth, error: authError } = await client.auth.getUser();
@@ -53,7 +72,7 @@ Deno.serve(async (req: Request) => {
     const appointment = typeof body?.appointment === 'string' ? body.appointment : '';
     if (!UUID.test(appointment)) return reply({ error: 'VEYRA_INVALID_INPUT' }, 400);
 
-    const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const admin = createClient(Deno.env.get('SUPABASE_URL')!, supabaseKey('SUPABASE_SECRET_KEYS'));
     const { data: orders, error: ordersError } = await admin.rpc('paytr_orders_to_check', { p_user: auth.user.id, p_appointment: appointment });
     if (ordersError) {
       console.error('paytr-status: orders_to_check failed', ordersError);

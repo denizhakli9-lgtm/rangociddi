@@ -6,6 +6,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2.119.0';
  * request: private.paytr_refunds records each attempt with reference_no = request id, and an interrupted
  * attempt is checked with PayTR's status service (Durum Sorgu) before anything is sent again.
  * Secrets: PAYTR_MERCHANT_ID, PAYTR_MERCHANT_KEY, PAYTR_MERCHANT_SALT.
+ * Supabase provides SUPABASE_URL, SUPABASE_PUBLISHABLE_KEYS and SUPABASE_SECRET_KEYS itself.
  */
 
 const corsHeaders = {
@@ -16,6 +17,24 @@ const corsHeaders = {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const encoder = new TextEncoder();
+
+/**
+ * The project's `default` publishable or secret API key. Supabase gives every Edge Function its API keys as JSON
+ * objects keyed by key name (SUPABASE_PUBLISHABLE_KEYS, SUPABASE_SECRET_KEYS). The legacy JWT-based SUPABASE_ANON_KEY
+ * and SUPABASE_SERVICE_ROLE_KEY are deliberately not used, not even as a fallback: they stop working once the legacy
+ * API keys are disabled, and a fallback would hide a missing key until then.
+ */
+function supabaseKey(variable: 'SUPABASE_PUBLISHABLE_KEYS' | 'SUPABASE_SECRET_KEYS'): string {
+  const prefix = variable === 'SUPABASE_SECRET_KEYS' ? 'sb_secret_' : 'sb_publishable_';
+  let key: unknown;
+  try {
+    key = JSON.parse(Deno.env.get(variable) ?? 'null')?.default;
+  } catch {
+    // Reported below.
+  }
+  if (typeof key !== 'string' || !key.startsWith(prefix)) throw new Error(`${variable} has no "default" ${prefix} key`);
+  return key;
+}
 
 async function hmacBase64(key: string, message: string): Promise<string> {
   const cryptoKey = await crypto.subtle.importKey('raw', encoder.encode(key), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
@@ -37,7 +56,7 @@ Deno.serve(async (req: Request) => {
     const merchantSalt = Deno.env.get('PAYTR_MERCHANT_SALT')?.trim();
     if (!merchantId || !merchantKey || !merchantSalt) return reply({ error: 'VEYRA_PROVIDER_REQUIRED' }, 503);
 
-    const userClient = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
+    const userClient = createClient(Deno.env.get('SUPABASE_URL')!, supabaseKey('SUPABASE_PUBLISHABLE_KEYS'), {
       global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } },
     });
     const { data: auth, error: authError } = await userClient.auth.getUser();
@@ -48,7 +67,7 @@ Deno.serve(async (req: Request) => {
     if (!UUID.test(request)) return reply({ error: 'VEYRA_INVALID_INPUT' }, 400);
     const note = typeof body?.note === 'string' ? body.note.slice(0, 500) : '';
 
-    const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const admin = createClient(Deno.env.get('SUPABASE_URL')!, supabaseKey('SUPABASE_SECRET_KEYS'));
     // Checks the caller is an admin, the request is pending and belongs to a PayTR payment, and claims it.
     const { data: refund, error: beginError } = await admin.rpc('paytr_refund_begin', { p_admin: auth.user.id, p_request: request });
     if (beginError) {

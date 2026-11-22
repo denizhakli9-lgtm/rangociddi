@@ -13,6 +13,24 @@ import { createClient } from 'npm:@supabase/supabase-js@2.119.0';
 
 const encoder = new TextEncoder();
 
+/**
+ * The project's `default` publishable or secret API key. Supabase gives every Edge Function its API keys as JSON
+ * objects keyed by key name (SUPABASE_PUBLISHABLE_KEYS, SUPABASE_SECRET_KEYS). The legacy JWT-based SUPABASE_ANON_KEY
+ * and SUPABASE_SERVICE_ROLE_KEY are deliberately not used, not even as a fallback: they stop working once the legacy
+ * API keys are disabled, and a fallback would hide a missing key until then.
+ */
+function supabaseKey(variable: 'SUPABASE_PUBLISHABLE_KEYS' | 'SUPABASE_SECRET_KEYS'): string {
+  const prefix = variable === 'SUPABASE_SECRET_KEYS' ? 'sb_secret_' : 'sb_publishable_';
+  let key: unknown;
+  try {
+    key = JSON.parse(Deno.env.get(variable) ?? 'null')?.default;
+  } catch {
+    // Reported below.
+  }
+  if (typeof key !== 'string' || !key.startsWith(prefix)) throw new Error(`${variable} has no "default" ${prefix} key`);
+  return key;
+}
+
 async function hmacBase64(key: string, message: string): Promise<string> {
   const cryptoKey = await crypto.subtle.importKey('raw', encoder.encode(key), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
   const signature = new Uint8Array(await crypto.subtle.sign('HMAC', cryptoKey, encoder.encode(message)));
@@ -37,6 +55,14 @@ Deno.serve(async (req: Request) => {
   const merchantSalt = Deno.env.get('PAYTR_MERCHANT_SALT')?.trim();
   if (!merchantKey || !merchantSalt) {
     console.error('paytr-callback: PayTR secrets are missing');
+    return text('Not configured', 500);
+  }
+  let secretKey: string;
+  try {
+    secretKey = supabaseKey('SUPABASE_SECRET_KEYS');
+  } catch (err) {
+    // Not "OK", so PayTR keeps the notification and retries it later.
+    console.error('paytr-callback:', err instanceof Error ? err.message : err);
     return text('Not configured', 500);
   }
 
@@ -70,7 +96,7 @@ Deno.serve(async (req: Request) => {
   // so it is only ever used to downgrade a payment to a test payment, never to upgrade one.
   const paytrTest = field('test_mode') === '1';
 
-  const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+  const admin = createClient(Deno.env.get('SUPABASE_URL')!, secretKey);
   const { data, error } = await admin.rpc('paytr_apply_callback', {
     p_oid: merchantOid,
     p_success: status === 'success',

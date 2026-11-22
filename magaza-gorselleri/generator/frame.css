@@ -1,0 +1,187 @@
+/*
+ * The 1080-unit-wide store frame: dark backdrop, headline and a phone showing a real app capture.
+ * Colours and fonts are the app's own (tailwind.config.js, src/index.css).
+ */
+@import url('../../node_modules/@fontsource/cormorant-garamond/latin-600.css');
+@import url('../../node_modules/@fontsource/cormorant-garamond/latin-ext-600.css');
+@import url('../../node_modules/@fontsource/manrope/latin-500.css');
+@import url('../../node_modules/@fontsource/manrope/latin-ext-500.css');
+@import url('../../node_modules/@fontsource/manrope/latin-600.css');
+@import url('../../node_modules/@fontsource/manrope/latin-ext-600.css');
+
+:root {
+  --gold-300: #e2c766;
+  --gold-400: #dabb4c;
+  --gold-500: #d4af37;
+  --gold-600: #b8952a;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { width: 1080px; height: var(--canvas-h); overflow: hidden; }
+
+body {
+  position: relative;
+  font-family: Manrope, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+  color: #faf9f5;
+  background:
+    radial-gradient(760px 620px at 50% 100%, rgba(212, 175, 55, 0.22), transparent 70%),
+    radial-gradient(900px 760px at 50% 58%, rgba(212, 175, 55, 0.13), transparent 72%),
+    radial-gradient(700px 520px at var(--glow-x, 88%) 0%, rgba(212, 175, 55, 0.12), transparent 70%),
+    linear-gradient(180deg, #12100b 0%, #0a0907 46%, #060605 100%);
+}
+
+/* Thin rings, the same motif as the circle on the app's home card. Every other frame mirrors them. */
+.rings { position: absolute; inset: 0; overflow: hidden; }
+.flip { --glow-x: 12%; }
+.flip .rings { transform: scaleX(-1); }
+.ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1.5px solid rgba(212, 175, 55, 0.16);
+}
+.ring.a { width: 760px; height: 760px; right: -330px; top: -300px; }
+.ring.b { width: 1180px; height: 1180px; right: -540px; top: -510px; opacity: 0.6; }
+.ring.c { width: 900px; height: 900px; left: -520px; bottom: -330px; opacity: 0.75; }
+
+/* ---------- Headline ---------- */
+
+.copy {
+  position: absolute;
+  left: 70px;
+  right: 70px;
+  top: 112px;
+  text-align: center;
+}
+
+.eyebrow {
+  font-size: 25px;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--gold-500);
+  /* Letter-spacing adds a trailing gap; shift back so the line stays optically centred. */
+  margin-right: -0.3em;
+}
+
+/* The app's own signature, as in its header: used on the first frame instead of an eyebrow. */
+.wordmark {
+  margin-top: -26px;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 600;
+  font-size: 60px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+.wordmark span { color: var(--gold-400); }
+
+.title {
+  margin-top: 26px;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 600;
+  font-size: 108px;
+  line-height: 1.02;
+  letter-spacing: -0.012em;
+}
+
+.title em {
+  font-style: normal;
+  background: linear-gradient(100deg, var(--gold-300), var(--gold-500) 55%, var(--gold-600));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  /* Keeps descenders (y, ğ, ş) inside the clipped gradient box. */
+  padding-bottom: 0.14em;
+}
+
+.sub {
+  margin-top: 26px;
+  font-size: 33px;
+  font-weight: 500;
+  line-height: 1.42;
+  color: rgba(250, 249, 245, 0.7);
+}
+
+/* ---------- Phone ---------- */
+
+.phone {
+  --bezel: 15px;
+  --radius: 84px;
+  position: absolute;
+  left: 50%;
+  top: var(--phone-top);
+  width: calc(var(--screen-w) + 2 * var(--bezel));
+  margin-left: calc(var(--screen-w) / -2 - var(--bezel));
+  padding: var(--bezel);
+  border-radius: var(--radius);
+  background: linear-gradient(145deg, #3b3a37 0%, #1b1a18 22%, #0b0b0a 55%, #262522 100%);
+  box-shadow:
+    0 0 0 1.5px rgba(255, 255, 255, 0.1),
+    inset 0 0 0 1.5px rgba(255, 255, 255, 0.07),
+    inset 0 0 0 5px #050505,
+    0 70px 130px -30px rgba(0, 0, 0, 0.85),
+    0 30px 60px -20px rgba(0, 0, 0, 0.6),
+    0 0 160px 10px rgba(212, 175, 55, 0.14);
+}
+
+/* A dark app screen on the dark backdrop needs a brighter edge to read as a phone. */
+.phone.dark {
+  background: linear-gradient(145deg, #55524b 0%, #24231f 20%, #0e0e0d 55%, #33312c 100%);
+  box-shadow:
+    0 0 0 1.5px rgba(255, 255, 255, 0.2),
+    inset 0 0 0 1.5px rgba(255, 255, 255, 0.1),
+    inset 0 0 0 5px #050505,
+    0 70px 130px -30px rgba(0, 0, 0, 0.85),
+    0 0 170px 24px rgba(212, 175, 55, 0.2);
+}
+
+/* Side buttons */
+.phone::before, .phone::after {
+  content: '';
+  position: absolute;
+  right: -5px;
+  width: 5px;
+  border-radius: 0 4px 4px 0;
+  background: linear-gradient(90deg, #121211, #3a3936);
+}
+.phone::before { top: 300px; height: 150px; }
+.phone::after { top: 500px; height: 86px; }
+
+/* --s is the size of one app pixel in frame units. */
+.screen {
+  position: relative;
+  overflow: hidden;
+  border-radius: calc(var(--radius) - var(--bezel));
+  background: #f8f7f3;
+  color: #23221e;
+}
+.phone.dark .screen { background: #080808; color: #fafaf8; }
+
+.statusbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: calc(var(--status-bar) * var(--s));
+  padding: calc(6px * var(--s)) calc(26px * var(--s)) 0 calc(28px * var(--s));
+  font-size: calc(14px * var(--s));
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.statusbar .icons { display: flex; align-items: center; gap: calc(6px * var(--s)); }
+.statusbar svg { height: calc(15px * var(--s)); width: auto; display: block; fill: currentColor; }
+
+.camera {
+  position: absolute;
+  left: 50%;
+  top: calc(11px * var(--s));
+  width: calc(19px * var(--s));
+  height: calc(19px * var(--s));
+  margin-left: calc(-9.5px * var(--s));
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 36%, #2b2f3a 0%, #0a0a0c 55%, #000 100%);
+  box-shadow: 0 0 0 calc(1px * var(--s)) rgba(0, 0, 0, 0.35);
+}
+
+.app { display: block; width: var(--screen-w); }

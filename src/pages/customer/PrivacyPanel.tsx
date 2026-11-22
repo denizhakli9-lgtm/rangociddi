@@ -4,6 +4,7 @@ import { Download, FileText, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { Button } from '@/components/ui/Button';
 import { downloadBlob, exportMyData } from '@/lib/privacy';
+import { isNative, openExternal, publicUrl } from '@/lib/platform';
 import { legalPath } from '@/lib/legal';
 import type { Profile } from '@/lib/types';
 import { DeleteAccount } from './DeleteAccount';
@@ -16,6 +17,21 @@ export function PrivacyPanel({ profile }: { profile: Profile }) {
   const exportData = async () => {
     if (exporting) return;
     setExporting(true);
+    if (isNative) {
+      // The app's WebView cannot save a generated file (a blob link with `download` does nothing there), so the
+      // copy is downloaded on the website, which opens in the in-app browser.
+      toast(tx('Verilerinizin kopyası web sitemizden indirilir. Açılan sayfada giriş yapıp “İndir” düğmesine dokunun.', 'Your data copy is downloaded from our website. Sign in on the page that opens and tap “Download”.'), 'info');
+      try {
+        // A moment to read the message before the browser sheet covers the app.
+        await new Promise((resolve) => setTimeout(resolve, 1200));
+        await openExternal('/profil');
+      } catch {
+        toast(tx(`Sayfa açılamadı. Lütfen ${publicUrl('/profil')} adresinde giriş yapıp oradan indirin.`, `The page could not be opened. Please sign in at ${publicUrl('/profil')} and download it there.`), 'error');
+      } finally {
+        setExporting(false);
+      }
+      return;
+    }
     try {
       const blob = await exportMyData(profile);
       downloadBlob(blob, `${tx('rango-verilerim', 'rango-my-data')}-${new Date().toISOString().slice(0, 10)}.json`);
@@ -43,7 +59,7 @@ export function PrivacyPanel({ profile }: { profile: Profile }) {
         </div>
         <div className="grid gap-2 border-t border-line pt-5 sm:grid-cols-2">
           <Link to={legalPath('aydinlatma-metni')} className="flex items-center gap-2 text-sm text-mist transition hover:text-white">
-            <FileText className="h-4 w-4 text-gold-500" /> {tx('KVKK Aydınlatma Metni', 'Privacy Notice (KVKK)')}
+            <FileText className="h-4 w-4 text-gold-500" /> {tx('Gizlilik Politikası (KVKK)', 'Privacy Policy (KVKK)')}
           </Link>
           <Link to={legalPath('kvkk-basvuru')} className="flex items-center gap-2 text-sm text-mist transition hover:text-white">
             <ShieldCheck className="h-4 w-4 text-gold-500" /> {tx('KVKK kapsamında başvuru yap', 'Submit a data request (KVKK)')}

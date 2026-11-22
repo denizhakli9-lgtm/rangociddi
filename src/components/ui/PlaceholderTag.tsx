@@ -8,7 +8,7 @@ export function PlaceholderTag({ className = 'bottom-3 left-3', compact = false 
   return (
     <span
       title={tx('Yapay zekâ ile hazırlanmış temsili görsel. İşletmenin gerçek fotoğrafı değildir.', 'AI-generated illustrative image. Not an actual photo of the business.')} 
-      className={`pointer-events-none absolute z-10 inline-flex max-w-[calc(100%-24px)] items-center gap-1 rounded-xl bg-black/85 font-medium text-white backdrop-blur ${compact ? 'px-1.5 py-0.5 text-[9px]' : 'px-2.5 py-1 text-[10px]'} ${className}`}
+      className={`pointer-events-none absolute z-10 inline-flex max-w-[calc(100%-24px)] items-center gap-1 rounded-xl bg-black/85 font-medium text-[#fff] backdrop-blur ${compact ? 'px-1.5 py-0.5 text-[9px]' : 'px-2.5 py-1 text-[10px]'} ${className}`}
     >
       {!compact && <ImageIcon className="h-3 w-3" aria-hidden="true" />}
       {label}

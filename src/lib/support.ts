@@ -13,6 +13,20 @@ export function supportLabel(status: SupportThread['status']): string {
   const [trText, enText] = SUPPORT_LABELS[status];
   return tx(trText, enText);
 }
+/** Longest subject a support request can have (support_threads.subject CHECK 3–120, the form's maxLength). */
+export const SUPPORT_SUBJECT_MAX = 120;
+/**
+ * Makes free text (a `?konu=` link, a review report) a usable request subject: whitespace collapsed, trimmed and cut
+ * to SUPPORT_SUBJECT_MAX UTF-16 units without splitting a character (a lone surrogate would break encodeURIComponent).
+ */
+export function supportSubject(text: string): string {
+  let out = '';
+  for (const ch of text.replace(/\s+/g, ' ').trim()) {
+    if (out.length + ch.length > SUPPORT_SUBJECT_MAX) break;
+    out += ch;
+  }
+  return out.trimEnd();
+}
 export async function supportAction(action: string, thread?: string, text = '') {
   const { data, error } = await supabase.rpc('support_action', { p_action: action, p_thread: thread ?? null, p_text: text });
   if (error) throw error;

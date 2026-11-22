@@ -39,7 +39,7 @@ export const COMPANY = {
   verbis: '',
 } as const;
 
-export const LEGAL_UPDATED_AT = '20 Kasım 2026';
+export const LEGAL_UPDATED_AT = '22 Kasım 2026';
 
 /**
  * Sürüm biçimi `YYYY-AA-GG` (yayın tarihi; ileri bir tarih yazmayın). Aynı gün ikinci bir değişiklik için
@@ -50,7 +50,7 @@ type LegalVersion = `${number}-${number}-${number}`;
 
 export const LEGAL_VERSIONS = {
   terms: '2026-11-20',
-  privacy: '2026-11-20',
+  privacy: '2026-11-22',
   cookies: '2026-11-20',
   /**
    * Ödeme ekranında birlikte kabul edilen metinlerin ortak sürümü: Mesafeli Hizmet Satış Sözleşmesi,
@@ -101,12 +101,13 @@ export function filled(value: string): boolean {
 }
 
 export const LEGAL_LINKS = [
-  { slug: 'aydinlatma-metni', label: 'KVKK Aydınlatma Metni', labelEn: 'Privacy Notice (KVKK)' },
+  { slug: 'aydinlatma-metni', label: 'Gizlilik Politikası (KVKK)', labelEn: 'Privacy Policy (KVKK)' },
   { slug: 'kullanim-kosullari', label: 'Kullanım Koşulları', labelEn: 'Terms of Use' },
   { slug: 'cerez-politikasi', label: 'Çerez Politikası', labelEn: 'Cookie Policy' },
   { slug: 'satis-sozlesmesi', label: 'Mesafeli Hizmet Satış Sözleşmesi', labelEn: 'Distance Service Sales Agreement' },
   { slug: 'iptal-iade', label: 'İptal ve İade Koşulları', labelEn: 'Cancellation & Refunds' },
   { slug: 'kvkk-basvuru', label: 'KVKK Başvuru', labelEn: 'Data Request (KVKK)' },
+  { slug: 'hesap-silme', label: 'Hesap ve Veri Silme', labelEn: 'Account & Data Deletion' },
   { slug: 'kunye', label: 'Künye ve İletişim', labelEn: 'Company & Contact' },
 ] as const;
 

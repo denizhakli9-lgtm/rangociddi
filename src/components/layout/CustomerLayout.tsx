@@ -32,9 +32,15 @@ export function CustomerLayout() {
   return (
     <div className="min-h-screen bg-ink">
       <header className="sticky top-0 z-40 border-b border-line-soft bg-ink/85 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-          <Link to="/kesfet" aria-label={tx('Rango ana sayfa', 'Rango home')}>
-            {isHome ? <span className="font-display text-2xl font-semibold tracking-wide text-white">Rango<span className="text-gold-500">.</span></span> : <Logo size="sm" />}
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-2 px-4 sm:gap-4 sm:px-6">
+          <Link to="/kesfet" aria-label={tx('Rango ana sayfa', 'Rango home')} className="shrink-0">
+            {/* Phones get the compact text wordmark on every page (the map-pin mark pushed the header past 360px). */}
+            <span className={`font-display text-2xl font-semibold tracking-wide text-white ${isHome ? '' : 'sm:hidden'}`}>Rango<span className="text-gold-500">.</span></span>
+            {!isHome && (
+              <span className="hidden sm:block">
+                <Logo size="sm" />
+              </span>
+            )}
           </Link>
           <nav className="hidden items-center gap-1 md:flex">
             {tabs.slice(0, 4).map((tab) => (
@@ -49,11 +55,12 @@ export function CustomerLayout() {
               </NavLink>
             ))}
           </nav>
-          <div className="flex items-center gap-2">
+          {/* min-w-0: on the narrowest phones the location chip gives up width (it truncates) instead of the row overflowing. */}
+          <div className="flex min-w-0 items-center gap-1 sm:gap-2">
             <button
               onClick={() => navigate('/konum')}
               aria-label={tx('Konumu değiştir', 'Change location')}
-              className="flex min-h-11 min-w-0 max-w-[112px] items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs text-mist transition hover:border-gold-500/40 hover:text-white sm:max-w-[150px]"
+              className="flex min-h-11 min-w-0 max-w-[112px] items-center gap-1.5 rounded-full border border-line px-2.5 py-1.5 text-xs text-mist transition hover:border-gold-500/40 hover:text-white sm:max-w-[150px] sm:px-3"
             >
               <MapPin className="h-3.5 w-3.5 shrink-0 text-gold-500" />
               <span className="truncate">{location.label}</span>
@@ -62,7 +69,7 @@ export function CustomerLayout() {
             <ThemeToggle />
             {session ? (
               <>
-                <Link to="/bildirimler" className="relative flex h-11 w-11 items-center justify-center rounded-full p-2 text-mist transition hover:bg-white/5 hover:text-white" aria-label={t.nav.notifications}>
+                <Link to="/bildirimler" className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full p-2 text-mist transition hover:bg-white/5 hover:text-white" aria-label={t.nav.notifications}>
                   <Bell className="h-5 w-5" />
                   {unread > 0 && (
                     <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold-500 px-1 text-[10px] font-semibold text-ink">
@@ -75,7 +82,7 @@ export function CustomerLayout() {
                 </Link>
               </>
             ) : (
-              <Link to="/giris" className="rounded-full bg-gold-500 px-4 py-1.5 text-xs font-semibold text-ink transition hover:bg-gold-400">
+              <Link to="/giris" className="shrink-0 whitespace-nowrap rounded-full bg-gold-500 px-3 py-1.5 text-xs font-semibold text-ink transition hover:bg-gold-400 sm:px-4">
                 {t.nav.signIn}
               </Link>
             )}

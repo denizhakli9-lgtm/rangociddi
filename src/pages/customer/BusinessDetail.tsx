@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, BadgeCheck, CalendarClock, Clock, Heart, MapPin, MessageSquare, Navigation, Share2, ShieldCheck, Star, Store } from 'lucide-react';
+import { ArrowLeft, BadgeCheck, CalendarClock, Clock, Flag, Heart, MapPin, MessageSquare, Navigation, Share2, ShieldCheck, Star, Store } from 'lucide-react';
 import { fetchBusinessDetail, fetchBusinessReviews } from '@/lib/api';
 import { useAsync } from '@/lib/useAsync';
 import { useFavorites } from '@/lib/useFavorites';
@@ -14,6 +14,7 @@ import { categoryName } from '@/i18n/categories';
 import { businessCover } from '@/lib/placeholderImages';
 import { PlaceholderTag } from '@/components/ui/PlaceholderTag';
 import { publicUrl, shareLink } from '@/lib/platform';
+import { supportSubject } from '@/lib/support';
 import { useUserLocation } from '@/contexts/LocationContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useT } from '@/i18n/I18nProvider';
@@ -226,6 +227,17 @@ export default function BusinessDetail() {
                           <p className="mt-1 text-sm text-mist">{r.owner_reply}</p>
                         </div>
                       )}
+                      {/* Reporting objectionable reviews (Google Play UGC policy): opens a support request about this review. */}
+                      <div className="-mb-3 -mr-3 mt-1 flex justify-end">
+                        <Link
+                          to={`/destek?konu=${encodeURIComponent(supportSubject(tx(`Yorum bildirimi: ${b.name} – ${r.reviewer_name}`, `Review report: ${b.name} – ${r.reviewer_name}`)))}`}
+                          aria-label={tx(`Yorumu bildir: ${r.reviewer_name}`, `Report review: ${r.reviewer_name}`)}
+                          className="inline-flex min-h-11 items-center gap-1 rounded-full px-3 text-[11px] text-mist-3 transition hover:bg-white/5 hover:text-white"
+                        >
+                          <Flag className="h-3 w-3" aria-hidden="true" />
+                          {tx('Bildir', 'Report')}
+                        </Link>
+                      </div>
                     </div>
                   ))}
                 </div>

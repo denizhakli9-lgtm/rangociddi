@@ -1,6 +1,9 @@
-import { COMPANY, LEGAL_UPDATED_AT, LEGAL_VERSIONS, PAYMENT_PROVIDER, SALE_CONSENT_TEXT, SALE_CONSENT_TEXT_TEST, filled, type LegalSlug } from '@/lib/legal';
+import { COMPANY, LEGAL_UPDATED_AT, LEGAL_VERSIONS, PAYMENT_PROVIDER, SALE_CONSENT_TEXT, SALE_CONSENT_TEXT_TEST, filled, legalPath, type LegalSlug } from '@/lib/legal';
+import { WHATSAPP_SUPPORT } from '@/lib/whatsapp';
 
 const PAYTR_PAGE = `${PAYMENT_PROVIDER.shortName}’nin güvenli ödeme sayfasında (${PAYMENT_PROVIDER.website.replace('https://', '')})`;
+/** The website without the scheme, as people type it ("rango.com.tr"). */
+const SITE = COMPANY.website.replace(/^https?:\/\//, '');
 
 /**
  * Cayma hakkı (Mesafeli Sözleşmeler Yönetmeliği md. 5/1-g, ğ, h; md. 9, 12, 15/1-h). The sales agreement and
@@ -57,7 +60,7 @@ const writtenChannels = filled(COMPANY.kep)
 const aydinlatma: LegalDocument = {
   slug: 'aydinlatma-metni',
   eyebrow: 'KVKK',
-  title: 'Kişisel Verilerin Korunması Aydınlatma Metni',
+  title: 'Gizlilik Politikası ve KVKK Aydınlatma Metni',
   summary: `6698 sayılı Kişisel Verilerin Korunması Kanunu (“KVKK”) ve Aydınlatma Yükümlülüğünün Yerine Getirilmesinde Uyulacak Usul ve Esaslar Hakkında Tebliğ uyarınca, ${COMPANY.brand} platformunu kullanan müşteri, işletme sahibi ve ziyaretçilerin kişisel verilerinin nasıl işlendiğini açıklarız. Son güncelleme: ${LEGAL_UPDATED_AT}.`,
   sections: [
     {
@@ -165,7 +168,22 @@ const aydinlatma: LegalDocument = {
           'İşlenen verilerin münhasıran otomatik sistemler vasıtasıyla analiz edilmesi suretiyle aleyhinize bir sonucun ortaya çıkmasına itiraz etme,',
           'Kanuna aykırı işleme sebebiyle zarara uğramanız halinde zararın giderilmesini talep etme haklarına sahipsiniz.',
         ),
-        p(`Başvurunuzu “KVKK Başvuru” sayfasında açıklanan yöntemlerle (${writtenChannels}) iletebilirsiniz. Başvurular en geç 30 gün içinde ücretsiz olarak sonuçlandırılır. Profil sayfanızdaki “Verilerimi indir” seçeneğiyle hesabınıza ait verilerin bir kopyasını dilediğiniz an alabilirsiniz.`),
+        p(`Başvurunuzu “KVKK Başvuru” sayfasında açıklanan yöntemlerle (${writtenChannels}) iletebilirsiniz. Başvurular en geç 30 gün içinde ücretsiz olarak sonuçlandırılır. Profil sayfanızdaki “Verilerimin kopyasını indir” seçeneğiyle hesabınıza ait verilerin bir kopyasını dilediğiniz an alabilirsiniz.`),
+      ],
+    },
+    {
+      title: '9. Veri güvenliği',
+      blocks: [
+        p('Kişisel verilerinizi korumak için aldığımız başlıca teknik ve idari tedbirler:'),
+        ul(
+          'Web sitesi ve uygulama ile sunucularımız arasındaki tüm veri trafiği HTTPS/TLS ile şifrelenerek iletilir.',
+          'Verileriniz altyapı hizmet sağlayıcımız Supabase’in sistemlerinde, sağlayıcı tarafından şifrelenmiş olarak saklanır.',
+          'Rol tabanlı yetkilendirme ve satır düzeyinde güvenlik (Row Level Security) kurallarıyla her kullanıcı yalnızca kendi kayıtlarına erişebilir; işletmeler yalnızca kendi işletmelerine yapılan randevuların bilgilerini görür.',
+          'Şifreniz tarafımızca görülmez; kimlik doğrulama hizmeti tarafından yalnızca geri döndürülemez şekilde şifrelenmiş (hash) olarak saklanır.',
+          `Kart bilgileriniz yalnızca ${PAYMENT_PROVIDER.shortName}’nin güvenli ödeme sayfasına girilir; ${COMPANY.brand} kart bilgilerinizi almaz ve saklamaz.`,
+          'Yönetim paneline ve destek yazışmalarına erişim yalnızca yetkilendirilmiş personelle sınırlıdır.',
+        ),
+        p('KVKK md. 12 uyarınca kişisel verilerinizin hukuka aykırı olarak işlenmesini ve bunlara hukuka aykırı olarak erişilmesini önlemek ve verilerinizin muhafazasını sağlamak için gerekli her türlü teknik ve idari tedbiri alırız. Verilerinizin kanuni olmayan yollarla başkaları tarafından elde edilmesi halinde bu durumu en kısa sürede size ve Kişisel Verileri Koruma Kuruluna bildiririz.'),
       ],
     },
   ],
@@ -514,6 +532,92 @@ const kunye: LegalDocument = {
   ],
 };
 
+/**
+ * Public account-deletion page (Google Play "Delete account URL"; KVKK md. 7 and 11). Every statement follows
+ * the code: the steps quote the labels in Profile.tsx, PrivacyPanel.tsx and DeleteAccount.tsx, sections 4–5 follow
+ * private.delete_my_account() and private.run_retention() (supabase/migrations/20261114200000_rango_security_hardening.sql)
+ * and the retention periods follow section 7 of the privacy policy above. Reword this page when one of those changes.
+ */
+const hesapSilme: LegalDocument = {
+  slug: 'hesap-silme',
+  eyebrow: 'KVKK',
+  title: `${COMPANY.brand} – Hesap ve Veri Silme`,
+  summary: `Bu sayfa, ${COMPANY.brand} mobil uygulaması (Google Play) ve ${SITE} kullanıcılarının hesaplarını ve hesaplarına bağlı kişisel verileri nasıl sildirebileceğini açıklar. 3. bölümdeki e-posta yöntemiyle, uygulamayı yeniden yüklemeden de talepte bulunabilirsiniz. Son güncelleme: ${LEGAL_UPDATED_AT}.`,
+  sections: [
+    {
+      title: 'Uygulama ve geliştirici',
+      blocks: [p(`Uygulama: ${COMPANY.brand} · Geliştirici ve veri sorumlusu: ${COMPANY.legalName}, ${COMPANY.address} · E-posta: ${COMPANY.kvkkEmail}`)],
+    },
+    {
+      title: '1. Uygulamadan veya web sitesinden silme (müşteri hesapları, hemen)',
+      blocks: [
+        p(`1) ${COMPANY.brand} uygulamasında veya ${SITE} adresinde hesabınıza giriş yapın.`),
+        p('2) Alttaki menüden “Profil” sayfasını açın (bilgisayarda sağ üstteki, adınızın baş harfini gösteren yuvarlak simgeye tıklayın).'),
+        p('3) Sayfanın altındaki “Verilerim ve gizlilik” bölümünde “Hesabımı sil” düğmesine dokunun.'),
+        p('4) “Hesabımın silineceğini ve bu işlemin geri alınamayacağını anladım.” kutusunu işaretleyin ve “Hesabımı kalıcı olarak sil” düğmesine dokunun. Hesabınız hemen silinir ve oturumunuz kapatılır.'),
+        p('Yaklaşan, ödeme bekleyen veya işletme onayı bekleyen bir randevunuz ya da sonuçlanmamış bir iade talebiniz varsa hesap silinmez: önce bu randevuları iptal etmeniz veya tamamlanmalarını, iade talebinizin de sonuçlanmasını beklemeniz gerekir. Silme işlemi geri alınamaz.'),
+      ],
+    },
+    {
+      title: '2. İşletme hesapları',
+      blocks: [
+        p('İşletme panelinde “Menü” → “Hesabım” yolunu izleyin (bilgisayarda “Hesabım” soldaki menüdedir), ardından yukarıdaki 3. ve 4. adımları uygulayın. İşletme hesaplarında bekleyen ödeme ve hak edişler bulunabileceği için talebiniz destek ekibimize iletilir ve en geç 30 gün içinde sonuçlandırılarak size bildirilir.'),
+      ],
+    },
+    {
+      title: '3. Uygulamaya veya hesabınıza erişemiyorsanız (e-posta ile)',
+      blocks: [
+        p(`Hesabınızda kayıtlı e-posta adresinizden ${COMPANY.kvkkEmail} adresine “Hesap silme talebi” konulu bir e-posta gönderin; e-postada hesabınızın e-posta adresini ve hesap türünü (müşteri veya işletme) belirtin. Bu yöntem için uygulamayı yüklemeniz veya giriş yapmanız gerekmez. Kimliğinizi doğrulayabilmemiz için kayıtlı adresinizden yazmanızı rica ederiz; başka bir adresten yazarsanız doğrulama için ek bilgi isteyebiliriz. Talebiniz en geç 30 gün içinde ücretsiz olarak sonuçlandırılır ve size e-postayla bildirilir.`),
+        p(`Yardım için 7/24 WhatsApp destek hattı: ${WHATSAPP_SUPPORT.display}`),
+      ],
+    },
+    {
+      title: '4. Silinen veya anonim hale getirilen veriler',
+      blocks: [
+        ul(
+          'Ad soyad, e-posta adresi, telefon numarası, cinsiyet bilgisi ve (varsa) profil fotoğrafı; adınızın yerine “Silinmiş kullanıcı” yazılır',
+          'Profilinizde kayıtlı semt ve konum bilgisi',
+          'Favorileriniz ve bildirimleriniz',
+          'Sonuçlanmış destek yazışmalarınız ve yalnızca yapay zekâ asistanıyla yapılmış yazışmalarınız',
+          'Randevularınıza yazdığınız notlar ve randevu iptal ederken yazdığınız iptal nedenleri',
+          'Oturumlarınız sonlandırılır; hesabınızın giriş e-postası, telefonu ve bağlı giriş yöntemleri silinir ve hesap kalıcı olarak kapatılır, hesabınızla bir daha giriş yapılamaz',
+        ),
+        p('Müşteri hesaplarında bu işlemler silme anında yapılır.'),
+      ],
+    },
+    {
+      title: '5. Saklanan veriler ve saklama süreleri',
+      blocks: [
+        ul(
+          'Randevu, ödeme, iade, komisyon ve hak ediş kayıtları ile satış onayı kayıtları: vergi ve ticaret mevzuatı ile ödeme kuruluşu sözleşmemiz gereği işlem tarihinden itibaren 10 yıl; adınız, e-postanız ve telefonunuz silinmiş olarak, kimliğinizle ilişkilendirilmeden saklanır.',
+          `Kapora ödemelerinde ${PAYMENT_PROVIDER.shortName}’ye iletilmiş işlem bilgileri (ad soyad, e-posta, telefon, ödeme anındaki IP adresi, il/ilçe ve sipariş bilgileri) ${PAYMENT_PROVIDER.shortName}’nin sistemlerinde, ${PAYMENT_PROVIDER.shortName}’nin kendi yasal saklama yükümlülükleri kapsamında tutulur; hesabınızın silinmesi bu kayıtları kapsamaz.`,
+          'Yorumlarınız “Silinmiş kullanıcı” adıyla anonim olarak yayında kalır. Yorumlarınızın da yayından kaldırılmasını isterseniz bunu hesabınızı silmeden önce Yardım ve Destek sayfasından ya da 3. bölümdeki e-posta talebinizde belirtin.',
+          'Temsilcimize aktarılmış ve henüz sonuçlanmamış destek talepleriniz sonuçlanana kadar saklanır; bu yazışmalar talep kapandıktan 2 yıl sonra silinir.',
+          'Erişim ve işlem güvenliği kayıtları (ör. IP adresi içeren erişim kayıtları): altyapı ve barındırma hizmet sağlayıcılarımızın sistemlerinde, ilgili mevzuatta öngörülen süre boyunca.',
+          'Randevu aldığınız işletmeler, kendi sistemlerinde tuttukları kayıtlar bakımından ayrıca veri sorumlusudur; bu kayıtlar için doğrudan işletmeye başvurabilirsiniz.',
+        ),
+      ],
+    },
+    {
+      title: '6. Hesabınızı silmeden belirli verilerin silinmesi',
+      blocks: [
+        ul(
+          'Profil sayfasından adınızı ve telefon numaranızı değiştirebilir, telefon numaranızı kaldırabilir, cinsiyet bilginizi “Belirtmek istemiyorum” yapabilirsiniz.',
+          'Favorilerinizi işletme sayfasındaki kalp simgesiyle, bildirimlerinizi Bildirimler sayfasından tek tek kaldırabilirsiniz.',
+          `Diğer veriler (ör. bir yorumunuz veya destek yazışmalarınız) için yukarıdaki e-posta adresine ya da KVKK Başvuru sayfasındaki yöntemlerle başvurabilirsiniz: ${COMPANY.website}${legalPath('kvkk-basvuru')}`,
+        ),
+      ],
+    },
+    {
+      title: '7. Verilerinizin kopyası',
+      blocks: [
+        p(`Silmeden önce verilerinizin bir kopyasını ${SITE} adresinde giriş yapıp Profil → “Verilerim ve gizlilik” → “İndir” ile alabilirsiniz. Uygulamada “İndir”e dokunduğunuzda Profil sayfası tarayıcıda açılır; orada giriş yapıp yeniden “İndir”e dokunun.`),
+        p(`Ayrıntılı bilgi: Gizlilik Politikası ve KVKK Aydınlatma Metni – ${COMPANY.website}${legalPath('aydinlatma-metni')}`),
+      ],
+    },
+  ],
+};
+
 export const LEGAL_DOCUMENTS: Record<LegalSlug, LegalDocument> = {
   'aydinlatma-metni': aydinlatma,
   'kullanim-kosullari': kosullar,
@@ -521,5 +625,6 @@ export const LEGAL_DOCUMENTS: Record<LegalSlug, LegalDocument> = {
   'satis-sozlesmesi': satis,
   'iptal-iade': iade,
   'kvkk-basvuru': basvuru,
+  'hesap-silme': hesapSilme,
   kunye,
 };

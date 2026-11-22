@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
-import { ChevronRight, Download, Languages, Mail } from 'lucide-react';
+import { ChevronRight, Download, Languages, Mail, User } from 'lucide-react';
 import { COMPANY, LEGAL_LINKS, isPlaceholder, legalPath, type LegalSlug } from '@/lib/legal';
 import { LEGAL_DOCUMENTS, type LegalBlock } from './legalContent';
 import { isEnglish, tx } from '@/i18n/locale';
@@ -71,6 +71,36 @@ function ApplicationHelper() {
   );
 }
 
+/** Account-deletion page: the two ways to start, without searching the text (in the app or by e-mail). */
+function DeletionHelper() {
+  const target = COMPANY.kvkkEmail;
+  const body = [
+    'Merhaba,',
+    '',
+    `${COMPANY.brand} hesabımın kapatılmasını ve hesabıma bağlı kişisel verilerimin silinmesini talep ediyorum.`,
+    '',
+    'Hesabımda kayıtlı e-posta adresi:',
+    'Hesap türü (müşteri / işletme):',
+    '',
+  ].join('\n');
+  const href = `mailto:${target}?subject=${encodeURIComponent('Hesap silme talebi')}&body=${encodeURIComponent(body)}`;
+  return (
+    <div className="card-gold flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-sm text-mist">{tx('Hesabınızı uygulamada veya web sitesinde Profil sayfasından hemen silebilirsiniz. Giriş yapamıyorsanız talebinizi hesabınızda kayıtlı e-posta adresinizden e-postayla iletin.', 'You can delete your account straight away from the Profile page in the app or on the website. If you cannot sign in, email your request from the address registered to your account; you may write in English.')}</p>
+      <div className="flex shrink-0 flex-wrap gap-2">
+        {!isPlaceholder(target) && (
+          <a href={href} className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-4 py-2 text-xs font-semibold text-ink transition hover:bg-gold-400">
+            <Mail className="h-4 w-4" /> {tx('Silme talebi e-postası oluştur', 'Create deletion request email')}
+          </a>
+        )}
+        <Link to="/profil" className="inline-flex items-center gap-2 rounded-full border border-gold-500/40 px-4 py-2 text-xs font-semibold text-gold-400 transition hover:bg-gold-500/10">
+          <User className="h-4 w-4" /> {tx('Profil sayfasına git', 'Go to Profile')}
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export default function LegalPage() {
   const { slug } = useParams();
   const doc = slug ? LEGAL_DOCUMENTS[slug as LegalSlug] : undefined;
@@ -86,7 +116,8 @@ export default function LegalPage() {
 
   return (
     <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[220px_1fr]">
-      <nav aria-label={tx('Yasal metinler', 'Legal texts')} className="min-w-0 lg:sticky lg:top-24 lg:self-start">
+      {/* On phones the deletion page opens on its steps, not on the list of other documents (Play: steps shown prominently). */}
+      <nav aria-label={tx('Yasal metinler', 'Legal texts')} className={`min-w-0 lg:sticky lg:top-24 lg:self-start ${doc.slug === 'hesap-silme' ? 'order-last lg:order-none' : ''}`}>
         <ul className="card divide-y divide-line overflow-hidden">
           {LEGAL_LINKS.map((l) => (
             <li key={l.slug}>
@@ -121,6 +152,7 @@ export default function LegalPage() {
         </header>
 
         {doc.slug === 'kvkk-basvuru' && <ApplicationHelper />}
+        {doc.slug === 'hesap-silme' && <DeletionHelper />}
         {doc.slug === 'aydinlatma-metni' && (
           <p className="flex items-center gap-2 text-xs text-mist-2">
             <Download className="h-3.5 w-3.5 text-gold-500" />

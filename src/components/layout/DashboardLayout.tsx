@@ -83,13 +83,14 @@ export function DashboardLayout({ title, items, notificationsPath, whatsAppMessa
       </aside>
 
       <div className="min-w-0 flex-1">
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-line-soft bg-ink/85 px-4 backdrop-blur-xl sm:px-6">
-          <div className="flex items-center gap-3 lg:hidden">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-line-soft bg-ink/85 px-4 backdrop-blur-xl sm:px-6">
+          {/* One line: long business names are cut with "…" instead of spilling out of the header on phones. */}
+          <div className="flex min-w-0 items-center gap-3 lg:hidden">
             <Logo size="sm" withMark={false} />
-            <span className="eyebrow">{title}</span>
+            <span className="eyebrow truncate" title={title}>{title}</span>
           </div>
           <div className="hidden lg:block" />
-          <div className="flex items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1">
             {notificationsPath && (
               <Link to={notificationsPath} className="relative rounded-full p-2 text-mist transition hover:bg-white/5 hover:text-white" aria-label={t.nav.notifications}>
                 <Bell className="h-5 w-5" />

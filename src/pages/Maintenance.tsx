@@ -30,7 +30,7 @@ export default function Maintenance() {
         <p className="maint-message">{tx('Bakım devam ediyor. Yakında yeniden buradayız.', 'Maintenance is ongoing. We will be back soon.')}</p>
       </div>
       <nav aria-label={tx('Yasal bağlantılar', 'Legal links')} className="maint-links">
-        <Link to={legalPath('aydinlatma-metni')}>{tx('KVKK Aydınlatma Metni', 'Privacy Notice (KVKK)')}</Link>
+        <Link to={legalPath('aydinlatma-metni')}>{tx('Gizlilik Politikası (KVKK)', 'Privacy Policy (KVKK)')}</Link>
         <Link to={legalPath('kullanim-kosullari')}>{tx('Kullanım Koşulları', 'Terms of Use')}</Link>
         <Link to={legalPath('kunye')}>{tx('Künye ve İletişim', 'Company & Contact')}</Link>
       </nav>

@@ -198,7 +198,7 @@ export default function OwnerCalendar() {
                           <p className="font-semibold">
                             {formatTime(a.starts_at)} {a.profiles?.full_name ?? 'Müşteri'}
                           </p>
-                          <p className="truncate opacity-80">{a.service_name}</p>
+                          <p className="tint-muted truncate">{a.service_name}</p>
                         </button>
                       );
                     })}

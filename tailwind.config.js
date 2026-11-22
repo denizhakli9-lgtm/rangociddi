@@ -22,10 +22,13 @@ export default {
           900: '#3D3110',
         },
         champagne: { 300: '#E9DCC0', 500: '#CDB991', 700: '#8C7A57' },
-        success: { 300: '#86EFAC', 500: '#22C55E', 700: '#15803D', 900: '#0F2A1A' },
-        warning: { 300: '#FCD34D', 500: '#F59E0B', 700: '#B45309', 900: '#2D200A' },
-        error: { 300: '#FCA5A5', 500: '#EF4444', 700: '#B91C1C', 900: '#2D1111' },
-        info: { 300: '#93C5FD', 500: '#3B82F6', 700: '#1D4ED8', 900: '#0F1B33' },
+        // The 900 step is the tinted surface behind status text (badges, notice boxes). Like the
+        // neutrals above it follows the theme through variables in src/index.css: a dark tint in
+        // the dark theme, a pale one in the light theme.
+        success: { 300: '#86EFAC', 500: '#22C55E', 700: '#15803D', 900: 'rgb(var(--success-900) / <alpha-value>)' },
+        warning: { 300: '#FCD34D', 500: '#F59E0B', 700: '#B45309', 900: 'rgb(var(--warning-900) / <alpha-value>)' },
+        error: { 300: '#FCA5A5', 500: '#EF4444', 700: '#B91C1C', 900: 'rgb(var(--error-900) / <alpha-value>)' },
+        info: { 300: '#93C5FD', 500: '#3B82F6', 700: '#1D4ED8', 900: 'rgb(var(--info-900) / <alpha-value>)' },
       },
       fontFamily: {
         display: ['"Cormorant Garamond"', 'Georgia', 'serif'],

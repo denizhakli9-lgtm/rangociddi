@@ -20,6 +20,11 @@
     --mist: 173 173 168;
     --mist-2: 150 150 145;
     --mist-3: 130 130 125;
+    /* Tinted surface behind status text: bg-success-900/60 (Badge), bg-warning-900/40 (notices)… */
+    --success-900: 15 42 26;
+    --warning-900: 45 32 10;
+    --error-900: 45 17 17;
+    --info-900: 15 27 51;
   }
   :root[data-theme='light'] {
     color-scheme: light;
@@ -33,6 +38,15 @@
     --mist: 91 87 78;
     --mist-2: 103 98 89;
     --mist-3: 112 107 98;
+    /*
+     * Pale tints, so the dark light-theme status text (.text-success-300 … below) stays readable.
+     * The classes keep their alpha: /60 on a card lands on Tailwind's 100 shade (Badge), /30-/40 is
+     * a lighter wash (notice boxes). Text contrast stays above 4.5:1 at any alpha.
+     */
+    --success-900: 197 250 216;
+    --warning-900: 253 235 163;
+    --error-900: 253 207 208;
+    --info-900: 195 220 255;
   }
   html {
     -webkit-tap-highlight-color: transparent;
@@ -99,13 +113,19 @@
   .text-ink { color: #080808; }
   .text-ink\/70 { color: rgb(8 8 8 / 0.7); }
   .group:hover .group-hover\:text-ink { color: #080808; }
+  :root[data-theme='light'] .text-gold-200,
   :root[data-theme='light'] .text-gold-300,
   :root[data-theme='light'] .text-gold-400,
   :root[data-theme='light'] .text-gold-500 { color: #846719; }
   :root[data-theme='light'] .text-success-300 { color: #166534; }
   :root[data-theme='light'] .text-error-300 { color: #b91c1c; }
   :root[data-theme='light'] .text-warning-300 { color: #92400e; }
+  :root[data-theme='light'] .text-warning-300\/90 { color: rgb(146 64 14 / 0.9); }
   :root[data-theme='light'] .text-info-300 { color: #1d4ed8; }
+  /* Secondary line inside a tinted block (owner calendar). Dimmed on the dark tints only: on the
+     pale light tints any dimming takes the text below 4.5:1. */
+  .tint-muted { opacity: 0.8; }
+  :root[data-theme='light'] .tint-muted { opacity: 1; }
   :root[data-theme='light'] .gold-text {
     background-image: linear-gradient(to right, #846719, #705617);
   }

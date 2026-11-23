@@ -7,7 +7,7 @@ import { fetchCategories } from '@/lib/api';
 import { depositFor, formatTRY } from '@/lib/format';
 import { friendlyError } from '@/lib/errors';
 import { safeImageUrl } from '@/lib/safeUrl';
-import { placeholderCover } from '@/lib/placeholderImages';
+import { placeholderCover, sectorChoiceSrc } from '@/lib/placeholderImages';
 import { PlaceholderTag } from '@/components/ui/PlaceholderTag';
 import { tr } from '@/i18n/tr';
 import { useToast } from '@/contexts/ToastContext';
@@ -21,6 +21,7 @@ import { useImageUpload } from './useImageUpload';
 import { hasExactPin, type Coords } from '@/lib/maps';
 import { BasicsFields, districtCoords, validateBasics, type BasicsErrors, type BasicsForm } from './BusinessFields';
 import { LocationField } from './LocationField';
+import { SectorCoverPicker } from './SectorCoverPicker';
 import { PayoutAccountCard } from './PayoutAccountCard';
 import { parseTrNumber } from './number';
 import { newTabClick } from '@/lib/platform';
@@ -107,7 +108,8 @@ export default function BusinessProfile() {
   // Media URLs are writable through the REST API; only trusted storage/seed hosts are rendered.
   const coverSrc = safeImageUrl(media.cover_url);
   // Until the owner uploads a cover, customers see a labelled photo from the business's sector.
-  const sectorCover = placeholderCover(business.id, categories?.find((c) => c.id === basics.category_id));
+  const category = categories?.find((c) => c.id === basics.category_id);
+  const sectorCover = sectorChoiceSrc(media.cover_url) ?? placeholderCover(business.id, category);
   const logoSrc = safeImageUrl(media.logo_url);
 
   const sample = 1000;
@@ -140,7 +142,7 @@ export default function BusinessProfile() {
                 <img src={coverSrc} alt="Kapak" className="h-full w-full object-cover" />
               ) : (
                 <>
-                  <img src={sectorCover} alt="" className="h-full w-full object-cover opacity-70" />
+                  <img src={sectorCover} alt="" className="h-full w-full object-cover" />
                   <PlaceholderTag className="left-auto right-3 top-3" />
                 </>
               )}
@@ -155,9 +157,12 @@ export default function BusinessProfile() {
             </label>
           </div>
           {!coverSrc && (
-            <p className="-mt-2 mb-5 rounded-xl border border-gold-500/30 bg-gold-500/5 px-4 py-3 text-xs leading-relaxed text-mist">
-              Kendi kapak fotoğrafınızı yükleyene kadar sektörünüze uygun, yapay zekâ ile hazırlanmış bir temsili görsel gösterilir. Bu görsel gerçek fotoğraf galerinize eklenmez. “Kapak değiştir” ile işletmenizin gerçek fotoğrafını yükleyin ve değişiklikleri kaydedin; müşterilerinize işletmenizi kendi fotoğraflarınızla tanıtın.
-            </p>
+            <div className="-mt-2 mb-5 rounded-xl border border-gold-500/30 bg-gold-500/5 p-4">
+              <p className="mb-3 text-xs leading-relaxed text-mist">
+                Kendi kapak fotoğrafınızı yükleyene kadar sektörünüze özel hazır görsellerden biri gösterilir. Beğendiğinizi seçip kaydedin; “Kapak değiştir” ile dilediğiniz zaman işletmenizin kendi fotoğrafını yükleyebilirsiniz.
+              </p>
+              <SectorCoverPicker category={category} value={media.cover_url} onChange={(v) => setMedia((m) => ({ ...m, cover_url: v }))} />
+            </div>
           )}
           <p className="mb-3 text-xs font-medium tracking-wide text-mist">Galeri ({media.gallery.length}/{MAX_GALLERY})</p>
           <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">

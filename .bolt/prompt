@@ -310,6 +310,8 @@ Never remove existing functionality without explicit approval.
 
 Never remove or bypass the purchase confirmation (satış onayı) on the payment page: src/pages/customer/booking/Payment.tsx must call the record_sale_consent RPC before pay_deposit and before opening the PayTR checkout, and the PAYTR sentence and www.paytr.com link in src/components/legal/LegalFooter.tsx must stay (PayTR agreement md. 7.2 and 10.3). Do not rename or edit files that are already applied in supabase/migrations.
 
+Supabase API keys: the project uses the new publishable (sb_publishable_...) and secret (sb_secret_...) keys; Supabase removes the legacy JWT-based anon and service_role keys at the end of 2026. The website and the mobile app use only the sb_publishable_ key (.env VITE_SUPABASE_PUBLISHABLE_KEY or VITE_SUPABASE_ANON_KEY; default in vite.config.ts, which never lets a legacy JWT key into the bundle). Edge Functions read their keys from SUPABASE_PUBLISHABLE_KEYS and SUPABASE_SECRET_KEYS (JSON objects, key "default") through their supabaseKey() helper; never use SUPABASE_ANON_KEY or SUPABASE_SERVICE_ROLE_KEY, never paste a legacy eyJ... key anywhere, and never put an sb_secret_ key in frontend code, .env files that reach the browser, or the repository.
+
 Never create fake data or placeholder interactions that appear to be real production functionality.
 
 If a backend integration is not configured, clearly identify it rather than pretending it works.

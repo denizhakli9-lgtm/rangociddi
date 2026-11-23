@@ -1,9 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 
 const url = import.meta.env.VITE_SUPABASE_URL as string;
-const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+// The project's sb_publishable_ key (vite.config.ts resolves it and refuses legacy JWT keys at build time).
+const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 
-export const supabase = createClient(url, anonKey);
+export const supabase = createClient(url, publishableKey);
 
 export const MEDIA_BUCKET = 'business-media';
 

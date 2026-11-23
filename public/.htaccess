@@ -60,7 +60,7 @@ Options -Indexes
     Header set Cache-Control "no-cache, no-store, must-revalidate"
   </FilesMatch>
   # Sektör görselleri, simgeler ve paylaşım görseli: adları sabit olduğu için bir gün
-  <FilesMatch "^(sector_[a-z0-9_]+\.webp|og-image\.jpg|apple-touch-icon\.png|icon-(192|512)\.png|favicon\.svg)$">
+  <FilesMatch "^(sector-[a-z0-9-]+\.webp|og-image\.jpg|apple-touch-icon\.png|icon-(192|512)\.png|favicon\.svg)$">
     Header set Cache-Control "public, max-age=86400"
   </FilesMatch>
   <FilesMatch "^(robots\.txt|sitemap\.xml)$">

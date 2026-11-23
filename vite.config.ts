@@ -82,8 +82,8 @@ function resolveSupabase(env: Record<string, string | undefined>): SupabaseSetti
   );
 }
 
-/** Anahtar bir JWT ise (eski anon / service_role anahtarları) içindeki rolü döndürür; değilse (ör. sb_publishable_) null. */
-function jwtClaims(key: string): { role?: unknown } | null {
+/** Anahtar bir JWT ise (eski anon / service_role anahtarları) içindeki rol ve projeyi döndürür; değilse (ör. sb_publishable_) null. */
+function jwtClaims(key: string): { role?: unknown; ref?: unknown } | null {
   const [, payload, signature] = key.split('.');
   if (!payload || !signature) return null;
   try {
@@ -92,6 +92,36 @@ function jwtClaims(key: string): { role?: unknown } | null {
   } catch {
     return null;
   }
+}
+
+/** https://<proje>.supabase.co adresindeki proje kimliği; başka biçimdeki adreslerde undefined. */
+function projectRef(url: string): string | undefined {
+  try {
+    const host = new URL(url).hostname;
+    return host.endsWith('.supabase.co') ? host.split('.')[0] : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * .env'de, Bolt'ta ya da Hostinger panelinde Rango projesinin eski (legacy) anon anahtarı kalmışsa derleme durmaz:
+ * aynı projenin SUPABASE_DEFAULTS içindeki yayınlanabilir anahtarı kullanılır ve uyarı yazılır. Böylece panellerdeki
+ * eski değer güncellenmeden de yayınlanan site ve uygulama yalnızca sb_publishable_ anahtarını taşır. Başka bir
+ * projenin eski anahtarı bu kurala girmez; assertPublicSupabase onu reddeder.
+ */
+function upgradeLegacyKey(settings: SupabaseSettings): SupabaseSettings {
+  const claims = jwtClaims(settings.key);
+  const ref = projectRef(settings.url);
+  if (!claims || claims.role !== 'anon' || !ref || claims.ref !== ref || projectRef(SUPABASE_DEFAULTS.url) !== ref) {
+    return settings;
+  }
+  console.warn(
+    `[rango] UYARI: ${settings.source} içinde Supabase'in eski (legacy) anon anahtarı var; yerine projenin ` +
+      `sb_publishable_ anahtarı (vite.config.ts) kullanıldı. Bu değeri sb_publishable_ anahtarıyla değiştirin ` +
+      '(YAYINLAMA-REHBERI.md, "Supabase API anahtarı geçişi").',
+  );
+  return { url: settings.url, key: SUPABASE_DEFAULTS.key, source: settings.source };
 }
 
 /**
@@ -128,7 +158,7 @@ function assertPublicSupabase({ url, key, source }: SupabaseSettings): void {
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
-  const supabase = resolveSupabase(env);
+  const supabase = upgradeLegacyKey(resolveSupabase(env));
   assertPublicSupabase(supabase);
   if (!supabase.source.startsWith('VITE_')) {
     console.info(`[rango] Supabase ayarları: ${supabase.source}`);

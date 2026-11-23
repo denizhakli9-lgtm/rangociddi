@@ -31,7 +31,7 @@ Bu komut Capacitor paketlerini yükler ve `package-lock.json` dosyasını günce
 **Güncellenen `package-lock.json` dosyasını GitHub'a da gönder.** Yoksa Hostinger'daki site derlemesi hata verebilir.
 
 `.env` dosyası sitedekiyle aynı olmalı: `VITE_SUPABASE_URL` ve projenin `sb_publishable_` ile başlayan anahtarı. Anahtar `VITE_SUPABASE_PUBLISHABLE_KEY` ya da eski adıyla `VITE_SUPABASE_ANON_KEY` değişkenine yazılabilir. `.env` yoksa `vite.config.ts` içindeki varsayılan değerler kullanılır (o da `sb_publishable_` anahtarı).
-Derleme, eski (legacy) JWT tabanlı anon anahtarını reddeder: `.env`'de eski anahtar kalmışsa `npm run android` / `npm run ios` hata verip durur ve hangi değişkenin düzeltileceğini yazar.
+Uygulamaya hiçbir yoldan eski (legacy) JWT anahtarı giremez. `.env`'de Rango projesinin eski anahtarı kalmışsa derleme yerine yayınlanabilir anahtarı kullanır ve `[rango] UYARI` yazar; yine de `.env`'yi güncelle. Başka bir projenin eski anahtarı ya da gizli bir anahtar varsa `npm run android` / `npm run ios` hata verip durur.
 İstersen `VITE_SITE_URL=https://rango.com.tr` de ekleyebilirsin. Eklemezsen bu adres zaten varsayılan.
 
 Sonra telefon projelerini oluştur:

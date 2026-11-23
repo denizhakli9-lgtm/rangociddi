@@ -10,7 +10,7 @@ Aşağıdaki adımları **sırayla** uygulayın.
 **Neden:** Supabase eski (legacy) JWT tabanlı `anon` ve `service_role` anahtarlarını kaldırıyor. [Resmî geçiş rehberine](https://supabase.com/docs/guides/getting-started/migrating-to-new-api-keys) göre eski anahtarlar 2026 sonuna kadar çalışıyor. [GitHub duyurusunda](https://github.com/orgs/supabase/discussions/29260) tarih "Late 2026, TBC" olarak geçiyor, yani kesin gün açıklanmadı. Eski anahtarlar kapandığında bu anahtarı kullanan site, uygulama sürümü ve fonksiyonlar hiçbir isteği tamamlayamaz. Yerlerine yayınlanabilir (`sb_publishable_…`, tarayıcı ve uygulama için) ve gizli (`sb_secret_…`, yalnızca sunucu için) anahtarlar geçiyor.
 
 **Yapılanlar:**
-- **Site ve uygulama kodu:** `vite.config.ts` içindeki varsayılan anahtar, projenin `default` adlı yayınlanabilir anahtarı oldu. Derleme artık eski JWT anahtarını da reddediyor; hangi değişkenin düzeltileceğini yazıp duruyor. Böylece eski anahtarla yanlışlıkla bir site ya da mağaza sürümü derlenemez. `.env` dosyasında `VITE_SUPABASE_PUBLISHABLE_KEY` (yeni ad) ya da `VITE_SUPABASE_ANON_KEY` (eski ad) kullanılabilir. İkisi birden varsa yenisi geçerlidir.
+- **Site ve uygulama kodu:** `vite.config.ts` içindeki varsayılan anahtar, projenin `default` adlı yayınlanabilir anahtarı oldu. Pakete artık hiçbir yoldan eski JWT anahtarı giremez. Bir panelde ya da `.env`'de Rango projesinin eski anahtarı kalmışsa derleme yerine projenin `sb_publishable_` anahtarını kullanır ve uyarı yazar. Başka bir projenin eski anahtarı, gizli anahtarlar ve tanınmayan değerler derlemeyi durdurur. Böylece eski anahtarla yanlışlıkla bir site ya da mağaza sürümü çıkamaz. `.env` dosyasında `VITE_SUPABASE_PUBLISHABLE_KEY` (yeni ad) ya da `VITE_SUPABASE_ANON_KEY` (eski ad) kullanılabilir. İkisi birden varsa yenisi geçerlidir.
 - **Edge Function'lar** (`support-ai`, `paytr-token`, `paytr-status`, `paytr-refund`, `paytr-callback`): anahtarlarını Supabase'in kendiliğinden verdiği `SUPABASE_PUBLISHABLE_KEYS` / `SUPABASE_SECRET_KEYS` değişkenlerinden (`default` anahtarı) okuyor. Eski `SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` hiç kullanılmıyor, yedek olarak bile. Fonksiyonlar 22–23 Kasım 2026'da Supabase bağlantısı üzerinden yayınlandı: support-ai v8, paytr-token v6, paytr-status v4, paytr-refund v2, paytr-callback v4. Yayındaki kod depodakiyle birebir aynı. Eski anahtarlar açık olduğu sürece eski ve yeni sürümler birlikte sorunsuz çalışır.
 - **`verify_jwt` değişmedi:** `paytr-callback`'te kapalı, diğer dördünde açık. Supabase'in bu kontrolü kullanıcı oturum JWT'lerini doğrular: eski HS256'yı ve projenin zaten kullandığı ES256 imzalama anahtarlarını. API anahtarı ise bu kontrolde JWT yerine geçmez. Dört fonksiyonu yalnızca giriş yapmış kullanıcılar çağırır ve fonksiyonlar kullanıcıyı ayrıca `auth.getUser()` ile doğrular. Ayrıntı `supabase/config.toml` içinde.
 - Gizli (`sb_secret_…`) anahtar kodda, depoda ya da bu rehberde yazılı değildir; Supabase onu fonksiyonlara kendisi verir. Veritabanında eski anahtarı kullanan bir cron işi, `pg_net` çağrısı ya da webhook yok (kontrol edildi).
@@ -25,24 +25,22 @@ Fonksiyonlar gizli anahtarla veritabanına ulaştı: `paytr-status`, `paytr-toke
 **Henüz yapılmadı:** gerçek bir PayTR test ödemesi → bildirim → iptal → admin iadesi zinciri. Bu zincir sizin deneme işletmenizi ve admin hesabınızı gerektiriyor; aşağıdaki 3. adımda.
 
 **Günlüklere göre eski anahtarı hâlâ kullananlar (23 Kasım 2026):**
-1. canlı site `rango.com.tr` (Bolt `.env` içindeki anahtar),
+1. canlı site `rango.com.tr`: 22 Kasım'daki son yayın eski anahtarla derlenmiş. Bu geçiş `main`'e alınınca Hostinger siteyi yeni anahtarla yeniden yayınlar.
 2. **cihazlara yüklenmiş Android uygulaması.** Türkiye'deki birkaç telefonda (ikisinde giriş yapılmış hesaplar var) ve Google Play'in yayın öncesi test cihazlarına benzeyen ABD cihazlarında kullanılıyor. Bu sürüm eski anahtarla derlenmiş; eski anahtarlar kapatılınca **tamamen çalışmaz hale gelir**.
 
 ### Sizin yapmanız gerekenler (sırayla)
 
-**1. Bolt `.env` dosyasını güncelleyin.** Canlı site bu dosyadaki anahtarla derlenir; depodaki varsayılan yalnızca `.env` yoksa kullanılır.
-1. Supabase panelinde **Settings → API Keys → "Publishable and secret API keys"** sekmesindeki **Publishable key** değerini kopyalayın. Bu anahtar gizli değildir, zaten sitenin koduna gömülür: `sb_publishable_4XWej0uOwOHjYXDwXYB7AQ_e2b8xLXr`. **Secret key'i (`sb_secret_…`) hiçbir yere kopyalamayın.**
-2. Bolt'ta projeyi açın ve dosya listesinden `.env` dosyasını açın.
-3. `VITE_SUPABASE_ANON_KEY=eyJ…` satırında yalnızca `=` işaretinden sonrasını silip yerine yeni anahtarı yazın. Tırnak ve boşluk koymayın. Adres satırı aynı kalır:
-   ```
-   VITE_SUPABASE_URL=https://ocgqkdhrmjesrbksnrlh.supabase.co
-   VITE_SUPABASE_ANON_KEY=sb_publishable_4XWej0uOwOHjYXDwXYB7AQ_e2b8xLXr
-   ```
-4. Kaydedin. Bu adım eski kodla da çalışır: eski kod da `sb_publishable_` anahtarını kabul ediyor.
+**1. Site yayını: kendiliğinden.** `rango.com.tr` 22 Kasım 2026'dan beri Hostinger'dan sunuluyor (`platform: hostinger`). Hostinger, GitHub'da `main`'e gelen her değişiklikten sonra siteyi kendiliğinden derleyip yayınlıyor. Bu geçiş `main`'e alındığında site de yeni anahtarla yayınlandı. Bolt'tan ya da Netlify'dan ayrıca yayınlamanız gerekmez.
 
-> Bolt'ta Supabase bağlantısını yeniden kurarsanız `.env` yeniden yazılabilir. Derleme "eski (legacy) JWT tabanlı anon anahtarı" hatası verirse bu adımı tekrarlayın.
-
-**2. Bolt'u GitHub'daki son `main` ile güncelleyin ve Bolt'tan yayınlayın (Netlify).** Önce 1. adımı yapın: yeni kod eski anahtarla derlenmez. `.env` güncellenmeden yayınlarsanız Bolt derleme hatası verir ve eski site yayında kalır. Bolt'tan Edge Function yayınlamadan önce de Bolt'taki kodun son `main` olduğundan emin olun. Eski bir kopya yayınlanırsa fonksiyonlar eski anahtar değişkenlerine döner ve eski anahtarlar kapanınca çalışmaz.
+**2. Panellerde kalan eski anahtarı temizleyin (önerilir, zorunlu değil).** Derleme, bir panelde ya da `.env`'de Rango projesinin eski anahtarını görürse durmaz: yerine projenin `sb_publishable_` anahtarını kullanır ve derleme günlüğüne `[rango] UYARI: … eski (legacy) anon anahtarı var` yazar. Yine de karışıklık olmasın diye eski değeri değiştirin:
+- **Hostinger:** hPanel → Web Siteleri → rango.com.tr → Node.js uygulaması → ortam değişkenleri. `VITE_SUPABASE_ANON_KEY` ya da `SUPABASE_ANON_KEY` değeri `eyJ…` ile başlıyorsa yeni anahtarla değiştirin. Hiç tanımlı değilse bir şey yapmanıza gerek yok.
+- **Bolt** (`.env`) ve mobil uygulamayı derlediğiniz bilgisayardaki `.env`: aynı değişikliği yapın. Adres satırı aynı kalır; tırnak ve boşluk koymayın:
+  ```
+  VITE_SUPABASE_URL=https://ocgqkdhrmjesrbksnrlh.supabase.co
+  VITE_SUPABASE_ANON_KEY=sb_publishable_4XWej0uOwOHjYXDwXYB7AQ_e2b8xLXr
+  ```
+- Anahtar Supabase panelinde **Settings → API Keys → "Publishable and secret API keys"** sekmesindeki **Publishable key** değeridir ve gizli değildir; zaten sitenin koduna gömülür. **Secret key'i (`sb_secret_…`) hiçbir yere kopyalamayın.**
+- Bolt'tan Edge Function yayınlamadan önce Bolt'taki kodun son `main` olduğundan emin olun. Eski bir kopya yayınlanırsa fonksiyonlar eski anahtar değişkenlerine döner ve eski anahtarlar kapanınca çalışmaz.
 
 **3. Canlı siteyi doğrulayın.**
 - Paketteki anahtarı kontrol edin. Şu komut site dosyasının adını verir:
@@ -84,7 +82,7 @@ from logs where source = 'edge_logs' group by anahtar, kaynak order by istek des
 
 ## 1. Hostinger'a yükleme (site kodu)
 
-> **Not (20 Kasım 2026):** `rango.com.tr` şu anda **Netlify** üzerinden, Bolt'un yayınlama (Publish/Deploy) özelliğiyle sunuluyor. Sunucu yanıtında `server: Netlify` görünüyor. Bu yüzden GitHub'da `main`'e birleştirmek siteyi kendiliğinden güncellemez. Önce Bolt'taki projeyi GitHub'daki son `main` ile güncelleyin, sonra Bolt'tan yayınlayın. Aşağıdaki Hostinger adımları ancak site Hostinger'a taşınırsa geçerlidir.
+> **Not (23 Kasım 2026):** `rango.com.tr` artık **Hostinger**'dan sunuluyor (sunucu yanıtında `platform: hostinger`). GitHub'da `main`'e gelen her değişiklik birkaç saniye içinde kendiliğinden derlenip yayınlanıyor. 22 Kasım'da birleştirilen bir değişiklik yaklaşık 20 saniye sonra canlıdaydı. 20 Kasım'a kadar site Netlify'dan, Bolt'un yayınlama düğmesiyle sunuluyordu.
 
 1. hPanel → **Web Siteleri → rango.com.tr → Node.js** bölümüne girin.
 2. Bu zip dosyasını yükleyin ve **Ayarlar ve yeniden dağıtma** ile yeniden dağıtın.
@@ -98,7 +96,7 @@ from logs where source = 'edge_logs' group by anahtar, kaynak order by istek des
    > **Git ile dağıtım notu:** Kök dizin `.bolt` olarak kalırsa `.bolt/package.json` köprüsü devreye girer: Hostinger derlemeyi `.bolt` içinde başlattığında asıl projeyi depo kökünde kurup derler ve çıktıyı `.bolt/dist` klasörüne koyar. Kalıcı çözüm, uygulamayı kök dizin boş (ya da `/`) olacak şekilde GitHub'dan yeniden içe aktarmaktır.
    >
    > - Supabase ayarları şu sırayla okunur: `.env` dosyası ya da `VITE_SUPABASE_URL` + `VITE_SUPABASE_PUBLISHABLE_KEY` (eski adıyla `VITE_SUPABASE_ANON_KEY`) ortam değişkenleri → Hostinger'ın "Veritabanı bağla → Supabase" sihirbazının yazdığı `SUPABASE_URL` + `SUPABASE_PUBLISHABLE_KEY` (ya da `SUPABASE_ANON_KEY`) → `vite.config.ts` içindeki varsayılan (herkese açık) değerler. Adres ve anahtar her zaman birlikte verilmelidir.
-   > - Anahtar projenin `sb_publishable_` ile başlayan yayınlanabilir anahtarı olmalıdır. Eski (legacy) JWT tabanlı anon anahtarı, gizli (`sb_secret_` / `service_role`) anahtar ya da tanınmayan bir değer verilirse derleme durur ve hangi değişkenin düzeltileceğini yazar. Hostinger sihirbazı eski anon anahtarını yazmışsa Hostinger'daki ortam değişkenini `sb_publishable_` anahtarıyla değiştirin (bkz. 0. bölüm).
+   > - Anahtar projenin `sb_publishable_` ile başlayan yayınlanabilir anahtarı olmalıdır. Rango projesinin eski (legacy) anon anahtarı verilmişse derleme yerine `vite.config.ts` içindeki yayınlanabilir anahtarı kullanır ve uyarı yazar. Başka bir projenin eski anahtarı, gizli (`sb_secret_` / `service_role`) anahtar ya da tanınmayan bir değer verilirse derleme durur ve hangi değişkenin düzeltileceğini yazar. Hostinger sihirbazı eski anon anahtarını yazmışsa ortam değişkenini `sb_publishable_` anahtarıyla değiştirin (bkz. 0. bölüm).
    > - Köprü kullanılırken Hostinger'ın güvenlik taraması yalnızca bağımlılığı olmayan `.bolt` klasörünü görür. Gerçek bağımlılıkların `npm audit` özeti derleme günlüğünün sonunda yer alır.
 
 4. Dağıtımdan sonra kontrol edin:

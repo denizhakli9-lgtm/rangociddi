@@ -21,12 +21,8 @@ Options -Indexes
   RewriteCond %{DOCUMENT_ROOT}/_seo/index.html -f
   RewriteRule ^$ /_seo/index.html [L]
 
-  # Kategori sayfaları: /ara?kategori=kuafor (başka filtre yokken)
-  RewriteCond %{QUERY_STRING} ^kategori=([a-z0-9-]+)$
-  RewriteCond %{DOCUMENT_ROOT}/_seo/kategori/%1.html -f
-  RewriteRule ^ara/?$ /_seo/kategori/%1.html [L]
-
-  # Diğer sayfalar: /kategoriler, /ara, /i/<işletme>, /yasal/<metin>
+  # Diğer sayfalar: /kategoriler, /sss, /izmir, /izmir/<kategori|semt>, /izmir/<semt>/<kategori>,
+  # /i/<işletme>, /yasal/<metin>
   RewriteCond %{REQUEST_URI} ^/([a-z0-9]+(?:[/-][a-z0-9]+)*)/?$
   RewriteCond %{DOCUMENT_ROOT}/_seo/%1.html -f
   RewriteRule ^ /_seo/%1.html [L]

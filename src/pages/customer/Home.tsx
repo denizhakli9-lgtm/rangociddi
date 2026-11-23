@@ -1,8 +1,8 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, CalendarDays, LocateFixed, Search, Sparkles } from 'lucide-react';
 import { useBusinessSearch } from '@/lib/useDiscovery';
-import { fetchCategories } from '@/lib/api';
+import { useCategories, useCityListing } from '@/lib/landingApi';
 import { checkTodayAvailability, fetchUpcomingAppointment } from '@/lib/homeData';
 import { formatDate, formatTime } from '@/lib/format';
 import { useAsync } from '@/lib/useAsync';
@@ -15,14 +15,20 @@ import { AppointmentStatusBadge } from '@/components/ui/Badge';
 import { HomeBusinessSection } from './HomeSections';
 import { useT } from '@/i18n/I18nProvider';
 import { categoryName } from '@/i18n/categories';
-import { tx } from '@/i18n/locale';
+import { locale, tx } from '@/i18n/locale';
+import { DEFAULT_CITY, cityCategoryPath } from '@/lib/seo/places';
+import { homeMeta } from '@/lib/seo/meta';
+import { homeExtraBlocks, homeFaqSchema } from '@/lib/seo/pages/home';
+import { useSeo } from '@/lib/seo/useSeo';
+import { Blocks } from '@/components/seo/Blocks';
 
 export default function Home() {
   const t = useT();
   const { profile } = useAuth();
   const { location, hasChosen } = useUserLocation();
   const gender = profile?.gender === 'female' || profile?.gender === 'male' ? profile.gender : null;
-  const categoriesQ = useAsync(() => fetchCategories(), []);
+  const categoriesQ = useCategories();
+  const listingQ = useCityListing(DEFAULT_CITY.name);
   const featuredQ = useBusinessSearch({ featured: true, sort: 'populer' }, 6);
   const nearbyQ = useBusinessSearch({ sort: 'mesafe' }, 6);
   const todayQ = useBusinessSearch({ availableToday: true, sort: 'mesafe' }, 6);
@@ -49,6 +55,19 @@ export default function Home() {
     navigate(`/ara${query.trim() ? `?q=${encodeURIComponent(query.trim())}` : ''}`);
   };
   const shared = { favorites: ids, toggle, showDistance: hasChosen };
+  const lang = locale();
+  // How it works, links by service and area, and the common questions (the same blocks the static home page carries).
+  const extras = useMemo(
+    () =>
+      homeExtraBlocks({
+        lang,
+        city: DEFAULT_CITY,
+        categories: (categoriesQ.data ?? []).map((c) => ({ slug: c.slug, name: categoryName(c) })),
+        businesses: listingQ.data,
+      }),
+    [lang, categoriesQ.data, listingQ.data],
+  );
+  useSeo(useMemo(() => ({ ...homeMeta(lang), jsonLd: [...(homeMeta(lang).jsonLd ?? []), homeFaqSchema(lang)] }), [lang]));
   const upcoming = upcomingQ.data;
 
   return (
@@ -73,7 +92,7 @@ export default function Home() {
         {categoriesQ.error ? <ErrorState onRetry={categoriesQ.reload} /> : (
           <div className="grid grid-cols-4 gap-2 sm:gap-4 lg:grid-cols-8">
             {categoriesQ.loading ? Array.from({ length: 8 }).map((_, i) => <div key={i} className="skeleton h-24" />) : (categoriesQ.data ?? []).map((c) => (
-              <Link key={c.id} to={`/ara?kategori=${encodeURIComponent(c.slug)}`} className="group flex min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border border-line bg-coal p-2 text-center transition hover:-translate-y-1 hover:border-gold-500/50 hover:shadow-sm active:scale-95">
+              <Link key={c.id} to={cityCategoryPath(DEFAULT_CITY, c.slug)} className="group flex min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border border-line bg-coal p-2 text-center transition hover:-translate-y-1 hover:border-gold-500/50 hover:shadow-sm active:scale-95">
                 <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-gold-500/10 text-gold-500"><CategoryIcon name={c.icon} className="h-5 w-5" /></span>
                 <span className="text-[11px] font-medium leading-snug text-white sm:text-xs">{categoryName(c)}</span>
               </Link>
@@ -104,6 +123,7 @@ export default function Home() {
           <Link to="/randevularim" className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-gold-500">{tx('Randevumu görüntüle', 'View my booking')} <ArrowRight className="h-4 w-4" /></Link>
         </section>
       ))}
+      <Blocks blocks={extras} />
       <div className="flex items-center justify-center gap-2 border-t border-line-soft pt-6 text-xs text-mist-2"><Sparkles className="h-4 w-4 text-gold-500" /> {tx('İyi hissetmenin yeni adresi.', 'Your new place to feel good.')}</div>
     </div>
   );

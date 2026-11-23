@@ -76,7 +76,7 @@ export default function SearchPage() {
   const activeFilters = [maxPrice, minRating, gender, today].filter(Boolean).length;
   const currentCategory = categories.find((c) => c.slug === category);
 
-  // Only the plain list and the plain category pages are indexed; searches, filters and sort orders are variants of them.
+  // Only the plain list is indexed; searches, filters, sort orders and category selections are variants (see searchMeta).
   const filtered = !!q || activeFilters > 0 || params.has('sirala');
   useSeo(
     category && !categoryData

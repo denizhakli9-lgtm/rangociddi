@@ -15,7 +15,9 @@ import { tx } from '@/i18n/locale';
 
 export function CustomerLayout() {
   const t = useT();
-  const isHome = useLocation().pathname === '/kesfet';
+  const { pathname } = useLocation();
+  // On the website the home page also lives at "/".
+  const isHome = pathname === '/kesfet' || pathname === '/';
   const { session, profile } = useAuth();
   const { location } = useUserLocation();
   const unread = useUnreadCount();
@@ -42,7 +44,7 @@ export function CustomerLayout() {
                 key={tab.to}
                 to={tab.to}
                 className={({ isActive }) =>
-                  `rounded-full px-4 py-2 text-sm transition ${isActive ? 'text-gold-400' : 'text-mist hover:text-white'}`
+                  `rounded-full px-4 py-2 text-sm transition ${isActive || (tab.to === '/kesfet' && isHome) ? 'text-gold-400' : 'text-mist hover:text-white'}`
                 }
               >
                 {tab.label}
@@ -99,7 +101,7 @@ export function CustomerLayout() {
               key={to}
               to={to}
               className={({ isActive }) =>
-                `flex flex-col items-center gap-1 py-2.5 text-[10px] transition ${isActive ? 'text-gold-400' : 'text-mist-2'}`
+                `flex flex-col items-center gap-1 py-2.5 text-[10px] transition ${isActive || (to === '/kesfet' && isHome) ? 'text-gold-400' : 'text-mist-2'}`
               }
             >
               <Icon className="h-5 w-5" strokeWidth={1.6} />

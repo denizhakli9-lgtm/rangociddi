@@ -6,6 +6,8 @@
  * import içerir ve tarayıcıya özgü hiçbir şeye (window, document, `@/` takma adı) dokunmaz.
  */
 import { COMPANY, LEGAL_LINKS, type LegalSlug } from '../legal';
+import { isTestBusiness } from './config';
+import { DEFAULT_CITY, cityCategoryPath, cityPath } from './places';
 
 export const SITE_URL = 'https://rango.com.tr';
 export const SITE_NAME = 'Rango';
@@ -62,6 +64,20 @@ export interface SeoHours {
   close_time: string;
 }
 
+export interface SeoReview {
+  rating: number;
+  comment?: string | null;
+  reviewer_name?: string | null;
+  created_at?: string | null;
+}
+
+export interface BusinessExtras {
+  /** The business's own photo as an absolute URL; never a ready-made sector cover. */
+  photo?: string;
+  /** Published reviews, newest first. */
+  reviews?: SeoReview[];
+}
+
 const pick = (lang: SeoLang, tr: string, en: string) => (lang === 'en' ? en : tr);
 
 export function absoluteUrl(pathOrUrl: string): string {
@@ -80,11 +96,11 @@ export function clip(text: string, max = 160): string {
 
 /**
  * Which business pages search engines may index: real businesses (seeded samples have no
- * owner) that already list at least one service. An empty profile is a thin page that
+ * owner; test businesses are listed in config.ts) that already list at least one service. An empty profile is a thin page that
  * would only weaken the site in search results; it becomes indexable once services are added.
  */
 export function isIndexableBusiness(b: SeoBusiness, services: SeoService[]): boolean {
-  return b.owner_id !== null && services.length > 0;
+  return b.owner_id !== null && services.length > 0 && !isTestBusiness(b.slug);
 }
 
 // ---------------------------------------------------------------------------
@@ -149,6 +165,19 @@ export function itemListSchema(name: string, paths: { name: string; path: string
   };
 }
 
+/** Question-and-answer pairs that are visible on the page, as FAQPage structured data. */
+export function faqSchema(items: { q: string; a: string }[]): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: items.map((item) => ({
+      '@type': 'Question',
+      name: item.q,
+      acceptedAnswer: { '@type': 'Answer', text: item.a },
+    })),
+  };
+}
+
 const BUSINESS_TYPES: Record<string, string> = {
   kuafor: 'HairSalon',
   berber: 'HairSalon',
@@ -164,17 +193,19 @@ const BUSINESS_TYPES: Record<string, string> = {
   'dovme-studyosu': 'TattooParlor',
 };
 
+const MAX_SCHEMA_REVIEWS = 5;
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 export function businessPath(slug: string): string {
   return `/i/${slug}`;
 }
 
+/** A category's page: its city landing page (`/izmir/kuafor`). */
 export function categoryPath(slug: string): string {
-  return `/ara?kategori=${encodeURIComponent(slug)}`;
+  return cityCategoryPath(DEFAULT_CITY, slug);
 }
 
-export function localBusinessSchema(b: SeoBusiness, services: SeoService[] = [], hours: SeoHours[] = []): Record<string, unknown> {
+export function localBusinessSchema(b: SeoBusiness, services: SeoService[] = [], hours: SeoHours[] = [], extras: BusinessExtras = {}): Record<string, unknown> {
   const url = absoluteUrl(businessPath(b.slug));
   const prices = services.map((s) => Number(s.price)).filter((p) => Number.isFinite(p) && p > 0);
   const schema: Record<string, unknown> = {
@@ -193,7 +224,7 @@ export function localBusinessSchema(b: SeoBusiness, services: SeoService[] = [],
     },
   };
   if (b.description?.trim()) schema.description = clip(b.description, 300);
-  if (b.cover_url && /^https:\/\//i.test(b.cover_url)) schema.image = b.cover_url;
+  if (extras.photo) schema.image = extras.photo;
   if (b.latitude != null && b.longitude != null) {
     schema.geo = { '@type': 'GeoCoordinates', latitude: Number(b.latitude), longitude: Number(b.longitude) };
   }
@@ -215,6 +246,18 @@ export function localBusinessSchema(b: SeoBusiness, services: SeoService[] = [],
   const rating = Number(b.rating_avg ?? 0);
   if (reviews > 0 && rating > 0) {
     schema.aggregateRating = { '@type': 'AggregateRating', ratingValue: rating.toFixed(1), reviewCount: reviews, bestRating: 5, worstRating: 1 };
+    // Reviews are written on Rango by customers whose appointment was completed (a third-party
+    // marketplace's reviews of the business, not the business reviewing itself).
+    const written = (extras.reviews ?? []).filter((r) => r.comment?.trim() && r.reviewer_name?.trim() && r.rating >= 1 && r.rating <= 5).slice(0, MAX_SCHEMA_REVIEWS);
+    if (written.length) {
+      schema.review = written.map((r) => ({
+        '@type': 'Review',
+        author: { '@type': 'Person', name: r.reviewer_name!.trim() },
+        reviewRating: { '@type': 'Rating', ratingValue: r.rating, bestRating: 5, worstRating: 1 },
+        reviewBody: clip(r.comment!, 500),
+        ...(r.created_at ? { datePublished: r.created_at.slice(0, 10) } : {}),
+      }));
+    }
   }
   if (services.length) {
     schema.hasOfferCatalog = {
@@ -236,7 +279,7 @@ export function localBusinessSchema(b: SeoBusiness, services: SeoService[] = [],
 // Page metadata
 // ---------------------------------------------------------------------------
 
-const DEFAULT_TITLE: Record<SeoLang, string> = {
+export const DEFAULT_TITLE: Record<SeoLang, string> = {
   tr: 'Rango | Randevunun yeni yolu.',
   en: 'Rango | The new way to book.',
 };
@@ -275,32 +318,29 @@ export function categoriesMeta(lang: SeoLang, categories: SeoCategory[] = []): P
   };
 }
 
+/**
+ * The search page. Only the plain list is indexed: a search, filter, sort order or category
+ * selection is a variant of it (categories have their own pages, see `categoryPath`), so those
+ * carry "noindex".
+ */
 export function searchMeta(lang: SeoLang, options: { category?: SeoCategory | null; filtered?: boolean } = {}): PageMeta {
   const { category, filtered } = options;
   if (category) {
-    const detail = category.description?.trim();
     return {
-      title: pick(lang, `İzmir ${category.name} Randevusu | Rango`, `${category.name} in İzmir: Book Online | Rango`),
+      title: pick(lang, `${category.name} işletmeleri: ara ve filtrele | Rango`, `${category.name}: search and filter | Rango`),
       description: clip(
         pick(
           lang,
-          `İzmir’de ${category.name.toLocaleLowerCase('tr-TR')} için online randevu alın.${detail ? ` ${detail}.` : ''} İşletmeleri, fiyatları ve boş saatleri görün; yerinizi Rango ile ayırtın.`,
-          `Book ${category.name.toLowerCase()} appointments in İzmir online.${detail ? ` ${detail}.` : ''} See businesses, prices and free times, and secure your spot with Rango.`,
+          `İzmir’deki ${category.name.toLocaleLowerCase('tr-TR')} işletmelerini fiyata, puana ve mesafeye göre filtreleyin; online randevunuzu Rango ile alın.`,
+          `Filter ${category.name.toLowerCase()} businesses in İzmir by price, rating and distance, and book online with Rango.`,
         ),
       ),
-      path: categoryPath(category.slug),
-      noindex: filtered,
-      jsonLd: [
-        breadcrumbSchema([
-          { name: SITE_NAME, path: '/' },
-          { name: pick(lang, 'Kategoriler', 'Categories'), path: '/kategoriler' },
-          { name: category.name, path: categoryPath(category.slug) },
-        ]),
-      ],
+      path: `/ara?kategori=${encodeURIComponent(category.slug)}`,
+      noindex: true,
     };
   }
   return {
-    title: pick(lang, 'İzmir’de Kuaför, Berber ve Güzellik Merkezleri | Rango', 'Hair Salons, Barbers & Beauty Salons in İzmir | Rango'),
+    title: pick(lang, 'İşletme Ara: İzmir Kuaför, Berber ve Güzellik Merkezleri | Rango', 'Search Hair Salons, Barbers & Beauty Salons in İzmir | Rango'),
     description: pick(
       lang,
       'İzmir’deki kuaför, berber, güzellik merkezi ve spa işletmelerini arayın; fiyata, puana ve mesafeye göre sıralayın, online randevunuzu hemen oluşturun.',
@@ -318,13 +358,17 @@ export function businessMeta(
   hours: SeoHours[] = [],
   /** Category name in the page's language (the database stores the Turkish one). */
   categoryLabel?: string,
+  extras: BusinessExtras = {},
 ): PageMeta {
   const category = categoryLabel || b.categories?.name || '';
   const place = [b.district, b.city].filter(Boolean).join(', ');
   const titleMiddle = [b.district, category].filter(Boolean).join(' ');
   const indexable = isIndexableBusiness(b, services);
   const intro = b.description?.trim() ? `${b.description.trim().replace(/[.!?]+$/, '')}. ` : '';
-  const crumbs = [{ name: SITE_NAME, path: '/' }];
+  const crumbs = [
+    { name: SITE_NAME, path: '/' },
+    { name: DEFAULT_CITY.name, path: cityPath(DEFAULT_CITY) },
+  ];
   if (b.categories?.slug && category) crumbs.push({ name: category, path: categoryPath(b.categories.slug) });
   crumbs.push({ name: b.name, path: businessPath(b.slug) });
   return {
@@ -338,8 +382,8 @@ export function businessMeta(
     ),
     path: businessPath(b.slug),
     noindex: !indexable,
-    image: b.cover_url && /^https:\/\//i.test(b.cover_url) ? b.cover_url : undefined,
-    jsonLd: indexable ? [localBusinessSchema(b, services, hours), breadcrumbSchema(crumbs)] : [],
+    image: extras.photo,
+    jsonLd: indexable ? [localBusinessSchema(b, services, hours, extras), breadcrumbSchema(crumbs)] : [],
   };
 }
 
@@ -362,50 +406,6 @@ export function legalMeta(lang: SeoLang, slug: string): PageMeta | null {
     description: LEGAL_DESCRIPTIONS[link.slug],
     path: `/yasal/${link.slug}`,
   };
-}
-
-function privateMeta(lang: SeoLang, path: string, title?: string): PageMeta {
-  return {
-    title: title ? `${title} | ${SITE_NAME}` : DEFAULT_TITLE[lang],
-    description: homeMeta(lang).description,
-    path,
-    noindex: true,
-  };
-}
-
-/**
- * Metadata that depends only on the address. Pages with their own data (a business, a
- * category) refine it through `useSeo` once that data has loaded.
- */
-export function routeMeta(pathname: string, lang: SeoLang): PageMeta {
-  const path = pathname.replace(/\/+$/, '') || '/';
-  if (path === '/' || path === '/kesfet') return homeMeta(lang);
-  if (path === '/kategoriler') return categoriesMeta(lang);
-  if (path === '/ara') return searchMeta(lang);
-  if (path.startsWith('/yasal/')) return legalMeta(lang, path.slice('/yasal/'.length)) ?? privateMeta(lang, path);
-  if (/^\/i\/[^/]+$/.test(path)) {
-    // Shown only until the business has loaded; BusinessDetail replaces it.
-    return { title: DEFAULT_TITLE[lang], description: homeMeta(lang).description, path };
-  }
-  if (path === '/giris') {
-    return {
-      title: pick(lang, 'Giriş Yap | Rango', 'Sign in | Rango'),
-      description: pick(lang, 'Rango hesabınıza giriş yapın; randevularınızı yönetin, favori işletmelerinize hızlıca ulaşın.', 'Sign in to your Rango account to manage your bookings and reach your favourite businesses.'),
-      path,
-    };
-  }
-  if (path === '/kayit') {
-    return {
-      title: pick(lang, 'Ücretsiz Hesap Oluştur | Rango', 'Create a free account | Rango'),
-      description: pick(
-        lang,
-        'Rango’ya ücretsiz üye olun, İzmir’deki kuaför, berber ve güzellik merkezlerinden online randevu alın. İşletme sahibiyseniz salonunuzu Rango’ya ekleyin.',
-        'Join Rango for free and book hair salons, barbers and beauty salons in İzmir online. Own a business? Add your salon to Rango.',
-      ),
-      path,
-    };
-  }
-  return privateMeta(lang, path);
 }
 
 // ---------------------------------------------------------------------------
@@ -434,7 +434,7 @@ export function renderHead(meta: PageMeta, lang: SeoLang = 'tr'): string {
     `<title>${title}</title>`,
     `<meta name="description" content="${description}" />`,
     `<meta name="robots" content="${meta.noindex ? ROBOTS_NOINDEX : ROBOTS_INDEX}" />`,
-    `<link rel="canonical" href="${escapeHtml(url)}" />`,
+    ...(meta.noindex ? [] : [`<link rel="canonical" href="${escapeHtml(url)}" />`]),
     `<meta property="og:type" content="website" />`,
     `<meta property="og:site_name" content="${SITE_NAME}" />`,
     `<meta property="og:locale" content="${lang === 'en' ? 'en_GB' : 'tr_TR'}" />`,

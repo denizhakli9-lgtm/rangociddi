@@ -9,6 +9,7 @@ import { categoryDescription, categoryName } from '@/i18n/categories';
 import { locale, tx } from '@/i18n/locale';
 import { categoriesMeta } from '@/lib/seo/meta';
 import { useSeo } from '@/lib/seo/useSeo';
+import { DEFAULT_CITY, cityCategoryPath } from '@/lib/seo/places';
 
 export default function Categories() {
   const { data, loading, error, reload } = useAsync(async () => {
@@ -37,7 +38,7 @@ export default function Categories() {
                 return (
                   <Link
                     key={c.id}
-                    to={`/ara?kategori=${c.slug}`}
+                    to={cityCategoryPath(DEFAULT_CITY, c.slug)}
                     style={{ animationDelay: `${idx * 40}ms` }}
                     className="card group relative animate-fade-up overflow-hidden p-6 transition hover:-translate-y-0.5 hover:border-gold-500/40"
                   >

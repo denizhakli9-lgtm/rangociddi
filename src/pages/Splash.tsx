@@ -4,7 +4,6 @@ import { useAuth, homePathFor } from '@/contexts/AuthContext';
 import { useT } from '@/i18n/I18nProvider';
 import { BrandMark, WordMark } from '@/components/ui/Brand';
 import { ProfileLoadError } from '@/components/layout/RequireAuth';
-import { isNative } from '@/lib/platform';
 
 export const ONBOARDED_KEY = 'veyra.onboarded';
 
@@ -38,13 +37,10 @@ export default function Splash() {
 
   useEffect(() => {
     if (isRecovery || loading || (session && !profile)) return;
-    // The app shows the logo animation and, on first launch, the welcome slides. The website's
-    // home address must show real content straight away (search engines index what "/" renders,
-    // and a 2-second wait counts against page speed), so there visitors go directly to Discover.
     const timer = setTimeout(() => {
       if (session) navigate(homePathFor(profile), { replace: true });
-      else navigate(!isNative || hasOnboarded() ? '/kesfet' : '/hosgeldin', { replace: true });
-    }, isNative ? 2200 : 0);
+      else navigate(hasOnboarded() ? '/kesfet' : '/hosgeldin', { replace: true });
+    }, 2200);
     return () => clearTimeout(timer);
   }, [isRecovery, loading, session, profile, navigate]);
 

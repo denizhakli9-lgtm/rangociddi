@@ -1,5 +1,6 @@
 import { supabase, MEDIA_BUCKET } from '@/lib/supabase';
 import type { Business, Category, Employee, PlatformSettings, Review, Service, Slot, WorkingHours } from '@/lib/types';
+import { PUBLIC_BUSINESS_FIELDS, PUBLIC_REVIEW_FIELDS } from '@/lib/seo/queries';
 
 /** Keep owner_id: isDemoBusiness() (src/lib/demo.ts) uses owner_id === null to mark seeded sample businesses. */
 export const BUSINESS_LIST_COLUMNS =
@@ -11,8 +12,7 @@ export const BUSINESS_LIST_COLUMNS =
  * customer side (this prevents scraping and off-platform bookings). The business and admin
  * panels keep using BUSINESS_LIST_COLUMNS.
  */
-export const PUBLIC_BUSINESS_COLUMNS =
-  'id, owner_id, category_id, name, slug, description, address, district, city, latitude, longitude, logo_url, cover_url, gallery, gender_focus, deposit_type, deposit_value, cancellation_hours, auto_confirm, status, is_verified, is_featured, rating_avg, review_count, booking_count, min_price, created_at, categories(name, slug, icon)';
+export const PUBLIC_BUSINESS_COLUMNS = PUBLIC_BUSINESS_FIELDS;
 
 const CATEGORY_TTL_MS = 5 * 60 * 1000;
 let activeCategoriesCache: { at: number; data: Category[] } | null = null;
@@ -130,7 +130,7 @@ export async function fetchBusinessDetail(slug: string): Promise<BusinessDetail 
  * Public review columns. customer_id is deliberately left out: the list is read by guests, and a
  * later column-level REVOKE on reviews.customer_id must not break /i/<slug>.
  */
-const PUBLIC_REVIEW_COLUMNS = 'id, appointment_id, business_id, employee_id, rating, comment, reviewer_name, service_name, owner_reply, is_hidden, created_at';
+const PUBLIC_REVIEW_COLUMNS = PUBLIC_REVIEW_FIELDS;
 
 export async function fetchBusinessReviews(businessId: string, limit = 20): Promise<Review[]> {
   const { data, error } = await supabase

@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from '@/App';
+import { preloadRoute } from '@/lib/lazyPage';
 import { I18nProvider } from '@/i18n/I18nProvider';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { LocationProvider } from '@/contexts/LocationContext';
@@ -21,16 +22,31 @@ initNative();
 
 const visitSlogan = nextVisitSlogan();
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <I18nProvider sloganIndex={visitSlogan}>
-      <AuthProvider>
-        <LocationProvider>
-          <ToastProvider>
-            <App />
-          </ToastProvider>
-        </LocationProvider>
-      </AuthProvider>
-    </I18nProvider>
-  </StrictMode>
-);
+const container = document.getElementById('root')!;
+
+function start() {
+  createRoot(container).render(
+    <StrictMode>
+      <I18nProvider sloganIndex={visitSlogan}>
+        <AuthProvider>
+          <LocationProvider>
+            <ToastProvider>
+              <App />
+            </ToastProvider>
+          </LocationProvider>
+        </AuthProvider>
+      </I18nProvider>
+    </StrictMode>,
+  );
+}
+
+// A page published as static HTML (seo/prerender.ts) is already on screen. Its code is loaded
+// first, so the app replaces it in one step instead of flashing a loading spinner in between;
+// if that takes unusually long the app starts anyway.
+if (container.firstElementChild) {
+  Promise.race([preloadRoute(window.location.pathname), new Promise<void>((resolve) => setTimeout(resolve, 4000))])
+    .catch(() => undefined)
+    .then(start);
+} else {
+  start();
+}

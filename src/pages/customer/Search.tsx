@@ -14,7 +14,9 @@ import { EmptyState, ErrorState } from '@/components/ui/Feedback';
 import { useT } from '@/i18n/I18nProvider';
 import { categoryDescription, categoryName, englishQueryToCategory } from '@/i18n/categories';
 import type { GenderFocus } from '@/lib/types';
-import { tx } from '@/i18n/locale';
+import { locale, tx } from '@/i18n/locale';
+import { searchMeta } from '@/lib/seo/meta';
+import { useSeo } from '@/lib/seo/useSeo';
 
 type Sort = DiscoverySort;
 const SORTS: { value: Sort; label: [string, string] }[] = [
@@ -73,6 +75,17 @@ export default function SearchPage() {
 
   const activeFilters = [maxPrice, minRating, gender, today].filter(Boolean).length;
   const currentCategory = categories.find((c) => c.slug === category);
+
+  // Only the plain list and the plain category pages are indexed; searches, filters and sort orders are variants of them.
+  const filtered = !!q || activeFilters > 0 || params.has('sirala');
+  useSeo(
+    category && !categoryData
+      ? null
+      : searchMeta(locale(), {
+          category: currentCategory ? { slug: currentCategory.slug, name: categoryName(currentCategory), description: categoryDescription(currentCategory) } : null,
+          filtered: filtered || (!!category && !currentCategory),
+        }),
+  );
 
   return (
     <div>

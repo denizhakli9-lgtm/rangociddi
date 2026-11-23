@@ -6,7 +6,9 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { ErrorState } from '@/components/ui/Feedback';
 import { formatTRY } from '@/lib/format';
 import { categoryDescription, categoryName } from '@/i18n/categories';
-import { tx } from '@/i18n/locale';
+import { locale, tx } from '@/i18n/locale';
+import { categoriesMeta } from '@/lib/seo/meta';
+import { useSeo } from '@/lib/seo/useSeo';
 
 export default function Categories() {
   const { data, loading, error, reload } = useAsync(async () => {
@@ -14,6 +16,7 @@ export default function Categories() {
     return { categories, stats: new Map(stats.map((s) => [s.category_id, s])) };
   }, []);
   const categories = data?.categories ?? [];
+  useSeo(data ? categoriesMeta(locale(), categories.map((c) => ({ slug: c.slug, name: categoryName(c) }))) : null);
 
   return (
     <div>

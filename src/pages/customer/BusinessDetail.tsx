@@ -22,7 +22,9 @@ import { Avatar, Segmented, Stars } from '@/components/ui/Brand';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, ErrorState, PageLoader } from '@/components/ui/Feedback';
-import { tx } from '@/i18n/locale';
+import { locale, tx } from '@/i18n/locale';
+import { businessMeta } from '@/lib/seo/meta';
+import { useSeo } from '@/lib/seo/useSeo';
 
 type Tab = 'services' | 'staff' | 'reviews' | 'info';
 
@@ -42,6 +44,15 @@ export default function BusinessDetail() {
     const reviews = await fetchBusinessReviews(detail.business.id);
     return { ...detail, reviews };
   }, [slug]);
+
+  // A missing business answers 200 (single-page app), so it is explicitly kept out of search results.
+  useSeo(
+    loading || error
+      ? null
+      : data
+        ? businessMeta(locale(), data.business, data.services, data.hours, categoryName(data.business.categories))
+        : { title: `${tx('İşletme bulunamadı', 'Business not found')} | Rango`, description: tx('Aradığınız işletme yayından kaldırılmış olabilir.', 'The business you are looking for may have been removed.'), path: `/i/${slug}`, noindex: true },
+  );
 
   if (loading) return <PageLoader />;
   // Raw backend details only in development; visitors see the Turkish message.

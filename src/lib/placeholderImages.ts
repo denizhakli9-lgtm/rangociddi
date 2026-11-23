@@ -46,8 +46,9 @@ export function placeholderCover(key: string, category: CategoryRef): string {
   const sector = (category?.slug && SECTORS[category.slug])
     || (category?.name && SECTORS[BY_TR_NAME[category.name]])
     || 'beauty';
-  const variant = hash(key || 'rango') % 2 === 0 ? '' : '-2';
-  return `${import.meta.env.BASE_URL}sector-${sector}${variant}.webp`;
+  const variant = hash(key || 'rango') % 2 === 0 ? 1 : 2;
+  // Underscores on purpose: .htaccess treats "-<8 characters>.<ext>" as a hashed build file and caches it for a year.
+  return `${import.meta.env.BASE_URL}sector_${sector}_${variant}.webp`;
 }
 
 export interface CoverImage {

@@ -6,6 +6,7 @@ import { PageLoader } from '@/components/ui/Feedback';
 import { ScrollToTop } from '@/components/ScrollToTop';
 import { CookieNotice } from '@/components/legal/CookieNotice';
 import { maintenanceActive } from '@/lib/maintenance';
+import { RouteSeo } from '@/lib/seo/useSeo';
 import Splash from '@/pages/Splash';
 import Login from '@/pages/auth/Login';
 import Home from '@/pages/customer/Home';
@@ -38,6 +39,7 @@ function MaintenanceRoutes() {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      <RouteSeo />
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/yasal" element={<Navigate to="/yasal/aydinlatma-metni" replace />} />
@@ -69,6 +71,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      <RouteSeo />
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/" element={<Splash />} />

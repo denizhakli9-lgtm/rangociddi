@@ -58,7 +58,7 @@ export default function Home() {
         <div className="relative max-w-2xl animate-fade-up">
           <p className="eyebrow mb-3">{profile?.full_name ? tx(`Merhaba, ${profile.full_name.split(' ')[0]}`, `Hello, ${profile.full_name.split(' ')[0]}`) : tx('Günün güzel bir anı olsun', 'Treat yourself today')}</p>
           <h1 className="max-w-lg break-words font-display text-[36px] leading-[1.2] tracking-tight text-white sm:text-6xl">{t.brand.tagline}</h1>
-          <p className="mt-3 max-w-md text-sm leading-relaxed text-mist sm:text-base">{tx('Aradığın hizmeti keşfet, sana en uygun zamanı seç.', 'Find the service you want and pick the time that suits you.')}</p>
+          <p className="mt-3 max-w-md text-sm leading-relaxed text-mist sm:text-base">{tx('İzmir’de kuaför, berber, güzellik merkezi ve spa randevunu online al: aradığın hizmeti keşfet, sana en uygun zamanı seç.', 'Book hair salons, barbers, beauty salons and spas in İzmir online: find the service you want and pick the time that suits you.')}</p>
           <form onSubmit={submit} role="search" className="mt-6 flex items-center gap-2 rounded-2xl border border-line bg-coal p-2 shadow-sm focus-within:border-gold-500">
             <Search className="ml-2 h-5 w-5 shrink-0 text-gold-500" />
             <input aria-label={tx('İşletme, hizmet veya semt ara', 'Search businesses, services or areas')} value={query} onChange={(e) => setQuery(e.target.value)} placeholder={tx('İşletme, hizmet veya semt ara', 'Search businesses, services or areas')} className="h-11 min-w-0 flex-1 bg-transparent text-sm text-white placeholder:text-mist-2 focus:outline-none" />

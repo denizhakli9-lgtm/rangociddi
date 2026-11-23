@@ -11,9 +11,27 @@ Options -Indexes
   RewriteCond %{HTTP:X-Forwarded-Proto} !https
   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-  # Tek sayfa uygulama (SPA): var olmayan yolları index.html'e yönlendir
   RewriteBase /
   RewriteRule ^index\.html$ - [L]
+
+  # SEO: derleme sırasında üretilen statik sayfalar (dist/_seo, bkz. seo/prerender.ts).
+  # Adres değişmez; arama motorları ve bağlantı önizlemeleri sayfanın kendi başlığını ve
+  # metnini görür, uygulama yüklenince sayfanın yerini alır. Dosya yoksa bu kurallar atlanır
+  # ve aşağıdaki SPA kuralı index.html'i verir.
+  RewriteCond %{DOCUMENT_ROOT}/_seo/index.html -f
+  RewriteRule ^$ /_seo/index.html [L]
+
+  # Kategori sayfaları: /ara?kategori=kuafor (başka filtre yokken)
+  RewriteCond %{QUERY_STRING} ^kategori=([a-z0-9-]+)$
+  RewriteCond %{DOCUMENT_ROOT}/_seo/kategori/%1.html -f
+  RewriteRule ^ara/?$ /_seo/kategori/%1.html [L]
+
+  # Diğer sayfalar: /kategoriler, /ara, /i/<işletme>, /yasal/<metin>
+  RewriteCond %{REQUEST_URI} ^/([a-z0-9]+(?:[/-][a-z0-9]+)*)/?$
+  RewriteCond %{DOCUMENT_ROOT}/_seo/%1.html -f
+  RewriteRule ^ /_seo/%1.html [L]
+
+  # Tek sayfa uygulama (SPA): var olmayan yolları index.html'e yönlendir
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteRule . /index.html [L]
@@ -36,9 +54,17 @@ Options -Indexes
     Header set Cache-Control "no-cache"
   </Files>
 
-  # index.html her zaman güncel gelsin, hash'li dosyalar uzun süre önbellekte kalsın
-  <FilesMatch "index\.html$">
+  # HTML sayfaları (index.html ve _seo altındaki statik sayfalar) her zaman güncel gelsin,
+  # hash'li dosyalar uzun süre önbellekte kalsın
+  <FilesMatch "\.html$">
     Header set Cache-Control "no-cache, no-store, must-revalidate"
+  </FilesMatch>
+  # Sektör görselleri, simgeler ve paylaşım görseli: adları sabit olduğu için bir gün
+  <FilesMatch "^(sector_[a-z0-9_]+\.webp|og-image\.jpg|apple-touch-icon\.png|icon-(192|512)\.png|favicon\.svg)$">
+    Header set Cache-Control "public, max-age=86400"
+  </FilesMatch>
+  <FilesMatch "^(robots\.txt|sitemap\.xml)$">
+    Header set Cache-Control "public, max-age=3600"
   </FilesMatch>
   <FilesMatch "-[A-Za-z0-9_-]{8}\.(js|css|woff2?|svg|png|jpe?g|webp)$">
     Header set Cache-Control "public, max-age=31536000, immutable"

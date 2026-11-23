@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath, URL } from 'node:url';
+import { seoPrerender } from './seo/prerender';
 
 /**
  * Writes the project's own Supabase host into dist/.htaccess so the
@@ -128,7 +129,7 @@ export default defineConfig(({ mode }) => {
       'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(supabase.url),
       'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(supabase.key),
     },
-    plugins: [react(), supabaseCsp(supabase.url)],
+    plugins: [react(), supabaseCsp(supabase.url), seoPrerender(supabase)],
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),

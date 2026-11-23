@@ -190,7 +190,37 @@ WHERE a.booking_code = 'VY…';
 
 ---
 
-## 7. Bilerek ertelenen konular
+## 7. SEO (arama motoru görünürlüğü) – 23 Kasım 2026
+
+**Kodda hazır olanlar** (yayınlandığında kendiliğinden devreye girer):
+- Her sayfanın kendi başlığı, açıklaması, canonical adresi ve paylaşım (WhatsApp/Instagram/X) etiketleri: `src/lib/seo/`.
+- Yapısal veri (schema.org): ana sayfada Organization + WebSite, işletme sayfalarında LocalBusiness (adres, konum, çalışma saatleri, hizmet ve fiyatlar; yorum varsa puan), kategori sayfalarında BreadcrumbList.
+- Derleme sırasında üretilen statik sayfalar (`dist/_seo/`), `sitemap.xml` ve `robots.txt`: `seo/prerender.ts`, `public/.htaccess`, `public/robots.txt`. Kategoriler ve işletmeler derleme anında Supabase'den okunur.
+- Dizine girmeyenler (noindex): giriş gerektiren sayfalar, arama/filtre sonuçları, örnek (demo) işletmeler ve henüz hiç hizmet eklememiş işletmeler.
+- Arama motoru botları siteyi her zaman Türkçe görür (`src/i18n/locale.ts`).
+- Web sitesinde `/` adresi açılış animasyonu ve tanıtım slaytları olmadan doğrudan Keşfet'i açar (mobil uygulamada değişiklik yok). Eski davranış için `src/pages/Splash.tsx` içindeki `isNative` koşullarını kaldırın; ancak bu, ana sayfanın Google'daki görünümünü ve hızını olumsuz etkiler.
+
+**Yayından sonra kontrol:**
+- `https://rango.com.tr/robots.txt` ve `https://rango.com.tr/sitemap.xml` düz metin/XML olarak açılmalı (uygulama sayfası değil).
+- `curl -s https://rango.com.tr/kategoriler | grep -o '<title>.*</title>'` → "Hizmet Kategorileri…" yazmalı. "Rango | İzmir Online Kuaför…" yazıyorsa `.htaccess` içindeki `_seo` kuralları çalışmıyordur (site yine çalışır, yalnızca statik sayfalar sunulmaz); bu durumda hPanel'de belge kökünü kontrol edin.
+- Bir işletme sayfasını [Rich Results Test](https://search.google.com/test/rich-results) ile deneyin.
+
+**Sizin yapmanız gerekenler:**
+1. **Google Search Console:** `rango.com.tr` için "Alan adı" mülkü ekleyin (Hostinger DNS'e TXT kaydı). Ardından Site Haritaları → `https://rango.com.tr/sitemap.xml` gönderin ve ana sayfa için "Dizine eklenmesini iste" deyin.
+2. **Bing Webmaster Tools** ve **Yandex Webmaster:** aynı sitemap'i ekleyin (Search Console'dan içe aktarılabilir).
+3. **Google İşletme Profili:** Rango için bir profil açın; işletmelere de kendi profillerindeki "Randevu" bağlantısına Rango sayfalarını (`https://rango.com.tr/i/…`) eklemelerini önerin. Yerel aramalarda en etkili adım budur.
+4. **Yeni işletme veya kategori eklendiğinde** siteyi yeniden yayınlayın (yeniden derleme): statik sayfası ve sitemap kaydı o zaman oluşur. Yayınlamasanız da sayfa çalışır ve Google onu bulabilir, yalnızca daha yavaş.
+5. **İçerik:** İşletmelerin açıklama, fotoğraf, hizmet ve çalışma saatlerini eksiksiz doldurmasını sağlayın; sayfanın Google'daki metni bunlardan oluşur. Hizmeti olmayan işletme sayfası dizine girmez.
+6. **Örnek (demo) işletmeler:** Gerçek işletme sayısı arttıkça yayından kaldırın; kategori sayfalarında gerçek işletmelerin öne çıkması sıralamayı güçlendirir.
+
+**Sonraki adım olarak önerilenler (bu çalışmada yapılmadı):**
+- İngilizce için ayrı adresler (`/en/...`) ve `hreflang`: şu an dil aynı adreste değiştiği için Google yalnızca Türkçe sürümü dizine ekler.
+- Semt bazlı açılış sayfaları ("Karşıyaka berber", "Bornova kuaför") ve bir blog/rehber bölümü.
+- Ziyaret ölçümü (ör. çerezsiz bir analiz aracı). Çerez politikası şu an "analitik kullanmıyoruz" dediği için eklenirse metin de güncellenmelidir.
+
+---
+
+## 8. Bilerek ertelenen konular
 
 - **E-posta bağlantıları için PKCE akışı:** Supabase e-posta şablonlarının değiştirilmesini gerektirir.
 - **Yorumlarda müşteri kimliğinin sütun düzeyinde gizlenmesi:** Yeni site yayına girdikten sonra ayrıca uygulanabilir.

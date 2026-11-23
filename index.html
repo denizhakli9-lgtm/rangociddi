@@ -3,19 +3,31 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#f8f7f3" />
     <script src="/theme.js"></script>
-    <meta name="description" content="Rango - Randevunun yeni yolu. İzmir'in seçkin kuaför, berber, spa ve güzellik merkezlerinden saniyeler içinde randevu alın." />
-    <title>Rango | Randevunun yeni yolu.</title>
+    <!--
+      Sayfaya özgü etiketler. Uygulama açılınca her sayfa bunları kendi başlığı, açıklaması,
+      canonical adresi ve yapısal verisiyle günceller (src/lib/seo). Derleme sırasında bu
+      iki işaret arası, statik sayfalar için sayfanın kendi etiketleriyle değiştirilir
+      (seo/prerender.ts). Burada bilerek canonical yoktur: bu dosya her adreste sunulur.
+    -->
+    <!--seo:start-->
+    <title>Rango | İzmir Online Kuaför, Berber ve Güzellik Randevusu</title>
+    <meta name="description" content="İzmir’de kuaför, berber, güzellik merkezi, spa ve cilt bakımı için online randevu. Hizmetleri ve fiyatları karşılaştırın, uygun saati seçin, yerinizi saniyeler içinde ayırtın." />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Rango" />
     <meta property="og:locale" content="tr_TR" />
-    <meta property="og:title" content="Rango | Randevunun yeni yolu." />
-    <meta property="og:description" content="İzmir'in seçkin kuaför, berber, spa ve güzellik merkezlerinden saniyeler içinde randevu alın." />
-    <meta name="twitter:title" content="Rango | Randevunun yeni yolu." />
-    <meta name="twitter:description" content="İzmir'in seçkin kuaför, berber, spa ve güzellik merkezlerinden saniyeler içinde randevu alın." />
-    <meta name="twitter:card" content="summary">
+    <meta property="og:title" content="Rango | İzmir Online Kuaför, Berber ve Güzellik Randevusu" />
+    <meta property="og:description" content="İzmir’de kuaför, berber, güzellik merkezi, spa ve cilt bakımı için online randevu. Hizmetleri ve fiyatları karşılaştırın, uygun saati seçin, yerinizi saniyeler içinde ayırtın." />
+    <meta property="og:image" content="https://rango.com.tr/og-image.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Rango | İzmir Online Kuaför, Berber ve Güzellik Randevusu" />
+    <meta name="twitter:description" content="İzmir’de kuaför, berber, güzellik merkezi, spa ve cilt bakımı için online randevu. Hizmetleri ve fiyatları karşılaştırın, uygun saati seçin, yerinizi saniyeler içinde ayırtın." />
+    <meta name="twitter:image" content="https://rango.com.tr/og-image.jpg" />
+    <!--seo:end-->
   </head>
   <body>
     <div id="root"></div>

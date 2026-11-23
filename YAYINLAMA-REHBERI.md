@@ -5,9 +5,84 @@ Aşağıdaki adımları **sırayla** uygulayın.
 
 ---
 
+## 0. Supabase API anahtarı geçişi (23 Kasım 2026) – ⚠️ sizin adımlarınız bekliyor
+
+**Neden:** Supabase eski (legacy) JWT tabanlı `anon` ve `service_role` anahtarlarını kaldırıyor. [Resmî geçiş rehberine](https://supabase.com/docs/guides/getting-started/migrating-to-new-api-keys) göre eski anahtarlar 2026 sonuna kadar çalışıyor. [GitHub duyurusunda](https://github.com/orgs/supabase/discussions/29260) tarih "Late 2026, TBC" olarak geçiyor, yani kesin gün açıklanmadı. Eski anahtarlar kapandığında bu anahtarı kullanan site, uygulama sürümü ve fonksiyonlar hiçbir isteği tamamlayamaz. Yerlerine yayınlanabilir (`sb_publishable_…`, tarayıcı ve uygulama için) ve gizli (`sb_secret_…`, yalnızca sunucu için) anahtarlar geçiyor.
+
+**Yapılanlar:**
+- **Site ve uygulama kodu:** `vite.config.ts` içindeki varsayılan anahtar, projenin `default` adlı yayınlanabilir anahtarı oldu. Pakete artık hiçbir yoldan eski JWT anahtarı giremez. Bir panelde ya da `.env`'de Rango projesinin eski anahtarı kalmışsa derleme yerine projenin `sb_publishable_` anahtarını kullanır ve uyarı yazar. Başka bir projenin eski anahtarı, gizli anahtarlar ve tanınmayan değerler derlemeyi durdurur. Böylece eski anahtarla yanlışlıkla bir site ya da mağaza sürümü çıkamaz. `.env` dosyasında `VITE_SUPABASE_PUBLISHABLE_KEY` (yeni ad) ya da `VITE_SUPABASE_ANON_KEY` (eski ad) kullanılabilir. İkisi birden varsa yenisi geçerlidir.
+- **Edge Function'lar** (`support-ai`, `paytr-token`, `paytr-status`, `paytr-refund`, `paytr-callback`): anahtarlarını Supabase'in kendiliğinden verdiği `SUPABASE_PUBLISHABLE_KEYS` / `SUPABASE_SECRET_KEYS` değişkenlerinden (`default` anahtarı) okuyor. Eski `SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` hiç kullanılmıyor, yedek olarak bile. Fonksiyonlar 22–23 Kasım 2026'da Supabase bağlantısı üzerinden yayınlandı: support-ai v8, paytr-token v6, paytr-status v4, paytr-refund v2, paytr-callback v4. Yayındaki kod depodakiyle birebir aynı. Eski anahtarlar açık olduğu sürece eski ve yeni sürümler birlikte sorunsuz çalışır.
+- **`verify_jwt` değişmedi:** `paytr-callback`'te kapalı, diğer dördünde açık. Supabase'in bu kontrolü kullanıcı oturum JWT'lerini doğrular: eski HS256'yı ve projenin zaten kullandığı ES256 imzalama anahtarlarını. API anahtarı ise bu kontrolde JWT yerine geçmez. Dört fonksiyonu yalnızca giriş yapmış kullanıcılar çağırır ve fonksiyonlar kullanıcıyı ayrıca `auth.getUser()` ile doğrular. Ayrıntı `supabase/config.toml` içinde.
+- Gizli (`sb_secret_…`) anahtar kodda, depoda ya da bu rehberde yazılı değildir; Supabase onu fonksiyonlara kendisi verir. Veritabanında eski anahtarı kullanan bir cron işi, `pg_net` çağrısı ya da webhook yok (kontrol edildi).
+
+**Test edildi (23 Kasım 2026, yeni anahtarlarla, canlı Supabase projesine karşı):** Yeni derlemeyle şunlar denendi:
+- kayıt, çıkış ve yeniden giriş, profil kaydı, keşfet/arama,
+- destek konuşması (`support-ai` çağrıldı, konuşma temsilciye aktarıldı),
+- KVKK hesap silme. Deneme hesabı bu yolla silindi, deneme destek konuşması da temizlendi.
+
+Fonksiyonlar gizli anahtarla veritabanına ulaştı: `paytr-status`, `paytr-token`, `paytr-refund` ve `support-ai`. `paytr-callback` de anahtarını buldu. Supabase ağ geçidi günlüklerinde fonksiyonların yalnızca yeni anahtarları kullandığı görüldü.
+
+**Henüz yapılmadı:** gerçek bir PayTR test ödemesi → bildirim → iptal → admin iadesi zinciri. Bu zincir sizin deneme işletmenizi ve admin hesabınızı gerektiriyor; aşağıdaki 3. adımda.
+
+**Günlüklere göre eski anahtarı hâlâ kullananlar (23 Kasım 2026):**
+1. canlı site `rango.com.tr`: 22 Kasım'daki son yayın eski anahtarla derlenmiş. Bu geçiş `main`'e alınınca Hostinger siteyi yeni anahtarla yeniden yayınlar.
+2. **cihazlara yüklenmiş Android uygulaması.** Türkiye'deki birkaç telefonda (ikisinde giriş yapılmış hesaplar var) ve Google Play'in yayın öncesi test cihazlarına benzeyen ABD cihazlarında kullanılıyor. Bu sürüm eski anahtarla derlenmiş; eski anahtarlar kapatılınca **tamamen çalışmaz hale gelir**.
+
+### Sizin yapmanız gerekenler (sırayla)
+
+**1. Site yayını: kendiliğinden.** `rango.com.tr` 22 Kasım 2026'dan beri Hostinger'dan sunuluyor (`platform: hostinger`). Hostinger, GitHub'da `main`'e gelen her değişiklikten sonra siteyi kendiliğinden derleyip yayınlıyor. Bu geçiş `main`'e alındığında site de yeni anahtarla yayınlandı. Bolt'tan ya da Netlify'dan ayrıca yayınlamanız gerekmez.
+
+**2. Panellerde kalan eski anahtarı temizleyin (önerilir, zorunlu değil).** Derleme, bir panelde ya da `.env`'de Rango projesinin eski anahtarını görürse durmaz: yerine projenin `sb_publishable_` anahtarını kullanır ve derleme günlüğüne `[rango] UYARI: … eski (legacy) anon anahtarı var` yazar. Yine de karışıklık olmasın diye eski değeri değiştirin:
+- **Hostinger:** hPanel → Web Siteleri → rango.com.tr → Node.js uygulaması → ortam değişkenleri. `VITE_SUPABASE_ANON_KEY` ya da `SUPABASE_ANON_KEY` değeri `eyJ…` ile başlıyorsa yeni anahtarla değiştirin. Hiç tanımlı değilse bir şey yapmanıza gerek yok.
+- **Bolt** (`.env`) ve mobil uygulamayı derlediğiniz bilgisayardaki `.env`: aynı değişikliği yapın. Adres satırı aynı kalır; tırnak ve boşluk koymayın:
+  ```
+  VITE_SUPABASE_URL=https://ocgqkdhrmjesrbksnrlh.supabase.co
+  VITE_SUPABASE_ANON_KEY=sb_publishable_4XWej0uOwOHjYXDwXYB7AQ_e2b8xLXr
+  ```
+- Anahtar Supabase panelinde **Settings → API Keys → "Publishable and secret API keys"** sekmesindeki **Publishable key** değeridir ve gizli değildir; zaten sitenin koduna gömülür. **Secret key'i (`sb_secret_…`) hiçbir yere kopyalamayın.**
+- Bolt'tan Edge Function yayınlamadan önce Bolt'taki kodun son `main` olduğundan emin olun. Eski bir kopya yayınlanırsa fonksiyonlar eski anahtar değişkenlerine döner ve eski anahtarlar kapanınca çalışmaz.
+
+**3. Canlı siteyi doğrulayın.**
+- Paketteki anahtarı kontrol edin. Şu komut site dosyasının adını verir:
+  ```bash
+  curl -s https://rango.com.tr/ | grep -o 'assets/index-[A-Za-z0-9_-]*\.js'
+  ```
+  Çıkan dosya adını aşağıdaki `<dosya>` yerine yazın. İlk komut en az 1, ikincisi 0 vermeli:
+  ```bash
+  curl -s https://rango.com.tr/assets/<dosya> | grep -c sb_publishable_
+  ```
+  ```bash
+  curl -s https://rango.com.tr/assets/<dosya> | grep -c eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
+  ```
+- Gizli pencerede şu akışları deneyin (site şu an "PayTR test" modunda olduğu için gerçek tahsilat olmaz):
+  1. Deneme müşteri hesabıyla giriş yapın.
+  2. **Kendi deneme işletmenizde** randevu alın (gerçek bir işletmeye bildirim gitmesin).
+  3. Satış onayı kutusunu işaretleyip PayTR test kartıyla ödeyin ("Ödeme Yap" → 3D sayfasında "Gönder"). Randevu birkaç saniyede onaylanmalı; bu adım PayTR bildirimini (`paytr-callback`) ve durum sorgusunu (`paytr-status`) dener.
+  4. Randevuyu iptal edin. Otomatik iade talebi açılmalı.
+  5. Admin hesabıyla **Yönetim → İadeler**'de iadeyi onaylayın. PayTR iadesi gönderilmeli (`paytr-refund`).
+  6. **Destek**'te bir mesaj gönderin (`support-ai`).
+  7. Bir kez çıkış yapıp tekrar giriş yapın.
+- İsterseniz bu adımlardan sonra Claude'a (Supabase bağlantısıyla) günlükleri kontrol ettirin. Hangi isteğin hangi anahtarla geldiği Supabase ağ geçidi günlüklerinde görünür.
+
+**4. Android uygulamasının yeni sürümünü yayınlayın** (ayrıntı: `MOBIL-REHBERI.md`, "Supabase anahtarı ve mağaza sürümleri"). Son `main` ile `npm run android` → imzalı yeni `.aab` (sürüm kodunu artırın) → Google Play'de mevcut sürümün bulunduğu kanal(lar)a yükleyin. Eski sürümlerin trafiği bitene kadar 6. adımı yapmayın. Play güncellemeleri birkaç gün sürebilir; Supabase'in son tarihi 2026 sonu olduğu için bunu bekletmeyin.
+
+**5. Eski anahtarı kullanan kalmadığını doğrulayın.** Claude'dan Supabase bağlantısıyla son 24 saatin ağ geçidi günlüklerini anahtar türüne göre saydırmasını isteyin. Eski anahtar istekleri günlükte `request.sb.jwt.apikey.payload.role = anon / service_role` olarak, yeni anahtarlar `request.sb.apikey.apikey.prefix = sb_publishable_… / sb_secret_…` olarak görünür. Kullanılan sorgu:
+```sql
+select multiIf(log_attributes['request.sb.jwt.apikey.payload.role'] in ('anon', 'service_role'), 'ESKİ', startsWith(log_attributes['request.sb.apikey.apikey.prefix'], 'sb_'), 'yeni', 'anahtarsız') as anahtar,
+       log_attributes['request.headers.referer'] as kaynak, count(*) as istek, max(timestamp) as son
+from logs where source = 'edge_logs' group by anahtar, kaynak order by istek desc
+```
+"ESKİ" satırlarında `https://rango.com.tr/`, `https://www.rango.com.tr/` (site) ve `https://localhost/` (Android uygulaması) kalmamalı. `127.0.0.1` / `localhost:4173` gibi kaynaklar geliştirme ve test çalıştırmalarıdır. Kaynağı boş "ESKİ" satırlar `curl` / `node` gibi betiklerden gelir; 23 Kasım'da birkaç tane görüldü. Bunları tanımıyorsanız, eski anahtarı içeren bir betik ya da otomasyon olup olmadığını kontrol edin.
+
+**6. Eski anahtarları kapatın.** Supabase → **Settings → API Keys → "Legacy API Keys"** sekmesindeki **Disable JWT-based API keys** düğmesine basın. Sonra 3. adımdaki akışları kısaca tekrar deneyin. Bir şey bozulursa aynı sayfadan eski anahtarları yeniden açabilirsiniz; işlem geri alınabilir.
+
+> İsteğe bağlı, zorunlu değil: Kullanıcı oturumları zaten ES256 imzalama anahtarıyla imzalanıyor. Eski anahtarlar kapatıldıktan sonra **Settings → JWT Keys** sayfasında eski (legacy) JWT secret'ı da iptal edebilirsiniz. Supabase bunu yalnızca eski anahtarlar kapalıyken izin verir.
+
+---
+
 ## 1. Hostinger'a yükleme (site kodu)
 
-> **Not (20 Kasım 2026):** `rango.com.tr` şu anda **Netlify** üzerinden, Bolt'un yayınlama (Publish/Deploy) özelliğiyle sunuluyor. Sunucu yanıtında `server: Netlify` görünüyor. Bu yüzden GitHub'da `main`'e birleştirmek siteyi kendiliğinden güncellemez. Önce Bolt'taki projeyi GitHub'daki son `main` ile güncelleyin, sonra Bolt'tan yayınlayın. Aşağıdaki Hostinger adımları ancak site Hostinger'a taşınırsa geçerlidir.
+> **Not (23 Kasım 2026):** `rango.com.tr` artık **Hostinger**'dan sunuluyor (sunucu yanıtında `platform: hostinger`). GitHub'da `main`'e gelen her değişiklik birkaç saniye içinde kendiliğinden derlenip yayınlanıyor. 22 Kasım'da birleştirilen bir değişiklik yaklaşık 20 saniye sonra canlıdaydı. 20 Kasım'a kadar site Netlify'dan, Bolt'un yayınlama düğmesiyle sunuluyordu.
 
 1. hPanel → **Web Siteleri → rango.com.tr → Node.js** bölümüne girin.
 2. Bu zip dosyasını yükleyin ve **Ayarlar ve yeniden dağıtma** ile yeniden dağıtın.
@@ -20,8 +95,8 @@ Aşağıdaki adımları **sırayla** uygulayın.
 
    > **Git ile dağıtım notu:** Kök dizin `.bolt` olarak kalırsa `.bolt/package.json` köprüsü devreye girer: Hostinger derlemeyi `.bolt` içinde başlattığında asıl projeyi depo kökünde kurup derler ve çıktıyı `.bolt/dist` klasörüne koyar. Kalıcı çözüm, uygulamayı kök dizin boş (ya da `/`) olacak şekilde GitHub'dan yeniden içe aktarmaktır.
    >
-   > - Supabase ayarları şu sırayla okunur: `.env` dosyası ya da `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` ortam değişkenleri → Hostinger'ın "Veritabanı bağla → Supabase" sihirbazının yazdığı `SUPABASE_URL` + `SUPABASE_ANON_KEY` → `vite.config.ts` içindeki varsayılan (herkese açık) değerler. Adres ve anahtar her zaman birlikte verilmelidir; gizli (`service_role` / `sb_secret_`) anahtar verilirse derleme durur.
-   > - Varsayılan anahtar Supabase'in eski (legacy) anon anahtarıdır ve Supabase'e göre 2026 sonunda çalışmayı bırakır. Yeni `sb_publishable_` anahtarına geçerken Bolt'taki `.env` dosyasını ve `vite.config.ts` içindeki varsayılanı birlikte güncelleyin.
+   > - Supabase ayarları şu sırayla okunur: `.env` dosyası ya da `VITE_SUPABASE_URL` + `VITE_SUPABASE_PUBLISHABLE_KEY` (eski adıyla `VITE_SUPABASE_ANON_KEY`) ortam değişkenleri → Hostinger'ın "Veritabanı bağla → Supabase" sihirbazının yazdığı `SUPABASE_URL` + `SUPABASE_PUBLISHABLE_KEY` (ya da `SUPABASE_ANON_KEY`) → `vite.config.ts` içindeki varsayılan (herkese açık) değerler. Adres ve anahtar her zaman birlikte verilmelidir.
+   > - Anahtar projenin `sb_publishable_` ile başlayan yayınlanabilir anahtarı olmalıdır. Rango projesinin eski (legacy) anon anahtarı verilmişse derleme yerine `vite.config.ts` içindeki yayınlanabilir anahtarı kullanır ve uyarı yazar. Başka bir projenin eski anahtarı, gizli (`sb_secret_` / `service_role`) anahtar ya da tanınmayan bir değer verilirse derleme durur ve hangi değişkenin düzeltileceğini yazar. Hostinger sihirbazı eski anon anahtarını yazmışsa ortam değişkenini `sb_publishable_` anahtarıyla değiştirin (bkz. 0. bölüm).
    > - Köprü kullanılırken Hostinger'ın güvenlik taraması yalnızca bağımlılığı olmayan `.bolt` klasörünü görür. Gerçek bağımlılıkların `npm audit` özeti derleme günlüğünün sonunda yer alır.
 
 4. Dağıtımdan sonra kontrol edin:
@@ -67,9 +142,11 @@ Bu güncelleme şunları yaptı:
 
 ## 3. Destek yapay zekâ fonksiyonu (Supabase Edge Function) – ✅ YAPILDI (15 Kasım 2026)
 
-Dosya: `supabase/functions/support-ai/index.ts`. Supabase bağlantısı üzerinden **v4** olarak yayınlandı (giriş kontrolü `verify_jwt` açık).
+Dosya: `supabase/functions/support-ai/index.ts`. Supabase bağlantısı üzerinden yayınlandı (giriş kontrolü `verify_jwt` açık). Son sürüm **v8**: 22 Kasım 2026'da yeni API anahtarlarına geçirildi (bkz. 0. bölüm).
 Yayındaki kodun bu dosyayla birebir aynı olduğu doğrulandı ve fonksiyonun çalıştığı test edildi. Tekrar yayınlamanıza gerek yok.
-İleride kodu değiştirirseniz `supabase functions deploy support-ai` ile (veya Bolt üzerinden) yeniden yayınlayın.
+İleride kodu değiştirirseniz `supabase functions deploy support-ai` ile (veya Bolt üzerinden, Bolt'taki kod son `main` ise) yeniden yayınlayın.
+
+> **Açık sorun (23 Kasım 2026):** `OPENAI_API_KEY` tanımlı, ancak OpenAI her istekte `404 model_not_found` döndürüyor. Kullanılan model (`OPENAI_SUPPORT_MODEL` gizli değişkeni, tanımlı değilse `gpt-4o-mini`) bu OpenAI hesabında açık değil. Bu yüzden asistan şu an hiçbir mesajı yanıtlamıyor ve her konuşma temsilciye aktarılıyor. Sorun API anahtarı geçişinden bağımsız. Düzeltmek için OpenAI hesabınızda açık olan bir modeli `OPENAI_SUPPORT_MODEL` olarak tanımlayın. Asistanı kullanmayacaksanız (aşağıdaki KVKK önerisi) `OPENAI_API_KEY`'i silin.
 
 - `OPENAI_API_KEY` tanımlı değilse tüm destek mesajları doğrudan temsilciye gider; yurt dışına veri aktarımı olmaz.
 - **Öneri:** OpenAI ile KVKK standart sözleşmesi imzalanıp Kurum'a bildirilene kadar `OPENAI_API_KEY`'i tanımlamayın.
@@ -112,7 +189,7 @@ Kod tarafındaki uyum ekranları hazır: aydınlatma metni, kullanım koşullar�
 Kaporalar **PayTR iFrame API** ile alınır. Müşteri kart bilgisini PayTR'nin güvenli ödeme sayfasına girer; kart bilgisi Rango'ya hiç gelmez. Ödeme yalnızca PayTR'nin sunucudan sunucuya gönderdiği bildirimle (ya da PayTR durum sorgusuyla) onaylanır.
 
 **Kurulu olanlar (Supabase'e yüklendi):**
-- Edge Function'lar: `paytr-token` (ödeme sayfası), `paytr-callback` (PayTR Bildirim URL), `paytr-status` (PayTR durum sorgusu ile yedek kontrol), `paytr-refund` (admin iadesi PayTR'ye gider).
+- Edge Function'lar: `paytr-token` (ödeme sayfası), `paytr-callback` (PayTR Bildirim URL), `paytr-status` (PayTR durum sorgusu ile yedek kontrol), `paytr-refund` (admin iadesi PayTR'ye gider). 22–23 Kasım 2026'da yeni Supabase API anahtarlarına geçirildiler (bkz. 0. bölüm).
 - Gizli anahtarlar Supabase → Edge Functions → Secrets altında: `PAYTR_MERCHANT_ID`, `PAYTR_MERCHANT_KEY`, `PAYTR_MERCHANT_SALT`. Kodda veya GitHub'da **yoktur**.
 - Veritabanı: `supabase/migrations/20261120095952_paytr_iframe_payments.sql`, `20261120104422_paytr_refunds_reconcile_admin_mode.sql`, `20261120110336_paytr_testers.sql`, `20261120111919_paytr_review_fixes.sql`, `20261120112728_paytr_security_fixes.sql`, `20261120113849_paytr_protocol_fixes.sql`.
 - İzleme: `rango-paytr-notification-health` (pg_cron, 10 dakikada bir). Bir ödeme yalnızca durum sorgusuyla onaylanıp PayTR'nin bildirimi 15 dakika içinde gelmezse adminlere "PayTR bildirimi ulaşmıyor" bildirimi gider (Bildirim URL'yi kontrol edin).

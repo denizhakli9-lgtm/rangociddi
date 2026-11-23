@@ -30,7 +30,8 @@ npm install
 Bu komut Capacitor paketlerini yükler ve `package-lock.json` dosyasını günceller.
 **Güncellenen `package-lock.json` dosyasını GitHub'a da gönder.** Yoksa Hostinger'daki site derlemesi hata verebilir.
 
-`.env` dosyası sitedekiyle aynı olmalı (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`). `.env` yoksa `vite.config.ts` içindeki varsayılan değerler kullanılır.
+`.env` dosyası sitedekiyle aynı olmalı: `VITE_SUPABASE_URL` ve projenin `sb_publishable_` ile başlayan anahtarı. Anahtar `VITE_SUPABASE_PUBLISHABLE_KEY` ya da eski adıyla `VITE_SUPABASE_ANON_KEY` değişkenine yazılabilir. `.env` yoksa `vite.config.ts` içindeki varsayılan değerler kullanılır (o da `sb_publishable_` anahtarı).
+Uygulamaya hiçbir yoldan eski (legacy) JWT anahtarı giremez. `.env`'de Rango projesinin eski anahtarı kalmışsa derleme yerine yayınlanabilir anahtarı kullanır ve `[rango] UYARI` yazar; yine de `.env`'yi güncelle. Başka bir projenin eski anahtarı ya da gizli bir anahtar varsa `npm run android` / `npm run ios` hata verip durur.
 İstersen `VITE_SITE_URL=https://rango.com.tr` de ekleyebilirsin. Eklemezsen bu adres zaten varsayılan.
 
 Sonra telefon projelerini oluştur:
@@ -77,6 +78,24 @@ npm run ios         # derler, Xcode'u açar (Mac)
 - iOS: Xcode'da **Product → Archive → Distribute App**.
 
 Kodda değişiklik yaptıktan sonra yeniden `npm run android` veya `npm run ios` çalıştırman yeterli.
+
+---
+
+## 3a. Supabase anahtarı ve mağaza sürümleri (önemli)
+
+Supabase anahtarı derleme anında uygulamanın içine gömülür. Telefondaki bir sürümün anahtarı sonradan değiştirilemez; ancak yeni sürüm yayınlanarak değişir.
+
+- **Bu geçişten önceki kodla derlenen her sürüm** (GitHub'daki Kasım 2026 öncesi `main`, ya da `.env`'inde `eyJ…` ile başlayan anahtar olan bir bilgisayar) Supabase'in eski (legacy) anon anahtarını içerir. Supabase eski anahtarları kapattığında (en geç 2026 sonu ya da `YAYINLAMA-REHBERI.md` 0. bölümdeki 6. adımda sen kapattığında) bu sürümler **hiçbir şey yükleyemez**: giriş, randevu ve ödeme çalışmaz.
+- **23 Kasım 2026 durumu:** Supabase günlüklerinde eski anahtarla çalışan bir Android sürümü görülüyor. Türkiye'de birkaç telefonda kullanılıyor ve bazılarında hesaplarla giriş yapılmış. ABD'deki cihazlar Google Play'in yayın öncesi testlerine benziyor, yani büyük olasılıkla Play Console'a yüklenmiş eski bir sürüm var.
+- **Yapılacak:** GitHub'daki son `main` ile yeni bir sürüm derle. `android/app/build.gradle` içinde `versionCode`'u artır. Ardından Play Console'da mevcut sürümün bulunduğu kanal(lar)a yükle. iOS'ta bir sürüm yayınladıysan onu da yenile.
+- Yeni sürümün yeni anahtarı içerdiğini derlemeden sonra kontrol et. İlk komut en az 1, ikincisi 0 vermeli:
+  ```bash
+  grep -c sb_publishable_ dist/assets/index-*.js
+  ```
+  ```bash
+  grep -c eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9 dist/assets/index-*.js
+  ```
+- Eski anahtarları ancak eski sürümlerin trafiği bittikten sonra kapat. Uygulama istekleri Supabase günlüklerinde `https://localhost/` kaynağıyla görünür; `YAYINLAMA-REHBERI.md` 0. bölüm, 5. adım.
 
 ---
 

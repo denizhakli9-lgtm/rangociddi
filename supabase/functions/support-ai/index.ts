@@ -101,13 +101,31 @@ const envLimit = (name: string, fallback: number) => {
   return Number.isFinite(n) && n > 0 ? n : fallback;
 };
 
+/**
+ * The project's `default` publishable or secret API key. Supabase gives every Edge Function its API keys as JSON
+ * objects keyed by key name (SUPABASE_PUBLISHABLE_KEYS, SUPABASE_SECRET_KEYS). The legacy JWT-based SUPABASE_ANON_KEY
+ * and SUPABASE_SERVICE_ROLE_KEY are deliberately not used, not even as a fallback: they stop working once the legacy
+ * API keys are disabled, and a fallback would hide a missing key until then.
+ */
+function supabaseKey(variable: 'SUPABASE_PUBLISHABLE_KEYS' | 'SUPABASE_SECRET_KEYS'): string {
+  const prefix = variable === 'SUPABASE_SECRET_KEYS' ? 'sb_secret_' : 'sb_publishable_';
+  let key: unknown;
+  try {
+    key = JSON.parse(Deno.env.get(variable) ?? 'null')?.default;
+  } catch {
+    // Reported below.
+  }
+  if (typeof key !== 'string' || !key.startsWith(prefix)) throw new Error(`${variable} has no "default" ${prefix} key`);
+  return key;
+}
+
 Deno.serve(async (req: Request) => {
   const reply = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   if (req.method === 'OPTIONS') return new Response(null, { status: 200, headers: corsHeaders });
   if (req.method !== 'POST') return reply({ error: 'Invalid request' }, 405);
   try {
     const authorization = req.headers.get('Authorization') ?? '';
-    const client = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authorization } } });
+    const client = createClient(Deno.env.get('SUPABASE_URL')!, supabaseKey('SUPABASE_PUBLISHABLE_KEYS'), { global: { headers: { Authorization: authorization } } });
     const { data: auth, error: authError } = await client.auth.getUser();
     if (authError || !auth.user || auth.user.is_anonymous) return reply({ error: 'Not authorized' }, 401);
     const body = await req.json().catch(() => null);
@@ -118,7 +136,7 @@ Deno.serve(async (req: Request) => {
     ]);
     if (threadError || !thread || profile.error || !profile.data || profile.data.is_suspended) return reply({ error: 'Not authorized' }, 403);
     if (thread.status !== 'ai') return reply({ handoff: true });
-    const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const admin = createClient(Deno.env.get('SUPABASE_URL')!, supabaseKey('SUPABASE_SECRET_KEYS'));
     const { data: messages, error } = await admin.from('support_messages').select('id,sender,body,created_at').eq('thread_id', thread.id).order('created_at', { ascending: false }).order('id', { ascending: false }).limit(HISTORY_LIMIT);
     if (error || !messages?.length) return reply({ error: 'Invalid request' }, 400);
     const latest = messages[0];

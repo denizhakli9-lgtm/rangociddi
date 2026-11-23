@@ -1,3 +1,11 @@
+# verify_jwt: before a function runs, the platform checks the Authorization header. The check accepts user session
+# JWTs (legacy HS256 and the project's asymmetric JWT signing keys, e.g. ES256), never an API key. support-ai,
+# paytr-token, paytr-status and paytr-refund are only called by signed-in users through supabase.functions.invoke,
+# which sends the user's JWT in Authorization and the sb_publishable_ key in apikey, so the check stays on (see
+# https://supabase.com/docs/guides/functions/auth-headers). Each of them also verifies the user with auth.getUser().
+# The functions read their own keys from SUPABASE_PUBLISHABLE_KEYS / SUPABASE_SECRET_KEYS, not the legacy
+# SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY.
+
 [functions.support-ai]
 verify_jwt = true
 

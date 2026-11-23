@@ -43,7 +43,7 @@ function hash(text: string): number {
 type CategoryRef = { slug?: string | null; name?: string | null } | null | undefined;
 
 /** Ready-made cover variants shipped in /public per sector (`sector-<name><suffix>.webp`). */
-const VARIANTS = ['', '-2', '-3', '-4'] as const;
+const VARIANTS = ['', '-2', '-3', '-4', '-5', '-6', '-7', '-8'] as const;
 /** Only the first ones are used as the automatic cover, so existing listings keep their image. */
 const AUTO_VARIANTS = 2;
 /** `cover_url` value for a ready-made cover the owner picked, e.g. `sector:hair-2`. */

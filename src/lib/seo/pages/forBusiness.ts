@@ -29,12 +29,14 @@ export function forBusinessPage(lang: SeoLang): PageModel {
     { kind: 'breadcrumb', items: crumbs },
     {
       kind: 'hero',
-      eyebrow: pick(lang, 'İşletmeler için', 'For businesses'),
-      title: pick(lang, 'Kuaför, berber ve güzellik işletmeleri için online randevu sistemi', 'Online booking for hair, barber and beauty businesses'),
+      // The heading is kept short on purpose: a long one wraps differently once the display font
+      // has loaded, which makes the page jump on phones.
+      eyebrow: pick(lang, 'Kuaför, berber ve güzellik işletmeleri için', 'For hair, barber and beauty businesses'),
+      title: pick(lang, 'Salonunuz için online randevu programı', 'Online booking for your salon'),
       lead: pick(
         lang,
-        'İşletmenizi Rango’ya ekleyin; müşterileriniz hizmetinizi, uzmanını ve saatini kendisi seçsin. Takviminizi, hizmetlerinizi, ekibinizi ve kazancınızı tek panelden yönetin. Rango şu anda İzmir’deki işletmelere açıktır.',
-        'Add your business to Rango and let customers pick the service, the specialist and the time themselves. Manage your calendar, services, team and earnings from one panel. Rango is currently open to businesses in İzmir.',
+        'Rango, salonunuz için bir online randevu programıdır: müşterileriniz hizmeti, uzmanı ve saati kendisi seçer; siz takviminizi, hizmetlerinizi, ekibinizi ve kazancınızı tek panelden yönetirsiniz. Rango şu anda İzmir’deki işletmelere açıktır.',
+        'Rango is an online booking system for your salon: customers pick the service, the specialist and the time themselves, and you manage your calendar, services, team and earnings from one panel. Rango is currently open to businesses in İzmir.',
       ),
       actions: [signup, whatsapp],
     },
@@ -75,7 +77,7 @@ export function forBusinessPage(lang: SeoLang): PageModel {
           ),
         },
         {
-          title: pick(lang, 'Müşteri defteri', 'Customer book'),
+          title: pick(lang, 'Müşteri takibi', 'Customer records'),
           text: pick(
             lang,
             'Sizden randevu almış müşterilerinizi, ziyaret sayılarını, harcamalarını ve randevu geçmişlerini panelinizde görürsünüz.',
@@ -220,10 +222,10 @@ export function forBusinessPage(lang: SeoLang): PageModel {
 
   return {
     meta: {
-      title: pick(lang, `Kuaför ve Berberler için Online Randevu Sistemi | ${SITE_NAME}`, `Online Booking System for Salons & Barbers | ${SITE_NAME}`),
+      title: pick(lang, `Kuaför ve Berber Randevu Programı: Online Randevu Sistemi | ${SITE_NAME}`, `Online Booking System for Salons & Barbers | ${SITE_NAME}`),
       description: pick(
         lang,
-        'Kuaför, berber, güzellik merkezi ve spa işletmeleri için online randevu sistemi: canlı takvim, kapora, hizmet ve ekip yönetimi, müşteri defteri. İşletmenizi Rango’ya ekleyin.',
+        'Kuaför, berber, güzellik merkezi ve spa işletmeleri için online randevu programı: canlı takvim, kapora, hizmet ve ekip yönetimi, müşteri takibi. İşletmenizi Rango’ya ekleyin.',
         'Online booking for hair salons, barbers, beauty salons and spas: live calendar, deposits, service and team management, customer book. Add your business to Rango.',
       ),
       path: FOR_BUSINESS_PATH,

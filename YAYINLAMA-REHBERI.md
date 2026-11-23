@@ -277,31 +277,83 @@ WHERE a.booking_code = 'VY…';
 
 ## 7. SEO (arama motoru görünürlüğü) – 23 Kasım 2026
 
-**Kodda hazır olanlar** (yayınlandığında kendiliğinden devreye girer):
-- Her sayfanın kendi başlığı, açıklaması, canonical adresi ve paylaşım (WhatsApp/Instagram/X) etiketleri: `src/lib/seo/`.
-- Yapısal veri (schema.org): ana sayfada Organization + WebSite, işletme sayfalarında LocalBusiness (adres, konum, çalışma saatleri, hizmet ve fiyatlar; yorum varsa puan), kategori sayfalarında BreadcrumbList.
-- Derleme sırasında üretilen statik sayfalar (`dist/_seo/`), `sitemap.xml` ve `robots.txt`: `seo/prerender.ts`, `public/.htaccess`, `public/robots.txt`. Kategoriler ve işletmeler derleme anında Supabase'den okunur.
-- Dizine girmeyenler (noindex): giriş gerektiren sayfalar, arama/filtre sonuçları, örnek (demo) işletmeler ve henüz hiç hizmet eklememiş işletmeler.
-- Arama motoru botları siteyi her zaman Türkçe görür (`src/i18n/locale.ts`).
-- Web sitesinde `/` adresi açılış animasyonu ve tanıtım slaytları olmadan doğrudan Keşfet'i açar (mobil uygulamada değişiklik yok). Eski davranış için `src/pages/Splash.tsx` içindeki `isNative` koşullarını kaldırın; ancak bu, ana sayfanın Google'daki görünümünü ve hızını olumsuz etkiler.
+Bu bölümdeki her şey kodda hazırdır ve site yayınlandığında (GitHub'da `main`'e birleştirilip yeniden derlendiğinde) kendiliğinden devreye girer.
 
-**Yayından sonra kontrol:**
-- `https://rango.com.tr/robots.txt` ve `https://rango.com.tr/sitemap.xml` düz metin/XML olarak açılmalı (uygulama sayfası değil).
-- `curl -s https://rango.com.tr/kategoriler | grep -o '<title>.*</title>'` → "Hizmet Kategorileri…" yazmalı. "Rango | İzmir Online Kuaför…" yazıyorsa `.htaccess` içindeki `_seo` kuralları çalışmıyordur (site yine çalışır, yalnızca statik sayfalar sunulmaz); bu durumda hPanel'de belge kökünü kontrol edin.
+### 7.1 Hangi sayfa dizine girer?
+
+| Adres | Arama motorunda | Not |
+| --- | --- | --- |
+| `/` | Evet | Ana sayfa. Web'de yönlendirme yoktur; `/kesfet` aynı sayfadır ve canonical adresi `/` olur. Mobil uygulama açılış ekranıyla başlamaya devam eder. |
+| `/izmir` | En az 1 işletme varsa | Şehir sayfası. |
+| `/izmir/<kategori>` (ör. `/izmir/berber`) | En az 1 işletme varsa | Kategori sayfası. Ana sayfadaki ve `/kategoriler`deki kategori kutuları buraya gider. |
+| `/izmir/<semt>` ve `/izmir/<semt>/<kategori>` | En az 2 işletme varsa | Tek işletmeli bir liste, o işletmenin kendi sayfasının kopyası olur; ikinci işletme gelince kendiliğinden açılır. |
+| `/i/<işletme>` | Sahibi ve en az bir hizmeti varsa | Örnek (sahipsiz) ve deneme işletmeleri hariç. |
+| `/kategoriler`, `/sss`, `/isletmeler-icin`, `/yasal/...` | Evet | |
+| `/ara` (her türlü arama, filtre, sıralama), giriş gerektiren sayfalar | Hayır | `noindex`. |
+
+- "İşletme" burada **gerçek ve randevu alınabilir** işletme demektir: sahibi olan, en az bir aktif hizmeti olan ve deneme listesinde olmayan. Eşikler `src/lib/seo/listing.ts` → `INDEX_THRESHOLDS` içindedir.
+- Eşiğin altındaki sayfalar çalışır ama `noindex` taşır ve sitemap'e girmez. Bir şehir/semt/kategori sayfasında hiç gerçek işletme yoksa, sayfa boş kalmasın diye örnek işletmeler "Örnek işletme" etiketiyle gösterilir.
+- **Deneme işletmeleri:** `src/lib/seo/config.ts` → `TEST_BUSINESS_SLUGS`. Şu an yalnızca `black-blade` var (PayTR testinde kullanılan, tohum verisinden gelen işletme). Bu listedeki işletmeler uygulamada görünmeye devam eder ama Google'a gerçek işletme olarak sunulmaz. Yeni bir deneme işletmesi açarsanız adresindeki `/i/<...>` kısmını bu listeye ekleyin; işletmeyi kaldırırsanız listeden silin.
+
+### 7.2 Metinler nerede, nasıl değişir?
+
+- Şehir/semt/kategori sayfalarının tamamı (başlık, açıklama, liste, fiyat tablosu, sık sorulan sorular, bağlantılar) işletme verisinden üretilir: `src/lib/seo/pages/landing.ts`. Elle yazılmış, yere özgü bir iddia yoktur.
+- Sık Sorulan Sorular: `src/lib/seo/pages/faq.ts`. "İşletmeler için": `src/lib/seo/pages/forBusiness.ts`. Ana sayfanın alt bölümleri: `src/lib/seo/pages/home.ts`. Ortak bloklar: `src/lib/seo/pages/common.ts`.
+- **Metin kuralı:** Bu dosyalardaki her cümle uygulamanın gerçek davranışını ya da yasal metinleri anlatır. Sayı ("500+ salon"), üstünlük ("en iyi"), garanti, sabit komisyon oranı, ödeme takvimi, mağaza uygulaması gibi doğrulanamayan iddialar bilerek yazılmamıştır. İptal, cayma ve iade yanıtları İptal, Erteleme ve İade Koşulları'ndaki ifadeyle aynıdır; o metin, kapora/iptal kuralı ya da komisyon modeli değişirse bu dosyaları da güncelleyin.
+
+### 7.3 Teknik yapı (özet)
+
+- Her sayfanın başlığı, açıklaması, canonical adresi, paylaşım etiketleri ve yapısal verisi (schema.org: Organization, WebSite, LocalBusiness, BreadcrumbList, ItemList, FAQPage): `src/lib/seo/`.
+- Derleme (`npm run build`) sonunda `seo/prerender.ts`, dizine girecek her sayfa için `dist/_seo/` altına statik bir HTML yazar, sayfanın verisini içine gömer (uygulama açılınca "yükleniyor" ekranı göstermeden devralır) ve `sitemap.xml` üretir. Kategoriler ve işletmeler derleme anında Supabase'den okunur.
+- Aynı derleme, `dist/.htaccess` içine bu sayfaları asıl adreslerinde sunan kuralları yazar. `public/.htaccess` içindeki `# __SEO_STATIC_PAGES__` satırını **silmeyin**; kurallar onun yerine yazılır.
+- Arama motoru botları siteyi her zaman Türkçe görür (`src/i18n/locale.ts`).
+- Var olmayan dosya adresleri (ör. eski bir `/assets/...js`) artık uygulama sayfası yerine gerçek 404 döner.
+
+### 7.4 Yayından sonra kontrol
+
+```bash
+curl -s https://rango.com.tr/robots.txt | head -3
+```
+```bash
+curl -s https://rango.com.tr/sitemap.xml | grep -c "<loc>"
+```
+```bash
+curl -s https://rango.com.tr/izmir | grep -o "<title>.*</title>"
+```
+```bash
+curl -s https://rango.com.tr/sss | grep -o "<title>.*</title>"
+```
+
+- İlk komut `# Rango - https://rango.com.tr` ile başlamalı, ikincisi 10'dan büyük bir sayı vermeli.
+- Üçüncü komut "İzmir Kuaför, Berber ve Güzellik Randevusu | Rango", dördüncüsü "Sık Sorulan Sorular…" yazmalı. İkisi de "Rango | İzmir Online Kuaför…" yazıyorsa statik sayfa kuralları çalışmıyordur (site yine çalışır); derleme günlüğünde `[rango] SEO: … statik sayfa` satırını ve sunucudaki `.htaccess` içinde `/_seo/` geçen `RewriteRule` satırlarını kontrol edin.
 - Bir işletme sayfasını [Rich Results Test](https://search.google.com/test/rich-results) ile deneyin.
 
-**Sizin yapmanız gerekenler:**
-1. **Google Search Console:** `rango.com.tr` için "Alan adı" mülkü ekleyin (Hostinger DNS'e TXT kaydı). Ardından Site Haritaları → `https://rango.com.tr/sitemap.xml` gönderin ve ana sayfa için "Dizine eklenmesini iste" deyin.
-2. **Bing Webmaster Tools** ve **Yandex Webmaster:** aynı sitemap'i ekleyin (Search Console'dan içe aktarılabilir).
-3. **Google İşletme Profili:** Rango için bir profil açın; işletmelere de kendi profillerindeki "Randevu" bağlantısına Rango sayfalarını (`https://rango.com.tr/i/…`) eklemelerini önerin. Yerel aramalarda en etkili adım budur.
-4. **Yeni işletme veya kategori eklendiğinde** siteyi yeniden yayınlayın (yeniden derleme): statik sayfası ve sitemap kaydı o zaman oluşur. Yayınlamasanız da sayfa çalışır ve Google onu bulabilir, yalnızca daha yavaş.
-5. **İçerik:** İşletmelerin açıklama, fotoğraf, hizmet ve çalışma saatlerini eksiksiz doldurmasını sağlayın; sayfanın Google'daki metni bunlardan oluşur. Hizmeti olmayan işletme sayfası dizine girmez.
-6. **Örnek (demo) işletmeler:** Gerçek işletme sayısı arttıkça yayından kaldırın; kategori sayfalarında gerçek işletmelerin öne çıkması sıralamayı güçlendirir.
+### 7.5 Sizin yapmanız gerekenler
 
-**Sonraki adım olarak önerilenler (bu çalışmada yapılmadı):**
+1. **Google Search Console:** `rango.com.tr` için "Alan adı" mülkü ekleyin (Hostinger DNS'e TXT kaydı). Site Haritaları → `https://rango.com.tr/sitemap.xml` gönderin; ana sayfa, `/izmir` ve `/isletmeler-icin` için "Dizine eklenmesini iste" deyin.
+2. **Bing Webmaster Tools** ve **Yandex Webmaster:** aynı sitemap'i ekleyin (Bing, Search Console'dan içe aktarabilir).
+3. **İşletme kazanın.** Sıralamayı en çok belirleyen şey gerçek işletme sayısıdır: şu an randevu alınabilen 2 gerçek işletme var, bu yüzden dizine giren liste sayfası da azdır. Her yeni işletme kendi sayfasını, kategori ve (ikinci işletmeyle) semt sayfalarını kendiliğinden açar. `/isletmeler-icin` sayfası bu amaçla hazırlandı; işletme sahiplerine bu adresi gönderin.
+4. **Google İşletme Profili:** İşletmelere, kendi Google profillerindeki "Randevu" bağlantısına Rango sayfalarını (`https://rango.com.tr/i/…`) eklemelerini önerin; Instagram profillerine de aynı bağlantıyı koysunlar. Yerel aramalarda en etkili adım budur.
+5. **Yeni işletme veya kategori eklendiğinde** siteyi yeniden yayınlayın: statik sayfası ve sitemap kaydı derlemede oluşur. Yayınlamasanız da sayfa çalışır ve Google onu bulabilir, yalnızca daha yavaş.
+6. **İçerik:** İşletmelerin açıklama, fotoğraf, hizmet ve çalışma saatlerini eksiksiz doldurmasını sağlayın; sayfanın Google'daki metni, fiyat tablosu ve "pazar günü açık mı" yanıtı bunlardan oluşur.
+7. **Örnek (demo) işletmeler:** Gerçek işletme sayısı arttıkça yayından kaldırın.
+
+### 7.6 Onayınızı bekleyen metin konuları
+
+Aşağıdakiler bilinmediği için sayfalarda **yazılmadı**; karar verirseniz ilgili dosyaya eklenebilir:
+- Komisyon oranı ve başka ücret olup olmadığı (`/isletmeler-icin` yalnızca "komisyon modeli" der, oran vermez).
+- Kaporaların işletmeye ne zaman ve nasıl ödendiği.
+- WhatsApp hattının gerçekten 7/24 yanıtlanıp yanıtlanmadığı (sayfalar "7/24" demez).
+- Mobil uygulamanın mağaza bağlantıları (sayfalarda uygulama indirme çağrısı yoktur).
+- Site "PayTR canlı"ya geçtiğinde: `/sss` içindeki "test ödemesi" sorusu kaldırılabilir.
+- Şirket künyesi (`src/lib/legal.ts`): açık adres ve telefon eklenirse Google'daki kurum bilgisi (Organization) de zenginleşir.
+
+### 7.7 Sonraki adım olarak önerilenler (bu çalışmada yapılmadı)
+
 - İngilizce için ayrı adresler (`/en/...`) ve `hreflang`: şu an dil aynı adreste değiştiği için Google yalnızca Türkçe sürümü dizine ekler.
-- Semt bazlı açılış sayfaları ("Karşıyaka berber", "Bornova kuaför") ve bir blog/rehber bölümü.
+- Bir rehber/blog bölümü (ör. hizmet fiyat rehberleri); gerçek işletme verisi çoğaldıkça anlam kazanır.
 - Ziyaret ölçümü (ör. çerezsiz bir analiz aracı). Çerez politikası şu an "analitik kullanmıyoruz" dediği için eklenirse metin de güncellenmelidir.
+- Yeni işletmeler için yeniden yayın beklemeyen, Supabase'den beslenen dinamik bir sitemap.
 
 ---
 
@@ -314,7 +366,7 @@ WHERE a.booking_code = 'VY…';
 
 ---
 
-## 8. Bolt'ta çalışmaya devam edecekseniz
+## 9. Bolt'ta çalışmaya devam edecekseniz
 
 Bu zip'i Bolt projenize **içe aktarın**. Aksi halde Bolt'taki eski kod, bu düzeltmelerin üzerine yazılır.
 

@@ -45,7 +45,6 @@ import {
   jsonLdText,
   legalMeta,
   renderHead,
-  searchMeta,
   type PageMeta,
   type SeoCategory,
   type SeoHours,
@@ -238,14 +237,6 @@ function categoriesBody(data: SiteData | null): string {
         ${categoryLinks(data?.categories ?? [])}`);
 }
 
-function searchBody(data: SiteData | null, supabaseUrl: string): string {
-  const bookable = data ? sortForListing(data.listing.filter(isBookable)) : [];
-  return shell(`<p class="eyebrow mb-2">Keşfet</p>
-        <h1 class="font-display text-4xl text-white">Tüm işletmeler</h1>
-        <div class="mt-6">${businessList('', bookable, supabaseUrl)}</div>
-        <p class="mt-8 text-sm text-mist"><a href="/kategoriler" class="text-gold-500">Tüm kategoriler</a></p>`);
-}
-
 /** Mirrors the layout of pages/customer/BusinessDetail.tsx so the page does not jump when the app takes over. */
 function businessBody(b: DetailRow, supabaseUrl: string): string {
   const photo = leadPhoto(b, supabaseUrl);
@@ -334,6 +325,24 @@ function legalBody(meta: PageMeta, title: string): string {
 // Output
 // ---------------------------------------------------------------------------
 
+const REWRITE_MARKER = '# __SEO_STATIC_PAGES__';
+
+/**
+ * The rewrite rules that serve the static pages at their real addresses, one exact rule per
+ * group of pages. Explicit rules need no file-existence test, so they do not depend on how the
+ * host maps its document root.
+ */
+function rewriteRules(files: string[]): string {
+  const lines: string[] = [];
+  if (files.includes('index')) lines.push('  RewriteRule ^$ /_seo/index.html [L]');
+  const rest = files.filter((file) => file !== 'index');
+  // A few dozen addresses per rule keeps every line far below the web server's line-length limit.
+  for (let i = 0; i < rest.length; i += 40) {
+    lines.push(`  RewriteRule ^(${rest.slice(i, i + 40).join('|')})/?$ /_seo/$1.html [L]`);
+  }
+  return lines.join('\n');
+}
+
 function sitemap(paths: string[]): string {
   const urls = paths.map((path) => `  <url>\n    <loc>${e(absoluteUrl(path))}</loc>\n  </url>`).join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
@@ -389,7 +398,6 @@ export function seoPrerender(supabase: { url: string; key: string }): Plugin {
         pages.push({ file: 'kesfet', meta: home, body: homeHtml, data: shared });
 
         pages.push({ file: 'kategoriler', meta: categoriesMeta('tr', data?.categories ?? []), body: categoriesBody(data), data: data ? { categories: data.categories } : undefined });
-        pages.push({ file: 'ara', meta: searchMeta('tr'), body: searchBody(data, supabase.url) });
         pages.push(model('sss', faqPage('tr')));
         pages.push(model('isletmeler-icin', forBusinessPage('tr')));
 
@@ -443,6 +451,18 @@ export function seoPrerender(supabase: { url: string; key: string }): Plugin {
         mkdirSync(dirname(file), { recursive: true });
         writeFileSync(file, html);
         written.push(page);
+      }
+
+      // Serve the pages at their real addresses (Hostinger / Apache / LiteSpeed). Read and written in
+      // one step, without awaiting in between: another plugin edits the same file (vite.config.ts).
+      const htaccess = resolve(outDir, '.htaccess');
+      if (existsSync(htaccess)) {
+        const rules = readFileSync(htaccess, 'utf8');
+        if (rules.includes(REWRITE_MARKER)) {
+          writeFileSync(htaccess, rules.replace(REWRITE_MARKER, () => `# Derlemede üretildi (seo/prerender.ts): ${written.length} statik sayfa\n${rewriteRules(written.map((page) => page.file))}`));
+        } else {
+          console.warn(`[rango] SEO: dist/.htaccess içinde "${REWRITE_MARKER}" satırı yok; statik sayfalar asıl adreslerinde sunulmayacak.`);
+        }
       }
 
       // The sitemap lists every page that may be indexed, by its canonical address.

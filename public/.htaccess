@@ -15,21 +15,20 @@ Options -Indexes
   RewriteRule ^index\.html$ - [L]
 
   # SEO: derleme sırasında üretilen statik sayfalar (dist/_seo, bkz. seo/prerender.ts).
+  # Derleme, aşağıdaki işaret satırının yerine üretilen her sayfa için kesin kurallar yazar:
+  #   RewriteRule ^$ /_seo/index.html [L]
+  #   RewriteRule ^(izmir|izmir/berber|sss|i/ornek-salon)/?$ /_seo/$1.html [L]
   # Adres değişmez; arama motorları ve bağlantı önizlemeleri sayfanın kendi başlığını ve
-  # metnini görür, uygulama yüklenince sayfanın yerini alır. Dosya yoksa bu kurallar atlanır
-  # ve aşağıdaki SPA kuralı index.html'i verir.
-  RewriteCond %{DOCUMENT_ROOT}/_seo/index.html -f
-  RewriteRule ^$ /_seo/index.html [L]
+  # metnini görür, uygulama yüklenince sayfanın yerini alır. Listede olmayan adreslerde
+  # aşağıdaki SPA kuralı index.html'i verir. Bu satırı silmeyin.
+  # __SEO_STATIC_PAGES__
 
-  # Diğer sayfalar: /kategoriler, /sss, /izmir, /izmir/<kategori|semt>, /izmir/<semt>/<kategori>,
-  # /i/<işletme>, /yasal/<metin>
-  RewriteCond %{REQUEST_URI} ^/([a-z0-9]+(?:[/-][a-z0-9]+)*)/?$
-  RewriteCond %{DOCUMENT_ROOT}/_seo/%1.html -f
-  RewriteRule ^ /_seo/%1.html [L]
-
-  # Tek sayfa uygulama (SPA): var olmayan yolları index.html'e yönlendir
+  # Tek sayfa uygulama (SPA): var olmayan yolları index.html'e yönlendir. Dosya uzantılı
+  # adresler hariçtir (ör. artık bulunmayan /assets/eski.js ya da /favicon.ico): onlar uygulama
+  # sayfası yerine gerçek bir 404 döner. Uygulamanın kendi adreslerinde nokta yoktur.
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_URI} !\.[A-Za-z0-9]{1,8}$
   RewriteRule . /index.html [L]
 </IfModule>
 
@@ -41,6 +40,10 @@ Options -Indexes
   Header always set Permissions-Policy "geolocation=(self), camera=(), microphone=(), payment=(), usb=(), interest-cohort=()"
   Header always set Cross-Origin-Opener-Policy "same-origin"
   Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://__SUPABASE_HOST__ https://images.pexels.com; font-src 'self' data:; connect-src 'self' https://__SUPABASE_HOST__ wss://__SUPABASE_HOST__; frame-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+  # HTML sayfaları (index.html ve _seo altındaki statik sayfalar) her zaman güncel gelsin
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+  </FilesMatch>
 
   # PayTR dönüş sayfası: PayTR bunu kendi ödeme iframe'i içinde açabilir. Yalnızca bu dosya
   # www.paytr.com tarafından çerçevelenebilir; sitenin geri kalanı çerçevelenemez.
@@ -50,24 +53,22 @@ Options -Indexes
     Header set Cache-Control "no-cache"
   </Files>
 
-  # HTML sayfaları (index.html ve _seo altındaki statik sayfalar) her zaman güncel gelsin,
-  # hash'li dosyalar uzun süre önbellekte kalsın
-  <FilesMatch "\.html$">
-    Header set Cache-Control "no-cache, no-store, must-revalidate"
+  # Vite'ın ürettiği, adında içerik özeti (hash) olan dosyalar hiç değişmez: bir yıl önbellekte kalır.
+  <FilesMatch "-[A-Za-z0-9_-]{8}\.(js|css|woff2?|svg|png|jpe?g|webp)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
-  # Sektör görselleri, simgeler ve paylaşım görseli: adları sabit olduğu için bir gün
+  # Adı sabit dosyalar (sektör görselleri, simgeler, paylaşım görseli): içerikleri değişebildiği
+  # için bir gün. Bu kural yukarıdakinden SONRA gelmelidir; "sector-barber-2.webp" gibi adlar
+  # yukarıdaki desene de uyar ve sondaki kural geçerli olur.
   <FilesMatch "^(sector-[a-z0-9-]+\.webp|og-image\.jpg|apple-touch-icon\.png|icon-(192|512)\.png|favicon\.svg)$">
     Header set Cache-Control "public, max-age=86400"
   </FilesMatch>
   <FilesMatch "^(robots\.txt|sitemap\.xml)$">
     Header set Cache-Control "public, max-age=3600"
   </FilesMatch>
-  <FilesMatch "-[A-Za-z0-9_-]{8}\.(js|css|woff2?|svg|png|jpe?g|webp)$">
-    Header set Cache-Control "public, max-age=31536000, immutable"
-  </FilesMatch>
 </IfModule>
 
 # Gizli/yapılandırma dosyalarına erişimi engelle
-<FilesMatch "^(\.env.*|\.git.*|package(-lock)?\.json|.*\.map)$">
+<FilesMatch "^(\.ht.*|\.env.*|\.git.*|package(-lock)?\.json|.*\.map)$">
   Require all denied
 </FilesMatch>

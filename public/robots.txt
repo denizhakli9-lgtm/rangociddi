@@ -1,6 +1,7 @@
 # Rango - https://rango.com.tr
-# Giriş gerektiren ve kişiye özel sayfalar taranmaz. Arama ve filtre sonuçları, kategori
-# sayfalarının (/ara?kategori=...) kopyası olduğu için dışarıda tutulur.
+# Giriş gerektiren ve kişiye özel sayfalar taranmaz. Arama, sıralama ve filtre sonuçları
+# şehir/kategori sayfalarının (/izmir/...) kopyası olduğu için dışarıda tutulur.
+# /_seo/ altındaki dosyalar asıl adreslerinde sunulur; kendi yollarının taranması gerekmez.
 
 User-agent: *
 Allow: /
@@ -16,6 +17,7 @@ Disallow: /destek
 Disallow: /sifre-yenile
 Disallow: /sifremi-unuttum
 Disallow: /odeme-sonuc.html
+Disallow: /_seo/
 Disallow: /*/randevu
 Disallow: /ara?*q=
 Disallow: /ara?*sirala=

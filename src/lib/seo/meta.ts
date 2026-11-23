@@ -319,12 +319,12 @@ export function categoriesMeta(lang: SeoLang, categories: SeoCategory[] = []): P
 }
 
 /**
- * The search page. Only the plain list is indexed: a search, filter, sort order or category
- * selection is a variant of it (categories have their own pages, see `categoryPath`), so those
- * carry "noindex".
+ * The search page is a tool, not a destination: every variant of it (plain, searched, filtered,
+ * sorted, by category) carries "noindex". The pages meant for search engines are the city,
+ * district and category pages (`/izmir/...`, see pages/landing.ts).
  */
-export function searchMeta(lang: SeoLang, options: { category?: SeoCategory | null; filtered?: boolean } = {}): PageMeta {
-  const { category, filtered } = options;
+export function searchMeta(lang: SeoLang, options: { category?: SeoCategory | null } = {}): PageMeta {
+  const { category } = options;
   if (category) {
     return {
       title: pick(lang, `${category.name} işletmeleri: ara ve filtrele | Rango`, `${category.name}: search and filter | Rango`),
@@ -340,14 +340,14 @@ export function searchMeta(lang: SeoLang, options: { category?: SeoCategory | nu
     };
   }
   return {
-    title: pick(lang, 'İşletme Ara: İzmir Kuaför, Berber ve Güzellik Merkezleri | Rango', 'Search Hair Salons, Barbers & Beauty Salons in İzmir | Rango'),
+    title: pick(lang, 'İşletme Ara | Rango', 'Search businesses | Rango'),
     description: pick(
       lang,
       'İzmir’deki kuaför, berber, güzellik merkezi ve spa işletmelerini arayın; fiyata, puana ve mesafeye göre sıralayın, online randevunuzu hemen oluşturun.',
       'Search hair salons, barbers, beauty salons and spas in İzmir; sort by price, rating and distance, and book online right away.',
     ),
     path: '/ara',
-    noindex: filtered,
+    noindex: true,
   };
 }
 

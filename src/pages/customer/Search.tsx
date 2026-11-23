@@ -76,15 +76,11 @@ export default function SearchPage() {
   const activeFilters = [maxPrice, minRating, gender, today].filter(Boolean).length;
   const currentCategory = categories.find((c) => c.slug === category);
 
-  // Only the plain list is indexed; searches, filters, sort orders and category selections are variants (see searchMeta).
-  const filtered = !!q || activeFilters > 0 || params.has('sirala');
+  // The search page is never indexed (see searchMeta); it only names the category it is showing.
   useSeo(
     category && !categoryData
       ? null
-      : searchMeta(locale(), {
-          category: currentCategory ? { slug: currentCategory.slug, name: categoryName(currentCategory), description: categoryDescription(currentCategory) } : null,
-          filtered: filtered || (!!category && !currentCategory),
-        }),
+      : searchMeta(locale(), { category: currentCategory ? { slug: currentCategory.slug, name: categoryName(currentCategory), description: categoryDescription(currentCategory) } : null }),
   );
 
   return (

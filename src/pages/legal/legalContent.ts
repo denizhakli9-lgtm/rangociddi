@@ -514,6 +514,67 @@ const kunye: LegalDocument = {
   ],
 };
 
+const hesapSilme: LegalDocument = {
+  slug: 'hesap-silme',
+  eyebrow: 'Hesap',
+  title: `${COMPANY.brand} Hesabınızı Silme`,
+  summary: `${COMPANY.brand} uygulamasındaki (Android, iOS ve ${COMPANY.website.replace('https://', '')}) hesabınızı nasıl silebileceğinizi, hangi verilerin silindiğini ve hangilerinin ne kadar süre saklandığını açıklar. Geliştirici: ${COMPANY.legalName}.`,
+  sections: [
+    {
+      title: '1. Uygulamadan silme',
+      blocks: [
+        ul(
+          `${COMPANY.brand} uygulamasını açın veya ${COMPANY.website.replace('https://', '')} adresine gidin ve hesabınıza giriş yapın.`,
+          'Alttaki menüden “Profil” sayfasına girin.',
+          '“Verilerim ve gizlilik” bölümündeki “Hesabımı sil” düğmesine dokunun.',
+          'Açılan pencerede onay kutusunu işaretleyip “Hesabımı kalıcı olarak sil” düğmesine dokunun.',
+        ),
+        p('Müşteri hesapları anında silinir. İşletme hesaplarında bekleyen ödeme ve hak edişler bulunabileceğinden, işletme sahipleri silme talebini işletme panelindeki “Yardım ve Destek” bölümünden veya 2. maddedeki e-posta yöntemiyle iletir; talep en geç 30 gün içinde sonuçlandırılır. Yaklaşan veya ödeme/onay bekleyen randevunuz ya da sonuçlanmamış bir iade talebiniz varsa, hesabınızı silmeden önce bunların iptal edilmesi veya tamamlanması gerekir.'),
+      ],
+    },
+    {
+      title: '2. Uygulamaya erişmeden silme talebi',
+      blocks: [
+        p(`Uygulamaya erişemiyorsanız, hesabınızda kayıtlı e-posta adresinizden ${COMPANY.kvkkEmail} adresine “Hesap silme talebi” konulu bir e-posta gönderin. E-postada hesabınızda kayıtlı e-posta adresini belirtin. Kimliğinizi doğruladıktan sonra hesabınız silinir ve talebiniz en geç 30 gün içinde ücretsiz olarak sonuçlandırılır.`),
+      ],
+    },
+    {
+      title: '3. Silinen veriler',
+      blocks: [
+        ul(
+          'Ad, soyad, e-posta adresi, telefon numarası ve profil bilgileri,',
+          'Konum ve semt tercihleri,',
+          'Favoriler ve bildirimler,',
+          'Oturum ve giriş bilgileri (hesaba bir daha giriş yapılamaz).',
+        ),
+        p('Yazdığınız yorumlar “Silinmiş kullanıcı” adıyla, kimliğinizle ilişkilendirilmeden kalır.'),
+      ],
+    },
+    {
+      title: '4. Saklanan veriler ve süreleri',
+      blocks: [
+        p('Aşağıdaki kayıtlar yasal yükümlülükler nedeniyle, kimliğinizle ilişkilendirilmeden (anonim hale getirilerek) belirtilen süre boyunca saklanır ve süre sonunda silinir:'),
+        table(
+          ['Kayıt', 'Saklama süresi', 'Neden'],
+          [
+            ['Randevu, ödeme, iade, komisyon ve satış onayı kayıtları', 'İşlem tarihinden itibaren 10 yıl', 'Vergi ve ticari mevzuat, ödeme kuruluşu sözleşmesi'],
+            ['Randevu notları ve iptal açıklamaları', 'Randevudan itibaren 12 ay', 'Uyuşmazlıkların çözümü'],
+            ['Destek yazışmaları', 'Talebin kapanmasından itibaren 2 yıl', 'Şikâyet ve uyuşmazlıkların çözümü'],
+          ],
+        ),
+        p(`Ayrıntılar için KVKK Aydınlatma Metni’ne bakabilirsiniz. Sorularınız için: ${COMPANY.kvkkEmail}.`),
+      ],
+    },
+    {
+      title: 'English summary',
+      blocks: [
+        p(`To delete your ${COMPANY.brand} account (developer: ${COMPANY.legalName}): open the ${COMPANY.brand} app or ${COMPANY.website.replace('https://', '')}, sign in, go to Profile → “My data & privacy” → “Delete my account” and confirm. Customer accounts are deleted immediately. Business owners request deletion through “Help & Support” in the business panel or by email (below); it is completed within 30 days. If you cannot access the app, email ${COMPANY.kvkkEmail} from your account’s email address with the subject “Account deletion request”; it will be completed within 30 days.`),
+        p('Deleted: name, email, phone, profile, location preferences, favourites, notifications and sign-in access. Reviews remain anonymously as “Deleted user”. Kept without being linked to your identity: booking, payment, refund and purchase-confirmation records for 10 years (tax and commercial law), booking notes for 12 months and support messages for 2 years.'),
+      ],
+    },
+  ],
+};
+
 export const LEGAL_DOCUMENTS: Record<LegalSlug, LegalDocument> = {
   'aydinlatma-metni': aydinlatma,
   'kullanim-kosullari': kosullar,
@@ -521,5 +582,6 @@ export const LEGAL_DOCUMENTS: Record<LegalSlug, LegalDocument> = {
   'satis-sozlesmesi': satis,
   'iptal-iade': iade,
   'kvkk-basvuru': basvuru,
+  'hesap-silme': hesapSilme,
   kunye,
 };

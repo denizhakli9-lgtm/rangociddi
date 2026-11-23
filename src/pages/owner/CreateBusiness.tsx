@@ -14,6 +14,7 @@ import type { Business } from '@/lib/types';
 import type { Coords } from '@/lib/maps';
 import { BasicsFields, districtCoords, validateBasics, type BasicsErrors, type BasicsForm } from './BusinessFields';
 import { LocationField } from './LocationField';
+import { SectorCoverPicker } from './SectorCoverPicker';
 
 const DEFAULT_HOURS = [1, 2, 3, 4, 5, 6, 7].map((weekday) => ({
   weekday,
@@ -40,11 +41,14 @@ export default function CreateBusiness({ onCreated }: { onCreated: (b: Business)
     gender_focus: 'unisex',
   });
   const [errors, setErrors] = useState<BasicsErrors>({});
+  const [cover, setCover] = useState<string | null>(null);
   const [pin, setPin] = useState<Coords | null>(null);
   const [saving, setSaving] = useState(false);
 
   const set = <K extends keyof BasicsForm>(key: K, value: BasicsForm[K]) => {
     setForm((f) => ({ ...f, [key]: value }));
+    // Ready-made covers are per sector; a new category gets a fresh choice.
+    if (key === 'category_id') setCover(null);
     setErrors((e) => ({ ...e, [key]: undefined }));
   };
 
@@ -69,6 +73,7 @@ export default function CreateBusiness({ onCreated }: { onCreated: (b: Business)
           email: form.email.trim() || null,
           description: form.description.trim(),
           gender_focus: form.gender_focus,
+          cover_url: cover,
           ...(pin ?? districtCoords(form.district)),
         })
         .select(BUSINESS_LIST_COLUMNS)
@@ -91,6 +96,13 @@ export default function CreateBusiness({ onCreated }: { onCreated: (b: Business)
     <AuthShell eyebrow="İşletme kurulumu" title="İşletmenizi tanıtın" subtitle="Birkaç temel bilgiyle başlayın. Yönetim ekibimiz başvurunuzu inceledikten sonra işletmeniz Rango'da yayına alınır.">
       <form onSubmit={submit} className="space-y-6" noValidate>
         <BasicsFields form={form} errors={errors} categories={categories ?? []} onChange={set} />
+        {form.category_id && (
+          <div className="border-t border-line pt-6">
+            <p className="mb-1 text-sm font-medium text-white">Kapak görseli <span className="font-normal text-mist-2">(isteğe bağlı)</span></p>
+            <p className="mb-4 text-xs text-mist-2">Sektörünüze özel, yapay zekâ ile hazırlanmış görsellerden birini seçin. Dilediğiniz zaman işletme profilinden kendi fotoğrafınızla değiştirebilirsiniz.</p>
+            <SectorCoverPicker category={categories?.find((c) => c.id === form.category_id)} value={cover} onChange={setCover} />
+          </div>
+        )}
         <div className="border-t border-line pt-6">
           <p className="mb-1 text-sm font-medium text-white">Mağaza konumu <span className="font-normal text-mist-2">(isteğe bağlı)</span></p>
           <p className="mb-4 text-xs text-mist-2">Müşterileriniz yol tarifiyle kapınıza kadar gelsin. Sonradan işletme profilinden de ekleyebilirsiniz.</p>

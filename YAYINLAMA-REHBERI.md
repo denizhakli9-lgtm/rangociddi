@@ -5,7 +5,7 @@ Aşağıdaki adımları **sırayla** uygulayın.
 
 ---
 
-## 0. Supabase API anahtarı geçişi (23 Kasım 2026) – ⚠️ sizin adımlarınız bekliyor
+## 0. Supabase API anahtarı geçişi (23 Kasım 2026) – site ve fonksiyonlar geçti; Android sürümü ve eski anahtarların kapatılması bekliyor
 
 **Neden:** Supabase eski (legacy) JWT tabanlı `anon` ve `service_role` anahtarlarını kaldırıyor. [Resmî geçiş rehberine](https://supabase.com/docs/guides/getting-started/migrating-to-new-api-keys) göre eski anahtarlar 2026 sonuna kadar çalışıyor. [GitHub duyurusunda](https://github.com/orgs/supabase/discussions/29260) tarih "Late 2026, TBC" olarak geçiyor, yani kesin gün açıklanmadı. Eski anahtarlar kapandığında bu anahtarı kullanan site, uygulama sürümü ve fonksiyonlar hiçbir isteği tamamlayamaz. Yerlerine yayınlanabilir (`sb_publishable_…`, tarayıcı ve uygulama için) ve gizli (`sb_secret_…`, yalnızca sunucu için) anahtarlar geçiyor.
 
@@ -22,10 +22,18 @@ Aşağıdaki adımları **sırayla** uygulayın.
 
 Fonksiyonlar gizli anahtarla veritabanına ulaştı: `paytr-status`, `paytr-token`, `paytr-refund` ve `support-ai`. `paytr-callback` de anahtarını buldu. Supabase ağ geçidi günlüklerinde fonksiyonların yalnızca yeni anahtarları kullandığı görüldü.
 
-**Henüz yapılmadı:** gerçek bir PayTR test ödemesi → bildirim → iptal → admin iadesi zinciri. Bu zincir sizin deneme işletmenizi ve admin hesabınızı gerektiriyor; aşağıdaki 3. adımda.
+**Canlı yayın (23 Kasım 2026, 17:03 UTC):** Geçiş `main`'e alındıktan yaklaşık 75 saniye sonra Hostinger yeni paketi yayınladı. Canlı pakette yalnızca `sb_publishable_` anahtarı var, eski JWT yok. Canlı sitede yeni bir deneme hesabıyla şu zincir denendi:
+- kayıt,
+- Black Blade Barbershop'ta randevu. Bu, tohum verisinden gelen ve 20 Kasım PayTR testinde kullanılan deneme işletmesi.
+- satış onayı kaydı,
+- `paytr-token`: PayTR ödeme jetonu alındı,
+- `paytr-status`: PayTR durum sorgusu "ödeme yok" (004) döndü, doğru sonuç,
+- saatin serbest bırakılması ve hesap silme. Test kayıtları temizlendi.
+
+**Henüz yapılmadı:** test kartıyla ödeme → PayTR bildirimi (`paytr-callback`) → iptal → admin iadesi (`paytr-refund`). PayTR ödeme sayfası, testin yapıldığı yurt dışı bağlantıda "Sistem Bakımda" gösterdi. Bu adımları Türkiye'den bir tarayıcıyla deneyin (aşağıdaki 3. adım). İade onayı için admin hesabı gerekir.
 
 **Günlüklere göre eski anahtarı hâlâ kullananlar (23 Kasım 2026):**
-1. canlı site `rango.com.tr`: 22 Kasım'daki son yayın eski anahtarla derlenmiş. Bu geçiş `main`'e alınınca Hostinger siteyi yeni anahtarla yeniden yayınlar.
+1. ~~canlı site `rango.com.tr`~~: 23 Kasım 17:03 UTC'de yeni anahtarla yeniden yayınlandı. Açık sekmelerde eski sayfa kalan ziyaretçilerin istekleri sayfa yenilenene kadar eski anahtarla gelebilir.
 2. **cihazlara yüklenmiş Android uygulaması.** Türkiye'deki birkaç telefonda (ikisinde giriş yapılmış hesaplar var) ve Google Play'in yayın öncesi test cihazlarına benzeyen ABD cihazlarında kullanılıyor. Bu sürüm eski anahtarla derlenmiş; eski anahtarlar kapatılınca **tamamen çalışmaz hale gelir**.
 
 ### Sizin yapmanız gerekenler (sırayla)

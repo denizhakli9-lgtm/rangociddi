@@ -9,11 +9,11 @@ interface Props {
   onChange: (value: string) => void;
 }
 
-/** Lets an owner pick one of the ready-made, AI-generated covers for their sector. */
+/** Lets an owner pick one of the ready-made covers for their sector. */
 export function SectorCoverPicker({ category, value, onChange }: Props) {
   const options = sectorCoverOptions(category);
   return (
-    <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Hazır kapak görselleri">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4" role="radiogroup" aria-label="Hazır kapak görselleri">
       {options.map((o, i) => {
         const selected = value === o.value;
         return (

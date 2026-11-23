@@ -99,7 +99,7 @@ export default function CreateBusiness({ onCreated }: { onCreated: (b: Business)
         {form.category_id && (
           <div className="border-t border-line pt-6">
             <p className="mb-1 text-sm font-medium text-white">Kapak görseli <span className="font-normal text-mist-2">(isteğe bağlı)</span></p>
-            <p className="mb-4 text-xs text-mist-2">Sektörünüze özel, yapay zekâ ile hazırlanmış görsellerden birini seçin. Dilediğiniz zaman işletme profilinden kendi fotoğrafınızla değiştirebilirsiniz.</p>
+            <p className="mb-4 text-xs text-mist-2">Sektörünüze özel hazır görsellerden birini seçin. Dilediğiniz zaman işletme profilinden kendi fotoğrafınızla değiştirebilirsiniz.</p>
             <SectorCoverPicker category={categories?.find((c) => c.id === form.category_id)} value={cover} onChange={setCover} />
           </div>
         )}

@@ -43,7 +43,9 @@ function hash(text: string): number {
 type CategoryRef = { slug?: string | null; name?: string | null } | null | undefined;
 
 /** Ready-made cover variants shipped in /public per sector (`sector-<name><suffix>.webp`). */
-const VARIANTS = ['', '-2'] as const;
+const VARIANTS = ['', '-2', '-3', '-4'] as const;
+/** Only the first ones are used as the automatic cover, so existing listings keep their image. */
+const AUTO_VARIANTS = 2;
 /** `cover_url` value for a ready-made cover the owner picked, e.g. `sector:hair-2`. */
 const CHOICE_PREFIX = 'sector:';
 
@@ -76,7 +78,7 @@ export function sectorChoiceSrc(coverUrl?: string | null): string | null {
 }
 
 export function placeholderCover(key: string, category: CategoryRef): string {
-  const variant = VARIANTS[hash(key || 'rango') % VARIANTS.length];
+  const variant = VARIANTS[hash(key || 'rango') % AUTO_VARIANTS];
   return fileFor(`${sectorOf(category)}${variant}`);
 }
 

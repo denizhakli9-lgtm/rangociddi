@@ -159,7 +159,7 @@ export default function BusinessProfile() {
           {!coverSrc && (
             <div className="-mt-2 mb-5 rounded-xl border border-gold-500/30 bg-gold-500/5 p-4">
               <p className="mb-3 text-xs leading-relaxed text-mist">
-                Kendi kapak fotoğrafınızı yükleyene kadar sektörünüze özel, yapay zekâ ile hazırlanmış hazır görsellerden biri gösterilir. Beğendiğinizi seçip kaydedin; “Kapak değiştir” ile dilediğiniz zaman işletmenizin kendi fotoğrafını yükleyebilirsiniz.
+                Kendi kapak fotoğrafınızı yükleyene kadar sektörünüze özel hazır görsellerden biri gösterilir. Beğendiğinizi seçip kaydedin; “Kapak değiştir” ile dilediğiniz zaman işletmenizin kendi fotoğrafını yükleyebilirsiniz.
               </p>
               <SectorCoverPicker category={category} value={media.cover_url} onChange={(v) => setMedia((m) => ({ ...m, cover_url: v }))} />
             </div>

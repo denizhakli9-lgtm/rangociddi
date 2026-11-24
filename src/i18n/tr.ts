@@ -118,6 +118,7 @@ export const tr = {
     VEYRA_OPEN_REFUND: 'Sonuçlanmamış bir iade talebiniz var. İade süreci tamamlandıktan sonra hesabınızı silebilirsiniz.',
     VEYRA_CHAT_CLOSED: 'Bu randevu için mesajlaşma kapalı.',
     VEYRA_MESSAGE_RATE: 'Çok hızlı mesaj gönderiyorsunuz. Lütfen biraz bekleyip tekrar deneyin.',
+    VEYRA_INVALID_CODE: 'Referans kodu geçersiz veya artık kullanılmıyor.',
     invalidCredentials: 'E-posta veya şifre hatalı.',
     userExists: 'Bu e-posta ile kayıt oluşturulamadı. Giriş yapmayı deneyin.',
     weakPassword: 'Şifre en az 8 karakter olmalıdır.',

@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { CalendarRange, CreditCard, Megaphone, LayoutDashboard, MessageSquareWarning, Percent, Settings, Shapes, Store, Undo2, Users } from 'lucide-react';
+import { Briefcase, CalendarRange, CreditCard, Megaphone, LayoutDashboard, MessageSquareWarning, Percent, Settings, Shapes, Store, Undo2, Users } from 'lucide-react';
 import { DashboardLayout, type DashNavItem } from '@/components/layout/DashboardLayout';
 import Notifications from '@/pages/Notifications';
 import AdminOverview from './AdminOverview';
@@ -13,12 +13,14 @@ import AdminCategories from './AdminCategories';
 import AdminCommissions from './AdminCommissions';
 import AdminSettings from './AdminSettings';
 import AdminBroadcasts from './AdminBroadcasts';
+import AdminFieldAgents from './AdminFieldAgents';
 import SupportCenter from '@/pages/support/SupportCenter';
 
 const ITEMS: DashNavItem[] = [
   { to: '/yonetim', label: 'Genel bakış', icon: LayoutDashboard, end: true, primary: true },
   { to: '/yonetim/isletmeler', label: 'İşletmeler', icon: Store, primary: true },
   { to: '/yonetim/kullanicilar', label: 'Kullanıcılar', icon: Users },
+  { to: '/yonetim/saha-ekibi', label: 'Saha ekibi', icon: Briefcase },
   { to: '/yonetim/randevular', label: 'Randevular', icon: CalendarRange, primary: true },
   { to: '/yonetim/odemeler', label: 'Ödemeler', icon: CreditCard },
   { to: '/yonetim/iadeler', label: 'İadeler', icon: Undo2, primary: true },
@@ -37,6 +39,7 @@ export default function AdminArea() {
         <Route index element={<AdminOverview />} />
         <Route path="isletmeler" element={<AdminBusinesses />} />
         <Route path="kullanicilar" element={<AdminUsers />} />
+        <Route path="saha-ekibi" element={<AdminFieldAgents />} />
         <Route path="randevular" element={<AdminAppointments />} />
         <Route path="odemeler" element={<AdminPayments />} />
         <Route path="iadeler" element={<AdminRefunds />} />

@@ -17,8 +17,11 @@ import '@fontsource/manrope/600.css';
 import './index.css';
 import { nextVisitSlogan } from '@/lib/brand';
 import { initNative } from '@/lib/native';
+import { captureReferralFromUrl } from '@/lib/fieldAgent';
 
 initNative();
+// A field agent's link (?ref=CODE) is kept until the business sign-up form uses it.
+captureReferralFromUrl();
 
 const visitSlogan = nextVisitSlogan();
 

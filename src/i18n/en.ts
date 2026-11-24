@@ -120,6 +120,7 @@ export const en: Dictionary = {
     VEYRA_OPEN_REFUND: 'You have an open refund request. You can delete your account once the refund is settled.',
     VEYRA_CHAT_CLOSED: 'Messaging is closed for this booking.',
     VEYRA_MESSAGE_RATE: 'You are sending messages too quickly. Please wait a moment and try again.',
+    VEYRA_INVALID_CODE: 'The referral code is invalid or no longer in use.',
     invalidCredentials: 'Incorrect email or password.',
     userExists: 'An account could not be created with this email. Try signing in.',
     weakPassword: 'Password must be at least 8 characters.',

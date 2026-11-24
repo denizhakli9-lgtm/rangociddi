@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { Lock, Mail } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { fetchFieldAgentMe } from '@/lib/fieldAgent';
 import { friendlyError } from '@/lib/errors';
 import { isEmail } from '@/lib/validation';
 import { safeInternalPath } from '@/lib/safeRedirect';
@@ -43,8 +44,11 @@ export default function Login() {
       return;
     }
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).maybeSingle();
+    let home = homePathFor(profile as Profile | null);
+    // Field agents have ordinary customer accounts; send them to their own panel.
+    if (!redirect && home === '/kesfet' && (await fetchFieldAgentMe())) home = '/saha';
     setLoading(false);
-    navigate(redirect ?? homePathFor(profile as Profile | null), { replace: true });
+    navigate(redirect ?? home, { replace: true });
   };
 
   // Already signed in (e.g. arriving from an e-mail confirmation link, which

@@ -72,10 +72,22 @@ export function isTestPayment(p: { provider_payment_id?: string | null; status?:
   return typeof p.provider_payment_id === 'string' && p.provider_payment_id.startsWith('TEST-');
 }
 
+/**
+ * A paid booking that was confirmed automatically and not yet answered by the business: the
+ * business can still approve it (locks it in) or decline it (full deposit refund) until it starts.
+ * approved_at is undefined before the migration that adds it; such rows are treated as answered.
+ */
+export function awaitsOwnerDecision(a: Pick<Appointment, 'status' | 'approved_at' | 'starts_at'>, now = Date.now()): boolean {
+  return a.status === 'confirmed' && a.approved_at === null && new Date(a.starts_at).getTime() > now;
+}
+
 export type OwnerAction = 'approve' | 'reject' | 'complete' | 'no_show';
 
-export async function runOwnerAction(appointmentId: string, action: OwnerAction): Promise<void> {
-  const { error } = await supabase.rpc('business_update_appointment', { p_appointment: appointmentId, p_action: action });
+export async function runOwnerAction(appointmentId: string, action: OwnerAction, reason = ''): Promise<void> {
+  // p_reason is only sent when there is one, so the call also works against the older two-argument function.
+  const args: Record<string, string> = { p_appointment: appointmentId, p_action: action };
+  if (reason) args.p_reason = reason;
+  const { error } = await supabase.rpc('business_update_appointment', args);
   if (error) throw error;
 }
 

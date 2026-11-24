@@ -10,7 +10,7 @@ import { EmptyState, ErrorState, SkeletonList } from '@/components/ui/Feedback';
 import { PageHeader } from '@/components/layout/PageHeader';
 import type { Appointment } from '@/lib/types';
 import { useOwnerBusiness } from './OwnerContext';
-import { fetchOwnerAppointments, istanbulDayStart } from './ownerApi';
+import { awaitsOwnerDecision, fetchOwnerAppointments, istanbulDayStart } from './ownerApi';
 import { OwnerApptRow } from './OwnerApptRow';
 import { AppointmentDetailModal } from './AppointmentDetailModal';
 
@@ -51,7 +51,7 @@ export default function Overview() {
     const list = data?.appts ?? [];
     const now = Date.now();
     const todayList = list.filter((a) => dateKey(new Date(a.starts_at)) === today && !['cancelled', 'rejected', 'pending_payment'].includes(a.status));
-    const pending = list.filter((a) => a.status === 'pending_approval');
+    const pending = list.filter((a) => a.status === 'pending_approval' || awaitsOwnerDecision(a, now));
     const upcoming = list.filter((a) => a.status === 'confirmed' && new Date(a.starts_at).getTime() > now && dateKey(new Date(a.starts_at)) !== today).slice(0, 5);
     const completed = list.filter((a) => a.status === 'completed' && a.starts_at >= istanbulDayStart(monthStart));
     const revenue = completed.reduce((s, a) => s + Number(a.total_price), 0);

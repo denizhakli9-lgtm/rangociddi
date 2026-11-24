@@ -8,7 +8,8 @@ import { EmptyState, ErrorState, SkeletonList } from '@/components/ui/Feedback';
 import { PageHeader } from '@/components/layout/PageHeader';
 import type { Appointment } from '@/lib/types';
 import { useOwnerBusiness } from './OwnerContext';
-import { fetchOwnerAppointments, istanbulDayStart } from './ownerApi';
+import { awaitsOwnerDecision, fetchOwnerAppointments, istanbulDayStart } from './ownerApi';
+import { fetchUnreadMessageCounts } from '@/lib/appointmentMessages';
 import { OwnerApptRow } from './OwnerApptRow';
 import { AppointmentDetailModal } from './AppointmentDetailModal';
 
@@ -31,12 +32,14 @@ export default function OwnerAppointments() {
       ),
     [business.id],
   );
+  const unread = useAsync(() => fetchUnreadMessageCounts('business'), [business.id]);
 
   const groups = useMemo(() => {
     const now = Date.now();
     const list = (data ?? []).filter((a) => a.status !== 'pending_payment');
     return {
-      pending: list.filter((a) => a.status === 'pending_approval'),
+      // Requests waiting for approval, plus paid bookings confirmed automatically that the business can still decline.
+      pending: list.filter((a) => a.status === 'pending_approval' || awaitsOwnerDecision(a, now)),
       upcoming: list.filter((a) => a.status === 'confirmed' && new Date(a.ends_at).getTime() > now - 6 * 3600_000),
       past: list.filter((a) => a.status === 'completed' || (a.status === 'confirmed' && new Date(a.ends_at).getTime() <= now - 6 * 3600_000)).reverse(),
       cancelled: list.filter((a) => CLOSED.includes(a.status)).reverse(),
@@ -65,7 +68,7 @@ export default function OwnerAppointments() {
 
   return (
     <div>
-      <PageHeader eyebrow="Randevular" title="Randevu yönetimi" text="Talepleri onaylayın, gelen müşterileri tamamlandı olarak işaretleyin, gerektiğinde iptal edin." />
+      <PageHeader eyebrow="Randevular" title="Randevu yönetimi" text="Talepleri onaylayın ya da onaylamayın, müşterilerle mesajlaşın, gelen müşterileri tamamlandı olarak işaretleyin, gerektiğinde iptal edin." />
 
       <div className="mb-4 overflow-x-auto no-scrollbar">
         <Segmented<Tab>
@@ -113,7 +116,7 @@ export default function OwnerAppointments() {
               </h3>
               <div className="space-y-2">
                 {list.map((a) => (
-                  <OwnerApptRow key={a.id} appt={a} onOpen={setOpen} />
+                  <OwnerApptRow key={a.id} appt={a} onOpen={setOpen} unread={unread.data?.get(a.id) ?? 0} />
                 ))}
               </div>
             </section>
@@ -124,6 +127,7 @@ export default function OwnerAppointments() {
       <AppointmentDetailModal
         appt={open}
         onClose={() => setOpen(null)}
+        onMessagesRead={unread.reload}
         onDone={() => {
           setOpen(null);
           reload();

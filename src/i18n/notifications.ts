@@ -22,6 +22,7 @@ const TITLES: Record<string, string> = {
   'İade talebiniz onaylandı': 'Your refund request was approved',
   'İade talebiniz sonuçlandı': 'Your refund request was decided',
   'Destek ekibinden yeni yanıt': 'New reply from support',
+  'İşletmeden yeni mesaj': 'New message from the business',
 };
 
 // Applied in order; each turns one fixed Turkish phrase into English.
@@ -34,6 +35,7 @@ const BODY_RULES: [RegExp, string][] = [
   [/^İptal politikası süresi geçtiği için kapora iade edilmeyecektir\.$/, 'The deposit will not be refunded because the cancellation window had passed.'],
   [/^İade talebiniz onaylanmadı\./, 'Your refund request was not approved.'],
   [/^Destek konuşmana yeni bir yanıt geldi\.$/, 'There is a new reply in your support conversation.'],
+  [/^(.+), ([\d.]+ [\d:]+) randevunuz için yeni bir mesajınız var\.$/, '$1, $2: you have a new message about your booking.'],
   [/ randevunuz iptal edildi\. Bu işletme platformdaki örnek kayıtlardan biridir ve randevu kabul etmemektedir\./, ': your booking was cancelled. This is a sample business on the platform and does not take bookings.'],
   [/ randevu talebiniz başlangıç saatine kadar onaylanmadığı için iptal edildi\./, ': your booking request was cancelled because it was not approved before the start time.'],
   [/ randevunuz Rango tarafından iptal edildi\./, ': your booking was cancelled by Rango.'],

@@ -9,24 +9,39 @@ import { formatDate, formatDuration, formatTime, formatTRY } from '@/lib/format'
 import { friendlyError } from '@/lib/errors';
 import { useToast } from '@/contexts/ToastContext';
 import type { Appointment } from '@/lib/types';
-import { isTestPayment, ownerCancel, runOwnerAction, type OwnerAction } from './ownerApi';
+import { awaitsOwnerDecision, isTestPayment, ownerCancel, runOwnerAction, type OwnerAction } from './ownerApi';
+import { AppointmentChat } from '@/components/AppointmentChat';
+import { canMessage, hasChat } from '@/lib/appointmentMessages';
 import { depositPayment } from '@/lib/demo';
 
 const ACTION_DONE: Record<OwnerAction, string> = {
   approve: 'Randevu onaylandı.',
-  reject: 'Randevu reddedildi, kapora iadesi başlatıldı.',
+  reject: 'Randevu onaylanmadı, kapora iadesi başlatıldı.',
   complete: 'Randevu tamamlandı olarak işaretlendi.',
   no_show: 'Müşteri gelmedi olarak işaretlendi.',
 };
 
-export function AppointmentDetailModal({ appt, onClose, onDone }: { appt: Appointment | null; onClose: () => void; onDone: () => void }) {
+export function AppointmentDetailModal({
+  appt,
+  onClose,
+  onDone,
+  onMessagesRead,
+}: {
+  appt: Appointment | null;
+  onClose: () => void;
+  onDone: () => void;
+  /** Called when the customer's messages were marked read, so unread badges can refresh. */
+  onMessagesRead?: () => void;
+}) {
   const { toast } = useToast();
   const [busy, setBusy] = useState<string | null>(null);
   const [cancelMode, setCancelMode] = useState(false);
+  const [declineMode, setDeclineMode] = useState(false);
   const [reason, setReason] = useState('');
 
   useEffect(() => {
     setCancelMode(false);
+    setDeclineMode(false);
     setReason('');
   }, [appt?.id]);
 
@@ -34,12 +49,22 @@ export function AppointmentDetailModal({ appt, onClose, onDone }: { appt: Appoin
   const started = new Date(appt.starts_at).getTime() <= Date.now();
   const payment = depositPayment(appt.payments);
   const testPayment = isTestPayment(payment);
+  // Paid and confirmed automatically: the business has not said yes or no yet.
+  const autoConfirmed = awaitsOwnerDecision(appt);
+  const canDecline = appt.status === 'pending_approval' || autoConfirmed;
 
-  const act = async (action: OwnerAction) => {
+  const act = async (action: OwnerAction, note = '') => {
     setBusy(action);
     try {
-      await runOwnerAction(appt.id, action);
-      toast(action === 'reject' && testPayment ? 'Randevu reddedildi. Kapora test ödemesi olduğu için müşterinin kartından tahsilat yapılmamıştı.' : ACTION_DONE[action], 'success');
+      await runOwnerAction(appt.id, action, note);
+      toast(
+        action === 'reject' && testPayment
+          ? 'Randevu onaylanmadı. Kapora test ödemesi olduğu için müşterinin kartından tahsilat yapılmamıştı.'
+          : action === 'approve' && autoConfirmed
+            ? 'Onayınız kaydedildi.'
+            : ACTION_DONE[action],
+        'success',
+      );
       onDone();
     } catch (e) {
       toast(friendlyError(e), 'error');
@@ -67,9 +92,19 @@ export function AppointmentDetailModal({ appt, onClose, onDone }: { appt: Appoin
 
   // Once the start time has passed, a confirmed visit is closed with "Tamamlandı"/"Gelmedi" and a
   // pending request with "Reddet" (which refunds); the server refuses cancel/approve after the start.
-  const canCancel = ['pending_payment', 'pending_approval', 'confirmed'].includes(appt.status) && !started;
+  // Where the business can still decline, "Onaylamıyorum" takes the place of a plain cancel.
+  const canCancel = ['pending_payment', 'pending_approval', 'confirmed'].includes(appt.status) && !started && !canDecline;
 
-  const footer = cancelMode ? (
+  const footer = declineMode ? (
+    <>
+      <Button variant="ghost" onClick={() => setDeclineMode(false)}>
+        Vazgeç
+      </Button>
+      <Button variant="danger" loading={busy === 'reject'} onClick={() => act('reject', reason.trim())} icon={<X className="h-4 w-4" />}>
+        Onaylamıyorum
+      </Button>
+    </>
+  ) : cancelMode ? (
     <>
       <Button variant="ghost" onClick={() => setCancelMode(false)}>
         Vazgeç
@@ -85,10 +120,10 @@ export function AppointmentDetailModal({ appt, onClose, onDone }: { appt: Appoin
           İptal
         </Button>
       )}
-      {appt.status === 'pending_approval' && (
+      {canDecline && (
         <>
-          <Button variant="danger" loading={busy === 'reject'} onClick={() => act('reject')} icon={<X className="h-4 w-4" />}>
-            Reddet
+          <Button variant="danger" onClick={() => setDeclineMode(true)} icon={<X className="h-4 w-4" />}>
+            Onaylamıyorum
           </Button>
           {!started && (
             <Button loading={busy === 'approve'} onClick={() => act('approve')} icon={<Check className="h-4 w-4" />}>
@@ -125,7 +160,13 @@ export function AppointmentDetailModal({ appt, onClose, onDone }: { appt: Appoin
         {appt.status === 'pending_approval' && started && (
           <p className="text-xs text-warning-300">
             Başlangıç saati geçtiği için bu talep onaylanamaz;{' '}
-            {!testPayment && Number(appt.deposit_amount) > 0 ? 'reddederek kaporayı iade edebilirsiniz.' : 'talebi reddedebilirsiniz.'}
+            {!testPayment && Number(appt.deposit_amount) > 0 ? 'onaylamayarak kaporayı iade edebilirsiniz.' : 'talebi onaylamayabilirsiniz.'}
+          </p>
+        )}
+        {autoConfirmed && (
+          <p className="rounded-xl border border-info-500/30 bg-info-900/40 p-3 text-xs leading-relaxed text-info-300">
+            Müşteri ödemeyi yaptı ve randevu otomatik onaylandı. Randevu saatine kadar onaylamayabilirsiniz; bu durumda
+            {!testPayment && Number(appt.deposit_amount) > 0 ? ' ödenen kapora müşteriye tam olarak iade edilir.' : ' randevu iptal edilir ve müşteriye bildirilir.'}
           </p>
         )}
 
@@ -178,6 +219,31 @@ export function AppointmentDetailModal({ appt, onClose, onDone }: { appt: Appoin
           <p className="flex items-center gap-2 text-xs text-mist-2">
             <CalendarClock className="h-3.5 w-3.5 text-gold-400" /> Randevu saati geldiğinde tamamlandı veya gelmedi olarak işaretleyebilirsiniz.
           </p>
+        )}
+        {declineMode && (
+          <div className="animate-fade-in space-y-2">
+            <Textarea
+              label="Onaylamama nedeni (isteğe bağlı)"
+              value={reason}
+              maxLength={500}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Müşteriye iletilecek kısa açıklama"
+            />
+            <p className="text-xs text-mist-2">
+              {testPayment
+                ? 'Kapora test ödemesi olduğu için karta iade yapılmaz; iade yalnızca kayıtta tamamlanır.'
+                : 'Randevuyu onaylamazsanız ödenen kapora müşteriye tam olarak iade edilir.'}
+            </p>
+          </div>
+        )}
+        {hasChat(appt) && !declineMode && !cancelMode && (
+          <AppointmentChat
+            appointmentId={appt.id}
+            role="business"
+            canSend={canMessage(appt)}
+            otherName={appt.profiles?.full_name ?? 'Müşteri'}
+            onRead={onMessagesRead}
+          />
         )}
         {cancelMode && (
           <div className="animate-fade-in space-y-2">

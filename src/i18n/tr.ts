@@ -116,6 +116,8 @@ export const tr = {
     VEYRA_INVALID_IMAGE: 'Görsel okunamadı. Lütfen JPG, PNG veya WebP bir fotoğraf seçin.',
     VEYRA_ACTIVE_APPOINTMENTS: 'Yaklaşan veya ödeme/onay bekleyen randevunuz var. Hesabınızı silmeden önce bu randevuları iptal edin ya da tamamlanmasını bekleyin.',
     VEYRA_OPEN_REFUND: 'Sonuçlanmamış bir iade talebiniz var. İade süreci tamamlandıktan sonra hesabınızı silebilirsiniz.',
+    VEYRA_CHAT_CLOSED: 'Bu randevu için mesajlaşma kapalı.',
+    VEYRA_MESSAGE_RATE: 'Çok hızlı mesaj gönderiyorsunuz. Lütfen biraz bekleyip tekrar deneyin.',
     invalidCredentials: 'E-posta veya şifre hatalı.',
     userExists: 'Bu e-posta ile kayıt oluşturulamadı. Giriş yapmayı deneyin.',
     weakPassword: 'Şifre en az 8 karakter olmalıdır.',

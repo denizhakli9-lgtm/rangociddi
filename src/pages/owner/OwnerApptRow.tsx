@@ -1,9 +1,10 @@
-import { ChevronRight } from 'lucide-react';
-import { AppointmentStatusBadge } from '@/components/ui/Badge';
+import { ChevronRight, MessageCircle } from 'lucide-react';
+import { AppointmentStatusBadge, Badge } from '@/components/ui/Badge';
+import { awaitsOwnerDecision } from './ownerApi';
 import { formatDate, formatTime, formatTRY } from '@/lib/format';
 import type { Appointment } from '@/lib/types';
 
-export function OwnerApptRow({ appt, onOpen, showDate }: { appt: Appointment; onOpen: (a: Appointment) => void; showDate?: boolean }) {
+export function OwnerApptRow({ appt, onOpen, showDate, unread = 0 }: { appt: Appointment; onOpen: (a: Appointment) => void; showDate?: boolean; unread?: number }) {
   return (
     <button
       type="button"
@@ -28,7 +29,12 @@ export function OwnerApptRow({ appt, onOpen, showDate }: { appt: Appointment; on
         <p className="text-sm text-white">{formatTRY(appt.total_price)}</p>
         <p className="text-[11px] text-mist-2">Kalan {formatTRY(appt.remaining_amount)}</p>
       </div>
-      <AppointmentStatusBadge status={appt.status} />
+      {unread > 0 && (
+        <span className="inline-flex items-center gap-1 rounded-full bg-gold-500/15 px-2 py-0.5 text-[11px] font-semibold text-gold-300" aria-label={`${unread} okunmamış mesaj`}>
+          <MessageCircle className="h-3 w-3" /> {unread}
+        </span>
+      )}
+      {awaitsOwnerDecision(appt) ? <Badge tone="info">Yanıtınızı bekliyor</Badge> : <AppointmentStatusBadge status={appt.status} />}
       <ChevronRight className="h-4 w-4 shrink-0 text-mist-3 transition group-hover:translate-x-0.5 group-hover:text-gold-400" />
     </button>
   );

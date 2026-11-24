@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, BellRing, CalendarCheck, CalendarX2, CheckCheck, CreditCard, Megaphone, MessageSquare, RefreshCw, Star, Store, Trash2, type LucideIcon } from 'lucide-react';
+import { Bell, BellRing, CalendarCheck, CalendarX2, CheckCheck, CreditCard, Megaphone, MessageCircle, MessageSquare, RefreshCw, Star, Store, Trash2, type LucideIcon } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAsync } from '@/lib/useAsync';
 import { friendlyError } from '@/lib/errors';
@@ -26,6 +26,7 @@ const ICONS: Record<string, LucideIcon> = {
   review_request: Star,
   new_review: MessageSquare,
   announcement: Megaphone,
+  appointment_message: MessageCircle,
 };
 
 export default function Notifications() {

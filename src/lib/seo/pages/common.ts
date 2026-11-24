@@ -10,6 +10,7 @@
 import type { Block, BlockLink, FaqItem } from '../blocks';
 import type { SeoLang } from '../meta';
 import { locativeTr } from '../places';
+import { PAYMENTS_IN_TEST_MODE } from '../config';
 
 const pick = (lang: SeoLang, tr: string, en: string) => (lang === 'en' ? en : tr);
 
@@ -34,7 +35,7 @@ export function howItWorksBlock(lang: SeoLang): Block {
     title: pick(lang, 'Rango ile randevu nasıl alınır?', 'How booking with Rango works'),
     items: [
       {
-        title: pick(lang, 'İşletmenizi seçin', 'Choose a business'),
+        title: pick(lang, 'Bir işletme seçin', 'Choose a business'),
         text: pick(
           lang,
           'İşletmeleri kategoriye, semte ve fiyata göre karşılaştırın; hizmetleri, fiyatları, çalışma saatlerini ve değerlendirmeleri inceleyin.',
@@ -61,14 +62,25 @@ export function howItWorksBlock(lang: SeoLang): Block {
   };
 }
 
+/** Added wherever the deposit is explained, for as long as no real money is charged (see config.ts). */
+function testModeNote(lang: SeoLang): string {
+  if (!PAYMENTS_IN_TEST_MODE) return '';
+  return pick(
+    lang,
+    ' Ödeme ekranında test modu uyarısı görünen işlemlerde kartınızdan gerçek tahsilat yapılmaz ve hizmet bedelinin tamamını işletmede ödersiniz.',
+    ' When the payment screen shows a test-mode warning, nothing is actually charged to your card and you pay the full price at the business.',
+  );
+}
+
 export function depositFaqItem(lang: SeoLang): FaqItem {
   return {
     q: pick(lang, 'Kapora nedir, ne kadar ödenir?', 'What is the deposit and how much is it?'),
-    a: pick(
-      lang,
-      'Kapora, randevunuzu güvenceye alan ön ödemedir. Tutarını her işletme kendisi belirler: hizmet fiyatının bir yüzdesi ya da sabit bir tutar olabilir, bazı işletmeler kapora istemez. Kapora tutarı her hizmetin yanında ve ödeme öncesindeki özet ekranında gösterilir; hizmet bedelinden düşülür, kalan tutarı işletmede ödersiniz.',
-      'The deposit is an advance payment that secures your booking. Each business sets it: a percentage of the service price or a fixed amount, and some businesses ask for none. It is shown next to each service and on the summary before payment; it is deducted from the price and you pay the rest at the business.',
-    ),
+    a:
+      pick(
+        lang,
+        'Kapora, randevu oluştururken online ödediğiniz ve hizmet bedelinden düşülen ön ödemedir. Tutarını her işletme kendisi belirler: hizmet fiyatının bir yüzdesi ya da sabit bir tutar olabilir, bazı işletmeler kapora istemez. Kapora tutarı her hizmetin yanında ve ödeme öncesindeki özet ekranında gösterilir; kalan tutarı işletmede ödersiniz.',
+        'The deposit is an advance payment you make online when booking; it is deducted from the service price. Each business sets it: a percentage of the service price or a fixed amount, and some businesses ask for none. It is shown next to each service and on the summary before payment; you pay the rest at the business.',
+      ) + testModeNote(lang),
   };
 }
 
@@ -77,8 +89,8 @@ export function cancellationFaqItem(lang: SeoLang): FaqItem {
     q: pick(lang, 'Randevumu iptal edebilir miyim?', 'Can I cancel my booking?'),
     a: pick(
       lang,
-      'Evet, Randevularım sayfasından iptal edebilirsiniz. İşletmenin sayfasında belirtilen ücretsiz iptal süresinden önce yaptığınız iptallerde kapora tamamen iade edilir. İptal süresi işletmeye göre değişir ve ödeme öncesinde size gösterilir.',
-      'Yes, from My bookings. If you cancel before the free-cancellation window stated on the business page, the deposit is refunded in full. The window differs per business and is shown to you before payment.',
+      'Evet, Randevularım sayfasından iptal edebilirsiniz. İşletmenin sayfasında belirtilen ücretsiz iptal süresi dolmadan (ör. randevuya 24 saat kalana kadar) yaptığınız iptallerde kapora tamamen iade edilir. Bu süre işletmeye göre değişir ve ödeme öncesinde size gösterilir.',
+      'Yes, from My bookings. If you cancel before the business’s free-cancellation deadline (for example, up to 24 hours before the appointment), the deposit is refunded in full. The deadline differs per business and is shown to you before payment.',
     ),
     link: { label: pick(lang, 'İptal, Erteleme ve İade Koşulları', 'Cancellation, Rescheduling & Refund Policy'), path: CANCELLATION_POLICY_PATH },
   };
@@ -109,7 +121,7 @@ export function ownerCtaBlock(lang: SeoLang, placeName?: string): Block {
       : pick(lang, 'İşletme sahibi misiniz?', 'Do you run a business?'),
     text: pick(
       lang,
-      'İşletmenizi Rango’ya ekleyin: hizmetlerinizi, fiyatlarınızı ve çalışma saatlerinizi tanımlayın, müşterileriniz size online randevu alsın.',
+      'İşletmenizi Rango’ya ekleyin: hizmetlerinizi, fiyatlarınızı ve çalışma saatlerinizi tanımlayın, müşterileriniz sizden online randevu alsın.',
       'Add your business to Rango: set up your services, prices and opening hours, and let customers book you online.',
     ),
     actions: [

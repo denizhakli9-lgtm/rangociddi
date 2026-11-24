@@ -11,11 +11,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserLocation } from '@/contexts/LocationContext';
 import { useUnreadCount } from '@/lib/useUnreadCount';
 import { useT } from '@/i18n/I18nProvider';
+import { useHomePath } from '@/lib/homePath';
 import { tx } from '@/i18n/locale';
 
 export function CustomerLayout() {
   const t = useT();
   const { pathname } = useLocation();
+  const homePath = useHomePath();
   // On the website the home page also lives at "/".
   const isHome = pathname === '/kesfet' || pathname === '/';
   const { session, profile } = useAuth();
@@ -24,7 +26,7 @@ export function CustomerLayout() {
   const navigate = useNavigate();
 
   const tabs = [
-    { to: '/kesfet', label: t.nav.home, icon: Compass },
+    { to: homePath, label: t.nav.home, icon: Compass },
     { to: '/ara', label: t.nav.search, icon: Search },
     { to: '/randevularim', label: t.nav.appointments, icon: CalendarDays },
     { to: '/favoriler', label: t.nav.favorites, icon: Heart },
@@ -35,7 +37,7 @@ export function CustomerLayout() {
     <div className="min-h-screen bg-ink">
       <header className="sticky top-0 z-40 border-b border-line-soft bg-ink/85 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-          <Link to="/kesfet" aria-label={tx('Rango ana sayfa', 'Rango home')}>
+          <Link to={homePath} aria-label={tx('Rango ana sayfa', 'Rango home')}>
             {isHome ? <span className="font-display text-2xl font-semibold tracking-wide text-white">Rango<span className="text-gold-500">.</span></span> : <Logo size="sm" />}
           </Link>
           <nav className="hidden items-center gap-1 md:flex">
@@ -44,7 +46,7 @@ export function CustomerLayout() {
                 key={tab.to}
                 to={tab.to}
                 className={({ isActive }) =>
-                  `rounded-full px-4 py-2 text-sm transition ${isActive || (tab.to === '/kesfet' && isHome) ? 'text-gold-400' : 'text-mist hover:text-white'}`
+                  `rounded-full px-4 py-2 text-sm transition ${isActive || (tab.to === homePath && isHome) ? 'text-gold-400' : 'text-mist hover:text-white'}`
                 }
               >
                 {tab.label}
@@ -101,7 +103,7 @@ export function CustomerLayout() {
               key={to}
               to={to}
               className={({ isActive }) =>
-                `flex flex-col items-center gap-1 py-2.5 text-[10px] transition ${isActive || (to === '/kesfet' && isHome) ? 'text-gold-400' : 'text-mist-2'}`
+                `flex flex-col items-center gap-1 py-2.5 text-[10px] transition ${isActive || (to === homePath && isHome) ? 'text-gold-400' : 'text-mist-2'}`
               }
             >
               <Icon className="h-5 w-5" strokeWidth={1.6} />

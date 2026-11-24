@@ -30,7 +30,7 @@ import type { Plugin } from 'vite';
 import { LEGAL_LINKS, PAYMENT_PROVIDER, COMPANY } from '../src/lib/legal';
 import { BLOCK_STYLES as S } from '../src/lib/seo/blockStyles';
 import type { Block, PageModel } from '../src/lib/seo/blocks';
-import { buildFacets, formatPrice, isBookable, isLandingIndexable, sortForListing, toSummary, type ListingBusiness } from '../src/lib/seo/listing';
+import { buildFacets, formatPrice, isLandingIndexable, type ListingBusiness } from '../src/lib/seo/listing';
 import {
   SITE_URL,
   absoluteUrl,
@@ -41,7 +41,6 @@ import {
   escapeHtml,
   homeMeta,
   isIndexableBusiness,
-  itemListSchema,
   jsonLdText,
   legalMeta,
   renderHead,
@@ -54,11 +53,12 @@ import {
 import { siteLinks } from '../src/lib/seo/pages/common';
 import { faqPage } from '../src/lib/seo/pages/faq';
 import { forBusinessPage } from '../src/lib/seo/pages/forBusiness';
-import { homeExtraBlocks, homeFaqSchema } from '../src/lib/seo/pages/home';
+import { homeExtraBlocks, homeSchemas, type HomeExtrasInput } from '../src/lib/seo/pages/home';
 import { buildLandingPage } from '../src/lib/seo/pages/landing';
 import { DEFAULT_CITY, cityPath } from '../src/lib/seo/places';
 import { LISTING_SELECT, MAX_EMBEDDED_LISTING, PUBLIC_BUSINESS_FIELDS, PUBLIC_REVIEW_FIELDS } from '../src/lib/seo/queries';
 import { leadPhoto } from '../src/lib/sectorCovers';
+import { LEGAL_DOCUMENTS, type LegalBlock } from '../src/pages/legal/legalContent';
 import { renderBlocks } from './renderBlocks';
 
 type Row = Record<string, unknown>;
@@ -127,7 +127,7 @@ async function loadSiteData(supabaseUrl: string, key: string): Promise<SiteData 
   try {
     const [categories, listingRows, detailRows] = await Promise.all([
       fetchRows<CategoryRow>(rest, key, 'categories', { select: '*', is_active: 'eq.true', order: 'sort_order' }),
-      fetchRows<ListingBusiness & Row>(rest, key, 'businesses', { select: compact(LISTING_SELECT), status: 'eq.approved', city: `eq.${DEFAULT_CITY.name}`, order: 'name', limit: '1000' }),
+      fetchRows<ListingBusiness & Row>(rest, key, 'businesses', { select: compact(LISTING_SELECT), status: 'eq.approved', city: `eq.${DEFAULT_CITY.name}`, 'services.is_active': 'eq.true', order: 'name', limit: '1000' }),
       fetchRows<DetailRow>(rest, key, 'businesses', {
         select: compact(`${PUBLIC_BUSINESS_FIELDS}, services(*), employees(*, employee_services(service_id)), working_hours(*), reviews(${PUBLIC_REVIEW_FIELDS})`),
         status: 'eq.approved',
@@ -208,33 +208,24 @@ function categoryLinks(categories: SeoCategory[]): string {
   return `<ul class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">${items}</ul>`;
 }
 
-/** Real, bookable businesses as cards (the same card the city and category pages use). */
-function businessList(title: string, businesses: ListingBusiness[], supabaseUrl: string): string {
-  if (!businesses.length) return '';
-  return renderBlocks([{ kind: 'businesses', title, items: businesses.map((b) => toSummary(b, 'tr', { supabaseUrl })) }]);
-}
-
-function homeBody(data: SiteData | null, supabaseUrl: string): string {
-  const bookable = data ? sortForListing(data.listing.filter(isBookable)) : [];
-  const extras = homeExtraBlocks({ lang: 'tr', city: DEFAULT_CITY, categories: data?.categories ?? [], businesses: data?.listing ?? null });
+function homeBody(input: HomeExtrasInput): string {
   return shell(`<div class="space-y-8 sm:space-y-10">
         <section class="rounded-3xl border border-gold-500/20 bg-gradient-to-br from-coal via-coal-2 to-gold-500/10 px-5 py-7 sm:px-10 sm:py-10">
           <p class="eyebrow mb-3">İzmir · Online randevu</p>
           <h1 class="max-w-lg font-display text-[36px] leading-[1.2] tracking-tight text-white sm:text-6xl">Randevunun yeni yolu.</h1>
-          <p class="mt-3 max-w-md text-sm leading-relaxed text-mist sm:text-base">İzmir’de kuaför, berber, güzellik merkezi ve spa randevunu online al: aradığın hizmeti keşfet, sana en uygun zamanı seç.</p>
+          <p class="mt-3 max-w-md text-sm leading-relaxed text-mist sm:text-base">Kuaför, berber ve güzellik randevunu online al: İzmir’deki işletmeleri keşfet, sana en uygun zamanı seç.</p>
           <p class="mt-6"><a href="${e(cityPath(DEFAULT_CITY))}" class="inline-flex h-11 items-center rounded-xl bg-gold-500 px-4 text-sm font-semibold text-ink">İşletmeleri keşfet</a></p>
         </section>
-        ${data?.categories.length ? `<section aria-label="Hizmet kategorileri"><h2 class="font-display text-3xl text-white">Bugün neye ihtiyacın var?</h2>${categoryLinks(data.categories)}</section>` : ''}
-        ${businessList('Rango’daki işletmeler', bookable.slice(0, 12), supabaseUrl)}
-        ${renderBlocks(extras)}
+        ${input.categories.length ? `<section aria-label="Hizmet kategorileri"><h2 class="font-display text-3xl text-white">Bugün neye ihtiyacın var?</h2>${categoryLinks(input.categories)}</section>` : ''}
+        ${renderBlocks(homeExtraBlocks(input))}
       </div>`);
 }
 
-function categoriesBody(data: SiteData | null): string {
+function categoriesBody(categories: SeoCategory[]): string {
   return shell(`<p class="eyebrow mb-2">Kategoriler</p>
         <h1 class="font-display text-4xl text-white">Size iyi gelecek her şey</h1>
-        <p class="mt-2 max-w-xl text-sm text-mist">Kadın ve erkek müşterilere özel hizmet veren seçkin işletmeleri kategoriye göre keşfedin.</p>
-        ${categoryLinks(data?.categories ?? [])}`);
+        <p class="mt-2 max-w-xl text-sm text-mist">Kadınlara ve erkeklere hizmet veren işletmeleri kategoriye göre keşfedin.</p>
+        ${categoryLinks(categories)}`);
 }
 
 /** Mirrors the layout of pages/customer/BusinessDetail.tsx so the page does not jump when the app takes over. */
@@ -314,11 +305,37 @@ function businessBody(b: DetailRow, supabaseUrl: string): string {
         </article>`);
 }
 
-function legalBody(meta: PageMeta, title: string): string {
-  return shell(`<article>
-          <h1 class="font-display text-3xl text-white sm:text-4xl">${e(title)}</h1>
-          <p class="mt-3 max-w-2xl text-sm leading-relaxed text-mist-2">${e(meta.description)}</p>
+function legalBlock(block: LegalBlock): string {
+  if (block.kind === 'p') return `<p class="text-base leading-relaxed text-mist">${e(block.text)}</p>`;
+  if (block.kind === 'ul') {
+    return `<ul class="list-disc space-y-1.5 pl-5 text-base leading-relaxed text-mist marker:text-gold-500">${block.items.map((item) => `<li>${e(item)}</li>`).join('')}</ul>`;
+  }
+  const head = block.head.map((cell) => `<th scope="col" class="px-4 py-3 font-medium">${e(cell)}</th>`).join('');
+  const rows = block.rows
+    .map((row) => `<tr class="align-top">${row.map((cell, i) => `<td class="px-4 py-3 ${i === 0 ? 'font-medium text-white' : 'text-mist'}">${e(cell)}</td>`).join('')}</tr>`)
+    .join('');
+  return `<div class="overflow-x-auto rounded-2xl border border-line"><table class="w-full min-w-[520px] text-left text-sm"><thead class="bg-white/[0.03] text-xs uppercase tracking-wide text-mist-2"><tr>${head}</tr></thead><tbody class="divide-y divide-line">${rows}</tbody></table></div>`;
+}
+
+/** The legal text itself (src/pages/legal/legalContent.ts), with the markup of pages/legal/LegalPage.tsx. */
+function legalBody(slug: keyof typeof LEGAL_DOCUMENTS): string {
+  const doc = LEGAL_DOCUMENTS[slug];
+  const sections = doc.sections
+    .map((section) => `<section lang="tr" class="space-y-3"><h2 class="font-display text-2xl text-white">${e(section.title)}</h2>${section.blocks.map(legalBlock).join('')}</section>`)
+    .join('');
+  return shell(`<article class="mx-auto max-w-5xl space-y-8">
+          <header lang="tr">
+            <p class="eyebrow mb-2">${e(doc.eyebrow)}</p>
+            <h1 class="font-display text-3xl text-white sm:text-4xl">${e(doc.title)}</h1>
+            <p class="mt-3 max-w-2xl text-sm leading-relaxed text-mist-2">${e(doc.summary)}</p>
+          </header>
+          ${sections}
         </article>`);
+}
+
+/** Sign-in and sign-up: nothing to index, but every page links to them, so they answer with their own "noindex" head. */
+function accountBody(title: string): string {
+  return shell(`<h1 class="font-display text-4xl text-white">${e(title)}</h1>`);
 }
 
 // ---------------------------------------------------------------------------
@@ -384,20 +401,24 @@ export function seoPrerender(supabase: { url: string; key: string }): Plugin {
       if (!maintenance) {
         const listing = data && data.listingRows.length <= MAX_EMBEDDED_LISTING ? { listing: { city: city.name, businesses: data.listingRows } } : {};
         const shared: Embedded | undefined = data ? { categories: data.categories, ...listing } : undefined;
-        const bookable = data ? sortForListing(data.listing.filter(isBookable)) : [];
-
         // Home ("/" and its in-app address "/kesfet", whose canonical is "/").
+        const homeInput: HomeExtrasInput = { lang: 'tr', city, categories: data?.categories ?? [], businesses: data?.listing ?? null, supabaseUrl: supabase.url };
         const home = homeMeta('tr');
-        home.jsonLd = [
-          ...(home.jsonLd ?? []),
-          ...(bookable.length ? [itemListSchema('Rango’daki işletmeler', bookable.slice(0, 12).map((b) => ({ name: b.name, path: businessPath(b.slug) })))] : []),
-          homeFaqSchema('tr'),
-        ];
-        const homeHtml = homeBody(data, supabase.url);
+        home.jsonLd = [...(home.jsonLd ?? []), ...homeSchemas(homeInput)];
+        const homeHtml = homeBody(homeInput);
         pages.push({ file: 'index', meta: home, body: homeHtml, data: shared });
         pages.push({ file: 'kesfet', meta: home, body: homeHtml, data: shared });
 
-        pages.push({ file: 'kategoriler', meta: categoriesMeta('tr', data?.categories ?? []), body: categoriesBody(data), data: data ? { categories: data.categories } : undefined });
+        // Categories: the structured list names only the categories whose page may be indexed.
+        const facetsNow = data ? buildFacets(city, data.listing) : null;
+        const indexableCategories = (data?.categories ?? []).filter((c) => isLandingIndexable('cityCategory', facetsNow?.byCategory.get(c.slug) ?? 0));
+        pages.push({ file: 'kategoriler', meta: categoriesMeta('tr', indexableCategories), body: categoriesBody(data?.categories ?? []), data: shared });
+
+        const signIn: PageMeta = { title: 'Giriş Yap | Rango', description: home.description, path: '/giris', noindex: true };
+        const signUp: PageMeta = { title: 'Ücretsiz Hesap Oluştur | Rango', description: home.description, path: '/kayit', noindex: true };
+        pages.push({ file: 'giris', meta: signIn, body: accountBody('Giriş Yap') });
+        pages.push({ file: 'kayit', meta: signUp, body: accountBody('Hesap Oluştur') });
+
         pages.push(model('sss', faqPage('tr')));
         pages.push(model('isletmeler-icin', forBusinessPage('tr')));
 
@@ -432,7 +453,7 @@ export function seoPrerender(supabase: { url: string; key: string }): Plugin {
       }
       for (const link of LEGAL_LINKS) {
         const meta = legalMeta('tr', link.slug)!;
-        pages.push({ file: `yasal/${link.slug}`, meta, body: legalBody(meta, link.label) });
+        pages.push({ file: `yasal/${link.slug}`, meta, body: legalBody(link.slug) });
       }
 
       const written: Page[] = [];

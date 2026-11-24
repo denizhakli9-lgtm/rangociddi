@@ -116,7 +116,7 @@ function copyFor(input: LandingInput, kind: LandingKind, listed: ListingBusiness
       ? pick(
           lang,
           `${placeLoc} online randevu alabileceğiniz ${n} ${nameLower} işletmesi var.${minText ? ` En düşük hizmet fiyatı ${minText}.` : ''} Hizmeti ve saati seçin, randevunuzu online oluşturun.`,
-          `${n === 1 ? 'There is 1 business' : `There are ${n} businesses`} for ${nameLower} in ${placeEn} that you can book online.${minText ? ` Prices start at ${minText}.` : ''} Pick a service and a time, and book online.`,
+          `${n === 1 ? 'There is 1 business' : `There are ${n} businesses`} offering ${nameLower} services in ${placeEn} that you can book online.${minText ? ` Prices start at ${minText}.` : ''} Pick a service and a time, and book online.`,
         )
       : pick(
           lang,
@@ -132,8 +132,8 @@ function copyFor(input: LandingInput, kind: LandingKind, listed: ListingBusiness
         n
           ? pick(
               lang,
-              `${placeLoc} ${n} ${nameLower} işletmesinden online randevu alın.${minText ? ` En düşük hizmet fiyatı ${minText}.` : ''} Hizmetleri ve fiyatları karşılaştırın, saati seçin, yerinizi ${SITE_NAME} ile ayırtın.`,
-              `Book ${nameLower} in ${placeEn} online: ${countLabel(lang, n)}${minText ? `, prices from ${minText}` : ''}. Compare services and prices, pick a time and secure your spot with ${SITE_NAME}.`,
+              `${placeLoc} ${n} ${nameLower} işletmesinden online randevu alın.${minText ? ` En düşük hizmet fiyatı ${minText}.` : ''} Hizmetleri ve fiyatları inceleyin, saati seçin.`,
+              `Book ${nameLower} services in ${placeEn} online: ${countLabel(lang, n)}${minText ? `, prices from ${minText}` : ''}. Compare services and prices and pick a time.`,
             )
           : lead,
       ),
@@ -142,6 +142,18 @@ function copyFor(input: LandingInput, kind: LandingKind, listed: ListingBusiness
   }
 
   const mix = categoryMix(input, listed);
+  // Category names in display order (stable across builds); as many as fit a search result title.
+  const mixSlugs = new Set(mix.map((m) => m.slug));
+  const mixNames = input.categories.filter((c) => mixSlugs.has(c.slug)).map((c) => c.name);
+  let title = pick(lang, `${place} Online Randevu | ${SITE_NAME}`, `Book Online in ${placeEn} | ${SITE_NAME}`);
+  for (let k = Math.min(3, mixNames.length); k >= 1; k--) {
+    const names = joinList(lang, mixNames.slice(0, k));
+    const candidate = pick(lang, `${place} ${names} Randevusu | ${SITE_NAME}`, `${names} Bookings in ${placeEn} | ${SITE_NAME}`);
+    if (candidate.length <= 60) {
+      title = candidate;
+      break;
+    }
+  }
   const mixText = joinList(
     lang,
     mix.slice(0, 4).map((m) => (lang === 'en' ? m.name.toLowerCase() : lowerTr(m.name))),
@@ -160,14 +172,14 @@ function copyFor(input: LandingInput, kind: LandingKind, listed: ListingBusiness
   return {
     eyebrow: kind === 'city' ? pick(lang, 'Şehir', 'City') : city.name,
     h1: pick(lang, `${placeLoc} online randevu`, `Book online in ${placeEn}`),
-    title: pick(lang, `${place} Kuaför, Berber ve Güzellik Randevusu | ${SITE_NAME}`, `Hair, Barber & Beauty Bookings in ${placeEn} | ${SITE_NAME}`),
+    title,
     lead,
     description: clip(
       n
         ? pick(
             lang,
-            `${placeLoc} ${n} işletmeden online randevu alın${mixText ? `: ${mixText}` : ''}. Hizmetleri ve fiyatları karşılaştırın, saati seçin, yerinizi ${SITE_NAME} ile ayırtın.`,
-            `Book ${countLabel(lang, n)} in ${placeEn} online${mixText ? `: ${mixText}` : ''}. Compare services and prices, pick a time and secure your spot with ${SITE_NAME}.`,
+            `${placeLoc} ${n} işletmeden online randevu alın${mixText ? `: ${mixText}` : ''}. Hizmetleri ve fiyatları inceleyin, size uyan saati seçin.`,
+            `Book ${countLabel(lang, n)} in ${placeEn} online${mixText ? `: ${mixText}` : ''}. Compare services and prices and pick a time that suits you.`,
           )
         : lead,
     ),
@@ -230,7 +242,7 @@ function siblingBlocks(input: LandingInput, facets: Facets): Block[] {
       .filter(({ count }) => isLandingIndexable('district', count))
       .map(({ d, count }) => ({ label: d.name, path: districtPath(city, d), detail: countLabel(lang, count) }));
     if (districts.length) {
-      blocks.push({ kind: 'links', title: district ? pick(lang, 'Diğer semtler', 'Other areas') : pick(lang, 'Semte göre keşfet', 'Browse by area'), items: districts });
+      blocks.push({ kind: 'links', title: district ? pick(lang, 'Diğer semtler', 'Other areas') : pick(lang, 'Semte göre keşfedin', 'Browse by area'), items: districts });
     }
   }
   return blocks;
@@ -255,47 +267,57 @@ function priceTable(input: LandingInput, listed: ListingBusiness[]): Block | nul
   };
 }
 
-function faqItems(input: LandingInput, listed: ListingBusiness[]): FaqItem[] {
+/** The questions only this page can answer, built from the businesses it lists. */
+function ownFaqItems(input: LandingInput, listed: ListingBusiness[]): FaqItem[] {
   const { lang, city, district, category } = input;
   const items: FaqItem[] = [];
   const place = district?.name ?? city.name;
   const placeLoc = locativeTr(place);
   const n = listed.length;
+  if (!category || !n) return items;
 
-  if (category && n) {
-    const nameLower = lang === 'en' ? category.name.toLowerCase() : lowerTr(category.name);
-    const prices = listed.flatMap((b) => b.services.map((s) => Number(s.price))).filter((p) => Number.isFinite(p) && p > 0);
-    if (prices.length) {
-      const range = formatPriceRange(Math.min(...prices), Math.max(...prices), lang);
-      items.push({
-        q: pick(lang, `${place} ${nameLower} fiyatları ne kadar?`, `How much does ${nameLower} cost in ${place}?`),
-        a: pick(
-          lang,
-          `Rango’da ${placeLoc} listelenen ${n} ${nameLower} işletmesinde hizmet fiyatları ${range} aralığında. Her hizmetin güncel fiyatı işletmenin sayfasındaki hizmet listesinde yazar.`,
-          `At the ${countLabel(lang, n)} listed for ${nameLower} in ${place} on Rango, service prices range ${range}. The current price of each service is on the business page.`,
-        ),
-      });
-    }
-    const withHours = listed.filter((b) => (b.working_hours ?? []).length > 0);
-    if (withHours.length === n) {
-      const sunday = openOnWeekday(listed, 7);
-      items.push({
-        q: pick(lang, `${placeLoc} pazar günü açık ${nameLower} var mı?`, `Is there ${nameLower} open on Sundays in ${place}?`),
-        a: sunday.length
-          ? pick(
-              lang,
-              `Evet. Çalışma saatlerine göre ${joinList(lang, sunday.slice(0, 5).map((b) => b.name))} pazar günü de açık. Güncel saatler işletmenin sayfasında yer alır.`,
-              `Yes. According to their opening hours, ${joinList(lang, sunday.slice(0, 5).map((b) => b.name))} ${sunday.length === 1 ? 'is' : 'are'} also open on Sundays. Current hours are on the business page.`,
-            )
-          : pick(
-              lang,
-              `Rango’da ${placeLoc} listelenen ${nameLower} işletmeleri çalışma saatlerine göre pazar günü kapalı. Güncel saatler işletmenin sayfasında yer alır.`,
-              `According to their opening hours, the businesses listed for ${nameLower} in ${place} are closed on Sundays. Current hours are on the business page.`,
-            ),
-      });
-    }
+  const nameLower = lang === 'en' ? category.name.toLowerCase() : lowerTr(category.name);
+  const prices = listed.flatMap((b) => b.services.map((s) => Number(s.price))).filter((p) => Number.isFinite(p) && p > 0);
+  if (prices.length) {
+    const min = Math.min(...prices);
+    const max = Math.max(...prices);
+    const range =
+      min === max
+        ? pick(lang, `hizmet fiyatı ${formatPrice(min, lang)}`, `the service price is ${formatPrice(min, lang)}`)
+        : pick(lang, `hizmet fiyatları ${formatPrice(min, lang)} ile ${formatPrice(max, lang)} arasında`, `service prices range from ${formatPrice(min, lang)} to ${formatPrice(max, lang)}`);
+    items.push({
+      q: pick(lang, `${place} ${nameLower} fiyatları ne kadar?`, `How much do ${nameLower} services cost in ${place}?`),
+      a: pick(
+        lang,
+        `Rango’da listelenen, ${placeLoc}ki ${n} ${nameLower} işletmesinde ${range}. Her hizmetin güncel fiyatı işletmenin sayfasındaki hizmet listesinde yazar.`,
+        `At the ${countLabel(lang, n)} listed for ${nameLower} in ${place} on Rango, ${range}. The current price of each service is on the business page.`,
+      ),
+    });
   }
-  return [...items, ...bookingFaqItems(lang)];
+  // Only when every listed business has published its hours; otherwise "closed" could be wrong.
+  if (listed.every((b) => (b.working_hours ?? []).length > 0)) {
+    const sunday = openOnWeekday(listed, 7);
+    const names = joinList(lang, sunday.slice(0, 5).map((b) => b.name));
+    items.push({
+      q: pick(lang, `${placeLoc} pazar günü açık ${nameLower} işletmesi var mı?`, `Are there any ${nameLower} businesses open on Sundays in ${place}?`),
+      a: sunday.length
+        ? pick(
+            lang,
+            `Evet. Çalışma saatlerine göre ${names} pazar günü de açık. Güncel saatler işletmenin sayfasında yer alır.`,
+            `Yes. According to their opening hours, ${names} ${sunday.length === 1 ? 'is' : 'are'} also open on Sundays. Current hours are on the business page.`,
+          )
+        : pick(
+            lang,
+            n === 1
+              ? `Rango’da listelenen, ${placeLoc}ki ${nameLower} işletmesi çalışma saatlerine göre pazar günü kapalı. Güncel saatler işletmenin sayfasında yer alır.`
+              : `Rango’da listelenen, ${placeLoc}ki ${nameLower} işletmeleri çalışma saatlerine göre pazar günü kapalı. Güncel saatler işletmenin sayfasında yer alır.`,
+            n === 1
+              ? `According to its opening hours, the business listed for ${nameLower} in ${place} is closed on Sundays. Current hours are on the business page.`
+              : `According to their opening hours, the businesses listed for ${nameLower} in ${place} are closed on Sundays. Current hours are on the business page.`,
+          ),
+    });
+  }
+  return items;
 }
 
 export function buildLandingPage(input: LandingInput): LandingModel {
@@ -354,8 +376,10 @@ export function buildLandingPage(input: LandingInput): LandingModel {
   if (table) blocks.push(table);
   blocks.push(...siblingBlocks(input, facets));
   blocks.push(howItWorksBlock(lang));
-  const questions = faqItems(input, listed);
-  blocks.push({ kind: 'faq', title: pick(lang, 'Sık sorulan sorular', 'Frequently asked questions'), items: questions });
+  // The page's own questions first, then the ones every listing page answers the same way. Only
+  // the page's own questions are marked up as FAQPage; the common ones are marked up once, on /sss.
+  const ownQuestions = ownFaqItems(input, listed);
+  blocks.push({ kind: 'faq', title: pick(lang, 'Sık sorulan sorular', 'Frequently asked questions'), items: [...ownQuestions, ...bookingFaqItems(lang)] });
   blocks.push(ownerCtaBlock(lang, place));
 
   const meta: PageMeta = {
@@ -366,7 +390,7 @@ export function buildLandingPage(input: LandingInput): LandingModel {
     jsonLd: [
       breadcrumbSchema(breadcrumb(input)),
       ...(listed.length ? [itemListSchema(copy.listTitle, listed.slice(0, MAX_LISTED).map((b) => ({ name: b.name, path: `/i/${b.slug}` })))] : []),
-      ...(indexable ? [faqSchema(questions)] : []),
+      ...(indexable && ownQuestions.length ? [faqSchema(ownQuestions)] : []),
     ],
   };
 

@@ -3,7 +3,7 @@
   "short_name": "Rango",
   "description": "İzmir’de kuaför, berber, güzellik merkezi ve spa için online randevu.",
   "lang": "tr",
-  "start_url": "/kesfet",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#f8f7f3",

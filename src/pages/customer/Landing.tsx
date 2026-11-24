@@ -58,12 +58,15 @@ export default function Landing() {
   if (page === null) return <PageLoader />;
   if (page === 'missing') {
     return (
-      <EmptyState
-        icon={<MapPinOff className="h-6 w-6" />}
-        title={tx('Sayfa bulunamadı', 'Page not found')}
-        text={tx('Aradığınız semt veya kategori bulunamadı.', 'The area or category you are looking for was not found.')}
-        action={<Button onClick={() => navigate(`/${city.slug}`)}>{tx(`${city.name} sayfasına git`, `Go to ${city.name}`)}</Button>}
-      />
+      // As tall as the loading state it replaces, so the footer does not jump into view.
+      <div className="flex min-h-[calc(100vh-5.5rem)] items-center justify-center">
+        <EmptyState
+          icon={<MapPinOff className="h-6 w-6" />}
+          title={tx('Sayfa bulunamadı', 'Page not found')}
+          text={tx('Aradığınız semt veya kategori bulunamadı.', 'The area or category you are looking for was not found.')}
+          action={<Button onClick={() => navigate(`/${city.slug}`)}>{tx(`${city.name} sayfasına git`, `Go to ${city.name}`)}</Button>}
+        />
+      </div>
     );
   }
   return <Blocks blocks={page.blocks} />;

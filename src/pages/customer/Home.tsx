@@ -18,7 +18,7 @@ import { categoryName } from '@/i18n/categories';
 import { locale, tx } from '@/i18n/locale';
 import { DEFAULT_CITY, cityCategoryPath } from '@/lib/seo/places';
 import { homeMeta } from '@/lib/seo/meta';
-import { homeExtraBlocks, homeFaqSchema } from '@/lib/seo/pages/home';
+import { homeExtraBlocks, homeSchemas } from '@/lib/seo/pages/home';
 import { useSeo } from '@/lib/seo/useSeo';
 import { Blocks } from '@/components/seo/Blocks';
 
@@ -56,18 +56,20 @@ export default function Home() {
   };
   const shared = { favorites: ids, toggle, showDistance: hasChosen };
   const lang = locale();
-  // How it works, links by service and area, and the common questions (the same blocks the static home page carries).
-  const extras = useMemo(
-    () =>
-      homeExtraBlocks({
-        lang,
-        city: DEFAULT_CITY,
-        categories: (categoriesQ.data ?? []).map((c) => ({ slug: c.slug, name: categoryName(c) })),
-        businesses: listingQ.data,
-      }),
+  // The real businesses, how it works, links by service and area, and the common questions:
+  // the same blocks (and structured data) the static home page carries.
+  const extrasInput = useMemo(
+    () => ({
+      lang,
+      city: DEFAULT_CITY,
+      categories: (categoriesQ.data ?? []).map((c) => ({ slug: c.slug, name: categoryName(c) })),
+      businesses: listingQ.data,
+      supabaseUrl: import.meta.env.VITE_SUPABASE_URL as string | undefined,
+    }),
     [lang, categoriesQ.data, listingQ.data],
   );
-  useSeo(useMemo(() => ({ ...homeMeta(lang), jsonLd: [...(homeMeta(lang).jsonLd ?? []), homeFaqSchema(lang)] }), [lang]));
+  const extras = useMemo(() => homeExtraBlocks(extrasInput), [extrasInput]);
+  useSeo(useMemo(() => ({ ...homeMeta(lang), jsonLd: [...(homeMeta(lang).jsonLd ?? []), ...homeSchemas(extrasInput)] }), [lang, extrasInput]));
   const upcoming = upcomingQ.data;
 
   return (
@@ -77,7 +79,7 @@ export default function Home() {
         <div className="relative max-w-2xl animate-fade-up">
           <p className="eyebrow mb-3">{profile?.full_name ? tx(`Merhaba, ${profile.full_name.split(' ')[0]}`, `Hello, ${profile.full_name.split(' ')[0]}`) : tx('Günün güzel bir anı olsun', 'Treat yourself today')}</p>
           <h1 className="max-w-lg break-words font-display text-[36px] leading-[1.2] tracking-tight text-white sm:text-6xl">{t.brand.tagline}</h1>
-          <p className="mt-3 max-w-md text-sm leading-relaxed text-mist sm:text-base">{tx('İzmir’de kuaför, berber, güzellik merkezi ve spa randevunu online al: aradığın hizmeti keşfet, sana en uygun zamanı seç.', 'Book hair salons, barbers, beauty salons and spas in İzmir online: find the service you want and pick the time that suits you.')}</p>
+          <p className="mt-3 max-w-md text-sm leading-relaxed text-mist sm:text-base">{tx('Kuaför, berber ve güzellik randevunu online al: İzmir’deki işletmeleri keşfet, sana en uygun zamanı seç.', 'Book hair, barber and beauty appointments online: discover businesses in İzmir and pick the time that suits you.')}</p>
           <form onSubmit={submit} role="search" className="mt-6 flex items-center gap-2 rounded-2xl border border-line bg-coal p-2 shadow-sm focus-within:border-gold-500">
             <Search className="ml-2 h-5 w-5 shrink-0 text-gold-500" />
             <input aria-label={tx('İşletme, hizmet veya semt ara', 'Search businesses, services or areas')} value={query} onChange={(e) => setQuery(e.target.value)} placeholder={tx('İşletme, hizmet veya semt ara', 'Search businesses, services or areas')} className="h-11 min-w-0 flex-1 bg-transparent text-sm text-white placeholder:text-mist-2 focus:outline-none" />

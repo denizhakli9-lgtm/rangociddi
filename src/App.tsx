@@ -1,5 +1,5 @@
-import { lazy, Suspense, useState } from 'react';
-import { BrowserRouter, Link, Navigate, Route, Routes } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
+import { BrowserRouter, Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { CustomerLayout } from '@/components/layout/CustomerLayout';
 import { ProfileLoadError, RequireAuth } from '@/components/layout/RequireAuth';
 import { PageLoader } from '@/components/ui/Feedback';
@@ -41,19 +41,28 @@ const AdminArea = lazy(() => import('@/pages/admin/AdminArea'));
 const AdminSetup = lazy(() => import('@/pages/admin/AdminSetup'));
 const Maintenance = lazy(() => import('@/pages/Maintenance'));
 
+/** True when the site was opened through a password-recovery link (read before the auth client tidies the address). */
+const OPENED_WITH_RECOVERY = /type=recovery/.test(window.location.hash);
+
 /**
- * The website's home address. The mobile app starts with the splash screen and the welcome
+ * The website's home page. The mobile app starts with the splash screen and the welcome
  * slides; on the web "/" shows the home page itself, without a redirect, because it is the
  * address search engines index and most visitors land on.
+ *
+ * It is used for both "/" and "/kesfet", so moving between the two addresses keeps the page
+ * mounted. What the old splash screen decided happens only when the site is opened at "/".
  */
 function WebHome() {
+  const location = useLocation();
   const { session, profile, loading } = useAuth();
-  const [isRecovery] = useState(() => /type=recovery/.test(window.location.hash));
-  if (isRecovery) return <Navigate to="/sifre-yenile" replace />;
-  // Signed in, but the profile could not be read: offer retry / sign-out.
-  if (!loading && session && !profile) return <ProfileLoadError />;
-  // Business owners and admins continue to their own panel.
-  if (!loading && profile && homePathFor(profile) !== '/kesfet') return <Navigate to={homePathFor(profile)} replace />;
+  if (location.pathname === '/') {
+    // `key` is "default" only for the address the site was opened with.
+    if (OPENED_WITH_RECOVERY && location.key === 'default') return <Navigate to="/sifre-yenile" replace />;
+    // Signed in, but the profile could not be read: offer retry / sign-out.
+    if (!loading && session && !profile) return <ProfileLoadError />;
+    // Business owners and admins continue to their own panel.
+    if (!loading && profile && homePathFor(profile) !== '/kesfet') return <Navigate to={homePathFor(profile)} replace />;
+  }
   return <Home />;
 }
 
@@ -106,7 +115,7 @@ export default function App() {
 
           <Route element={<CustomerLayout />}>
             {!isNative && <Route path="/" element={<WebHome />} />}
-            <Route path="/kesfet" element={<Home />} />
+            <Route path="/kesfet" element={isNative ? <Home /> : <WebHome />} />
             <Route path="/konum" element={<LocationSelect />} />
             <Route path="/ara" element={<SearchPage />} />
             <Route path="/kategoriler" element={<Categories />} />

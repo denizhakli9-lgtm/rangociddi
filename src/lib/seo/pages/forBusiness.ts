@@ -29,14 +29,14 @@ export function forBusinessPage(lang: SeoLang): PageModel {
     { kind: 'breadcrumb', items: crumbs },
     {
       kind: 'hero',
-      // The heading is kept short on purpose: a long one wraps differently once the display font
-      // has loaded, which makes the page jump on phones.
-      eyebrow: pick(lang, 'Kuaför, berber ve güzellik işletmeleri için', 'For hair, barber and beauty businesses'),
+      // The eyebrow and the heading are kept short on purpose: a long line wraps differently once
+      // the web fonts have loaded, which makes the page jump on phones.
+      eyebrow: pick(lang, 'İşletmeler için', 'For businesses'),
       title: pick(lang, 'Salonunuz için online randevu programı', 'Online booking for your salon'),
       lead: pick(
         lang,
-        'Rango, salonunuz için bir online randevu programıdır: müşterileriniz hizmeti, uzmanı ve saati kendisi seçer; siz takviminizi, hizmetlerinizi, ekibinizi ve kazancınızı tek panelden yönetirsiniz. Rango şu anda İzmir’deki işletmelere açıktır.',
-        'Rango is an online booking system for your salon: customers pick the service, the specialist and the time themselves, and you manage your calendar, services, team and earnings from one panel. Rango is currently open to businesses in İzmir.',
+        'Rango; kuaför, berber ve güzellik işletmeleri için bir online randevu programıdır: müşterileriniz hizmeti, uzmanı ve saati kendileri seçer; siz takviminizi, hizmetlerinizi, ekibinizi ve kazancınızı tek panelden yönetirsiniz. Rango şu anda İzmir’deki işletmelere açıktır.',
+        'Rango is an online booking system for hair, barber and beauty businesses: customers pick the service, the specialist and the time themselves, and you manage your calendar, services, team and earnings from one panel. Rango is currently open to businesses in İzmir.',
       ),
       actions: [signup, whatsapp],
     },
@@ -88,7 +88,7 @@ export function forBusinessPage(lang: SeoLang): PageModel {
           title: pick(lang, 'Kazanç takibi', 'Earnings overview'),
           text: pick(
             lang,
-            'Cironuzu, komisyonu, online alınan ve iade edilen kaporaları Kazanç & Komisyon ekranından tek tek izlersiniz.',
+            'Cironuzu, komisyonu, online alınan ve iade edilen kaporaları Kazanç & Komisyon ekranından izlersiniz.',
             'Follow your revenue, commission, and deposits collected and refunded online on the Earnings & Commission screen.',
           ),
         },
@@ -104,8 +104,8 @@ export function forBusinessPage(lang: SeoLang): PageModel {
           title: pick(lang, 'Kendi işletme sayfanız', 'Your own business page'),
           text: pick(
             lang,
-            'Logo, kapak görseli, fotoğraf galerisi, adres, harita konumu, hizmetler ve çalışma saatleriyle bir işletme sayfanız olur. Sayfanız, ilk hizmetinizi eklediğinizde arama motorlarının dizinine açılır.',
-            'You get a business page with logo, cover image, photo gallery, address, map location, services and opening hours. It becomes open to search engines once you add your first service.',
+            'Logo, kapak görseli, fotoğraf galerisi, adres, harita konumu, hizmetler ve çalışma saatleriyle bir işletme sayfanız olur. Sayfanız, işletmeniz onaylanıp yayına alındıktan ve en az bir hizmet eklendikten sonra arama motorlarının dizinine açılır.',
+            'You get a business page with logo, cover image, photo gallery, address, map location, services and opening hours. It becomes open to search engines once your business has been approved and lists at least one service.',
           ),
         },
       ],
@@ -147,8 +147,8 @@ export function forBusinessPage(lang: SeoLang): PageModel {
         ),
         pick(
           lang,
-          'Güncel komisyon oranını ve koşulları öğrenmek için bize WhatsApp’tan ya da Künye ve İletişim sayfasındaki adresten ulaşabilirsiniz.',
-          'For the current commission rate and terms, contact us on WhatsApp or through the address on the Company & Contact page.',
+          'Güncel komisyon oranını ve koşulları öğrenmek için bize WhatsApp’tan ya da Künye ve İletişim sayfasındaki e-posta adresinden ulaşabilirsiniz.',
+          'For the current commission rate and terms, contact us on WhatsApp or by e-mail at the address on the Company & Contact page.',
         ),
       ],
     },
@@ -222,11 +222,11 @@ export function forBusinessPage(lang: SeoLang): PageModel {
 
   return {
     meta: {
-      title: pick(lang, `Kuaför ve Berber Randevu Programı: Online Randevu Sistemi | ${SITE_NAME}`, `Online Booking System for Salons & Barbers | ${SITE_NAME}`),
+      title: pick(lang, `Kuaför ve Berber Online Randevu Programı | ${SITE_NAME}`, `Online Booking System for Salons & Barbers | ${SITE_NAME}`),
       description: pick(
         lang,
-        'Kuaför, berber, güzellik merkezi ve spa işletmeleri için online randevu programı: canlı takvim, kapora, hizmet ve ekip yönetimi, müşteri takibi. İşletmenizi Rango’ya ekleyin.',
-        'Online booking for hair salons, barbers, beauty salons and spas: live calendar, deposits, service and team management, customer book. Add your business to Rango.',
+        'Kuaför, berber ve güzellik işletmeleri için online randevu programı: canlı takvim, hizmet ve ekip yönetimi, müşteri takibi. İşletmenizi Rango’ya ekleyin.',
+        'Online booking for hair, barber and beauty businesses: live calendar, service and team management, customer records. Add your business to Rango.',
       ),
       path: FOR_BUSINESS_PATH,
       jsonLd: [breadcrumbSchema(crumbs), faqSchema(faqItems(blocks))],

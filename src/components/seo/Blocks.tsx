@@ -3,11 +3,14 @@ import { Link } from 'react-router-dom';
 import { BLOCK_STYLES as S } from '@/lib/seo/blockStyles';
 import { businessFactsLine, isExternalPath, type Block, type BlockAction, type BlockLink, type BusinessSummary } from '@/lib/seo/blocks';
 import { newTabClick, systemLinkClick } from '@/lib/platform';
+import { useHomePath } from '@/lib/homePath';
 
 /** Site-internal paths navigate inside the app; web addresses open in a new tab (in-app browser on mobile). */
 function Anchor({ link, className, children }: { link: BlockLink; className?: string; children: ReactNode }) {
+  const home = useHomePath();
   if (!isExternalPath(link.path)) {
-    return <Link to={link.path} className={className}>{children}</Link>;
+    // Page models name the home page "/"; inside the app that can be "/kesfet" (see useHomePath).
+    return <Link to={link.path === '/' ? home : link.path} className={className}>{children}</Link>;
   }
   if (/^https?:\/\//i.test(link.path)) {
     // In the mobile app a WhatsApp link is handed to the system (opens WhatsApp); other sites open in the in-app browser.
@@ -77,7 +80,7 @@ function BlockView({ block, renderBusiness }: { block: Block; renderBusiness?: P
               <li key={item.name + i} className="flex items-center gap-2">
                 {i > 0 && <span aria-hidden="true" className={S.breadcrumbSeparator}>›</span>}
                 {item.path && i < block.items.length - 1 ? (
-                  <Link to={item.path} className={S.breadcrumbLink}>{item.name}</Link>
+                  <Anchor link={{ label: item.name, path: item.path }} className={S.breadcrumbLink}>{item.name}</Anchor>
                 ) : (
                   <span aria-current={i === block.items.length - 1 ? 'page' : undefined} className={S.breadcrumbCurrent}>{item.name}</span>
                 )}

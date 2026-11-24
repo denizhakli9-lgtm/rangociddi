@@ -8,6 +8,7 @@
 import type { Block, FaqItem, PageModel } from '../blocks';
 import { faqItems } from '../blocks';
 import { SITE_NAME, breadcrumbSchema, faqSchema, type SeoLang } from '../meta';
+import { PAYMENTS_IN_TEST_MODE } from '../config';
 import { CANCELLATION_POLICY_PATH, FAQ_PATH, FOR_BUSINESS_PATH, bookingFaqItems, cancellationFaqItem, depositFaqItem, ownerCtaBlock } from './common';
 
 const pick = (lang: SeoLang, tr: string, en: string) => (lang === 'en' ? en : tr);
@@ -52,8 +53,8 @@ function bookingGroup(lang: SeoLang): FaqItem[] {
       q: pick(lang, 'Randevum ne zaman kesinleşir?', 'When is my booking confirmed?'),
       a: pick(
         lang,
-        'İşletme otomatik onay kullanıyorsa, ertesi gün ve sonrası için aldığınız randevular ödeme adımı tamamlandığında onaylanır. Aynı gün için alınan randevular ile otomatik onay kullanmayan işletmelerin randevuları işletmenin onayını bekler. İşletme talebi reddeder ya da randevu saatine kadar onaylamazsa randevu iptal olur ve ödediğiniz kapora tamamen iade edilir.',
-        'If the business uses automatic confirmation, bookings for the next day or later are confirmed once the payment step is completed. Same-day bookings, and bookings at businesses that do not use automatic confirmation, wait for the business’s approval. If the business declines or does not approve before the start time, the booking is cancelled and your deposit is refunded in full.',
+        'İşletme otomatik onay kullanıyorsa, ertesi gün ve sonrası için aldığınız randevular kapora varsa ödeme adımı tamamlandığında, kapora yoksa randevuyu oluşturduğunuz anda onaylanır. Aynı gün için alınan randevular ile otomatik onay kullanmayan işletmelerin randevuları işletmenin onayını bekler. İşletme talebi reddeder ya da randevu saatine kadar onaylamazsa randevu iptal olur ve ödediğiniz kapora tamamen iade edilir.',
+        'If the business uses automatic confirmation, bookings for the next day or later are confirmed once the payment step is completed or, when there is no deposit, as soon as you book. Same-day bookings, and bookings at businesses that do not use automatic confirmation, wait for the business’s approval. If the business declines or does not approve before the start time, the booking is cancelled and your deposit is refunded in full.',
       ),
     },
     {
@@ -75,14 +76,19 @@ function paymentGroup(lang: SeoLang): FaqItem[] {
         'Payment services are provided by PAYTR Ödeme ve Elektronik Para Kuruluşu A.Ş. You enter your card details on PayTR’s secure payment page and the payment is completed with your bank’s 3D Secure verification. Your card number, expiry date and security code are never seen or stored by Rango or the business.',
       ),
     },
-    {
-      q: pick(lang, 'Ödeme ekranında “test ödemesi” yazıyor; bu ne anlama geliyor?', 'The payment screen says “test payment”. What does that mean?'),
-      a: pick(
-        lang,
-        'Platform test modunda çalıştığı sürece ödeme ekranındaki işlem bir test ödemesidir: kartınızdan herhangi bir tutar çekilmez ve hizmet bedelinin tamamını işletmede ödersiniz. Bu durum ödeme ekranında açıkça belirtilir.',
-        'While the platform runs in test mode, the transaction on the payment screen is a test payment: nothing is charged to your card and you pay the full price at the business. The payment screen states this clearly.',
-      ),
-    },
+    // Shown only while no real money is charged (PAYMENTS_IN_TEST_MODE, config.ts).
+    ...(PAYMENTS_IN_TEST_MODE
+      ? [
+          {
+            q: pick(lang, 'Ödeme ekranında test modu uyarısı görüyorum; bu ne anlama geliyor?', 'The payment screen shows a test-mode warning. What does that mean?'),
+            a: pick(
+              lang,
+              'Ödeme ekranında “TEST MODU” ya da “PayTR test modu” uyarısı görünüyorsa işlem bir test ödemesidir: kartınızdan gerçek tahsilat yapılmaz ve hizmet bedelinin tamamını işletmede ödersiniz. Ödeme tamamlandığında onay ekranında kapora “test, tahsil edilmedi” olarak gösterilir.',
+              'If the payment screen shows “TEST MODE” or “PayTR test mode”, the transaction is a test payment: nothing is actually charged to your card and you pay the full price at the business. After the payment, the confirmation screen shows the deposit as “test, not charged”.',
+            ),
+          },
+        ]
+      : []),
     {
       q: pick(lang, 'Fiyatlara vergiler dahil mi?', 'Do prices include taxes?'),
       a: pick(lang, 'Evet. Tüm fiyatlar Türk Lirası cinsindendir ve vergiler dahildir.', 'Yes. All prices are in Turkish Lira and include taxes.'),
@@ -107,8 +113,8 @@ function cancellationGroup(lang: SeoLang): FaqItem[] {
       q: pick(lang, 'Randevumu başka bir saate alabilir miyim?', 'Can I move my booking to another time?'),
       a: pick(
         lang,
-        'Evet. İşletmenin iptal süresi içinde ve platformun tanıdığı erteleme hakkı sayısı kadar, randevunuzu uygun başka bir saate erteleyebilirsiniz.',
-        'Yes. Within the business’s cancellation window, and as many times as the platform’s rescheduling allowance permits, you can move your booking to another free time.',
+        'Evet. İşletmenin ücretsiz iptal süresi dolmadan ve platformun tanıdığı erteleme hakkı sayısı kadar, randevunuzu uygun başka bir saate erteleyebilirsiniz.',
+        'Yes. Until the business’s free-cancellation deadline, and as many times as the platform’s rescheduling allowance permits, you can move your booking to another free time.',
       ),
     },
     {
@@ -116,7 +122,7 @@ function cancellationGroup(lang: SeoLang): FaqItem[] {
       a: pick(
         lang,
         'Cayma süresi sona ermiş onaylı bir randevuyu iptal süresi geçtikten sonra iptal eder veya bildirimde bulunmadan randevuya gelmezseniz kapora, işletmenin ayırdığı zamanın karşılığı olarak iade edilmez.',
-        'If you cancel a confirmed booking after the cancellation window has passed (and the withdrawal period has ended), or do not show up without notice, the deposit is not refunded, in return for the time the business reserved.',
+        'If you cancel a confirmed booking after the free-cancellation deadline has passed (and the withdrawal period has ended), or do not show up without notice, the deposit is not refunded, in return for the time the business reserved.',
       ),
       link: policy,
     },
@@ -246,7 +252,7 @@ export function faqPage(lang: SeoLang): PageModel {
       title: pick(lang, `Sık Sorulan Sorular: Randevu, Kapora, İptal ve İade | ${SITE_NAME}`, `FAQ: Booking, Deposits, Cancellations & Refunds | ${SITE_NAME}`),
       description: pick(
         lang,
-        'Rango’da online randevu nasıl alınır, kapora nedir, randevu nasıl iptal edilir, iade ne zaman yapılır, işletmeler nasıl katılır? Sık sorulan soruların yanıtları.',
+        'Rango’da online randevu nasıl alınır, kapora nedir, randevu nasıl iptal edilir, iade ne zaman yapılır, işletmeler nasıl katılır? Soruların yanıtları.',
         'How to book online with Rango, what the deposit is, how to cancel, when refunds arrive and how businesses join: answers to frequently asked questions.',
       ),
       path: FAQ_PATH,

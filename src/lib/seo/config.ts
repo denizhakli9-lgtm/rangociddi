@@ -19,3 +19,12 @@ export const TEST_BUSINESS_SLUGS: ReadonlySet<string> = new Set([
 export function isTestBusiness(slug: string | null | undefined): boolean {
   return !!slug && TEST_BUSINESS_SLUGS.has(slug);
 }
+
+/**
+ * Ödeme altyapısı test modundayken (Yönetim → Ayarlar → Ödeme altyapısı: "Test" ya da
+ * "PayTR test") karttan gerçek tahsilat yapılmaz. Bu değer `true` iken kapora anlatılan
+ * yerlere bu not eklenir ve Sık Sorulan Sorular'da "test modu" sorusu gösterilir.
+ *
+ * Site "PayTR canlı"ya geçtiğinde `false` yapıp yeniden yayınlayın.
+ */
+export const PAYMENTS_IN_TEST_MODE = true;

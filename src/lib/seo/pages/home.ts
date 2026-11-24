@@ -4,9 +4,9 @@
  * `pages/customer/Home.tsx`, statik ana sayfada `seo/prerender.ts` aynı listeyi gösterir.
  */
 import type { Block, BlockLink, FaqItem } from '../blocks';
-import { faqSchema, type SeoCategory, type SeoLang } from '../meta';
+import { businessPath, faqSchema, itemListSchema, type SeoCategory, type SeoLang } from '../meta';
 import { cityCategoryPath, cityPath, districtPath, locativeTr, type PlaceCity } from '../places';
-import { buildFacets, isLandingIndexable, type ListingBusiness } from '../listing';
+import { buildFacets, isBookable, isLandingIndexable, sortForListing, toSummary, type ListingBusiness } from '../listing';
 import { FAQ_PATH, bookingFaqItems, howItWorksBlock, ownerCtaBlock } from './common';
 
 const pick = (lang: SeoLang, tr: string, en: string) => (lang === 'en' ? en : tr);
@@ -16,9 +16,21 @@ export interface HomeExtrasInput {
   city: PlaceCity;
   /** Active categories in display order, in the page's language. */
   categories: SeoCategory[];
-  /** The city's approved businesses; null while they are not known (the link sections are left out). */
+  /** The city's approved businesses; null while they are not known (the business and link sections are left out). */
   businesses: ListingBusiness[] | null;
+  /** The project's Supabase URL, needed to show a business's own photo (see sectorCovers.ts). */
+  supabaseUrl?: string;
 }
+
+/** How many businesses the home page lists; all of them are on the city page. */
+const MAX_HOME_BUSINESSES = 12;
+
+/** The real, bookable businesses shown on the home page, most popular first. */
+function homeBusinesses(input: HomeExtrasInput): ListingBusiness[] {
+  return input.businesses ? sortForListing(input.businesses.filter(isBookable)).slice(0, MAX_HOME_BUSINESSES) : [];
+}
+
+const businessesTitle = (lang: SeoLang) => pick(lang, 'Rango’da randevu alabileceğiniz işletmeler', 'Businesses you can book on Rango');
 
 export function homeFaqItems(lang: SeoLang): FaqItem[] {
   return [
@@ -45,7 +57,18 @@ export function homeFaqItems(lang: SeoLang): FaqItem[] {
 export function homeExtraBlocks(input: HomeExtrasInput): Block[] {
   const { lang, city, categories, businesses } = input;
   const count = (n: number) => pick(lang, `${n} işletme`, n === 1 ? '1 business' : `${n} businesses`);
-  const blocks: Block[] = [howItWorksBlock(lang)];
+  const blocks: Block[] = [];
+
+  const listed = homeBusinesses(input);
+  if (listed.length) {
+    const labelOf = (b: ListingBusiness) => categories.find((c) => c.slug === b.categories?.slug)?.name;
+    blocks.push({
+      kind: 'businesses',
+      title: businessesTitle(lang),
+      items: listed.map((b) => toSummary(b, lang, { categoryLabel: labelOf(b), supabaseUrl: input.supabaseUrl })),
+    });
+  }
+  blocks.push(howItWorksBlock(lang));
 
   if (businesses) {
     const facets = buildFacets(city, businesses);
@@ -75,7 +98,14 @@ export function homeExtraBlocks(input: HomeExtrasInput): Block[] {
   return blocks;
 }
 
-/** Structured data for the questions shown on the home page. */
-export function homeFaqSchema(lang: SeoLang): Record<string, unknown> {
-  return faqSchema(homeFaqItems(lang));
+/**
+ * Structured data for the home page: the businesses it lists and the two questions about Rango
+ * itself. The booking questions are shown here too, but they are marked up once, on /sss.
+ */
+export function homeSchemas(input: HomeExtrasInput): Record<string, unknown>[] {
+  const listed = homeBusinesses(input);
+  return [
+    ...(listed.length ? [itemListSchema(businessesTitle(input.lang), listed.map((b) => ({ name: b.name, path: businessPath(b.slug) })))] : []),
+    faqSchema(homeFaqItems(input.lang).slice(0, 2)),
+  ];
 }

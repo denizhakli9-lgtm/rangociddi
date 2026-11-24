@@ -23,6 +23,11 @@ Options -Indexes
   # aşağıdaki SPA kuralı index.html'i verir. Bu satırı silmeyin.
   # __SEO_STATIC_PAGES__
 
+  # Güvenlik ağı: yukarıdaki kurallardan biri eşleşti ama statik dosya sunucuda yoksa (eksik
+  # yükleme gibi), 404 yerine uygulamanın kendisi açılır.
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^_seo/ /index.html [L]
+
   # Tek sayfa uygulama (SPA): var olmayan yolları index.html'e yönlendir. Dosya uzantılı
   # adresler hariçtir (ör. artık bulunmayan /assets/eski.js ya da /favicon.ico): onlar uygulama
   # sayfası yerine gerçek bir 404 döner. Uygulamanın kendi adreslerinde nokta yoktur.

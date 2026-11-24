@@ -1,4 +1,5 @@
-import { COMPANY, LEGAL_UPDATED_AT, LEGAL_VERSIONS, PAYMENT_PROVIDER, SALE_CONSENT_TEXT, SALE_CONSENT_TEXT_TEST, filled, type LegalSlug } from '@/lib/legal';
+// Göreli import: bu dosyayı derleme eklentisi de okur (seo/prerender.ts); orada "@/" takma adı yoktur.
+import { COMPANY, LEGAL_UPDATED_AT, LEGAL_VERSIONS, PAYMENT_PROVIDER, SALE_CONSENT_TEXT, SALE_CONSENT_TEXT_TEST, filled, type LegalSlug } from '../../lib/legal';
 
 const PAYTR_PAGE = `${PAYMENT_PROVIDER.shortName}’nin güvenli ödeme sayfasında (${PAYMENT_PROVIDER.website.replace('https://', '')})`;
 

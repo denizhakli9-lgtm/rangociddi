@@ -33,27 +33,17 @@ export function routeMeta(pathname: string, lang: SeoLang): PageMeta {
   if (path === '/kategoriler') return categoriesMeta(lang);
   if (path === '/ara') return searchMeta(lang);
   if (path.startsWith('/yasal/')) return legalMeta(lang, path.slice('/yasal/'.length)) ?? privateMeta(lang, path);
-  if (/^\/i\/[^/]+$/.test(path) || isLandingPath(path) || CONTENT_PATHS.includes(path)) {
-    // Shown only until the page has loaded; it then sets its own (see BusinessDetail, Landing, ContentPage).
+  if (CONTENT_PATHS.includes(path)) {
+    // Shown only until the page's own code has loaded; it then sets its own (see pages/ContentPage.tsx).
     return { title: DEFAULT_TITLE[lang], description: homeMeta(lang).description, path };
   }
-  if (path === '/giris') {
-    return {
-      title: pick(lang, 'Giriş Yap | Rango', 'Sign in | Rango'),
-      description: pick(lang, 'Rango hesabınıza giriş yapın; randevularınızı yönetin, favori işletmelerinize hızlıca ulaşın.', 'Sign in to your Rango account to manage your bookings and reach your favourite businesses.'),
-      path,
-    };
+  if (/^\/i\/[^/]+$/.test(path) || isLandingPath(path)) {
+    // Whether a business or listing page may be indexed depends on its data (a sample or test
+    // business, too few listings, an unknown address). Until the page has loaded that data and
+    // set its own metadata, and whenever loading fails, it stays out of the index.
+    return privateMeta(lang, path);
   }
-  if (path === '/kayit') {
-    return {
-      title: pick(lang, 'Ücretsiz Hesap Oluştur | Rango', 'Create a free account | Rango'),
-      description: pick(
-        lang,
-        'Rango’ya ücretsiz üye olun, İzmir’deki kuaför, berber ve güzellik merkezlerinden online randevu alın. İşletme sahibiyseniz işletmenizi Rango’ya ekleyin.',
-        'Join Rango for free and book hair salons, barbers and beauty salons in İzmir online. Own a business? Add it to Rango.',
-      ),
-      path,
-    };
-  }
+  if (path === '/giris') return privateMeta(lang, path, pick(lang, 'Giriş Yap', 'Sign in'));
+  if (path === '/kayit') return privateMeta(lang, path, pick(lang, 'Ücretsiz Hesap Oluştur', 'Create a free account'));
   return privateMeta(lang, path);
 }

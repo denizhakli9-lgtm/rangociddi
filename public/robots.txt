@@ -1,6 +1,6 @@
 # Rango - https://rango.com.tr
-# Giriş gerektiren ve kişiye özel sayfalar taranmaz. Arama, sıralama ve filtre sonuçları
-# şehir/kategori sayfalarının (/izmir/...) kopyası olduğu için dışarıda tutulur.
+# Giriş gerektiren ve kişiye özel sayfalar taranmaz. Arama sayfası (/ara ve tüm filtreleri)
+# burada engellenmez: sayfanın kendisi "noindex" taşır ve tarayıcının bunu görebilmesi gerekir.
 # /_seo/ altındaki dosyalar asıl adreslerinde sunulur; kendi yollarının taranması gerekmez.
 
 User-agent: *
@@ -18,12 +18,6 @@ Disallow: /sifre-yenile
 Disallow: /sifremi-unuttum
 Disallow: /odeme-sonuc.html
 Disallow: /_seo/
-Disallow: /*/randevu
-Disallow: /ara?*q=
-Disallow: /ara?*sirala=
-Disallow: /ara?*fiyat=
-Disallow: /ara?*puan=
-Disallow: /ara?*cinsiyet=
-Disallow: /ara?*bugun=
+Disallow: /i/*/randevu
 
 Sitemap: https://rango.com.tr/sitemap.xml

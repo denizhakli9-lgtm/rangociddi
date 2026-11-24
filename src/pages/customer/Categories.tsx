@@ -1,29 +1,39 @@
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowUpRight } from 'lucide-react';
-import { fetchCategories, fetchCategoryStats } from '@/lib/api';
-import { useAsync } from '@/lib/useAsync';
+import { useCategories, useCityListing } from '@/lib/landingApi';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { ErrorState } from '@/components/ui/Feedback';
 import { formatTRY } from '@/lib/format';
 import { categoryDescription, categoryName } from '@/i18n/categories';
 import { locale, tx } from '@/i18n/locale';
 import { categoriesMeta } from '@/lib/seo/meta';
+import { isBookable, isLandingIndexable, lowestPrice } from '@/lib/seo/listing';
 import { useSeo } from '@/lib/seo/useSeo';
 import { DEFAULT_CITY, cityCategoryPath } from '@/lib/seo/places';
 
 export default function Categories() {
-  const { data, loading, error, reload } = useAsync(async () => {
-    const [categories, stats] = await Promise.all([fetchCategories(), fetchCategoryStats()]);
-    return { categories, stats: new Map(stats.map((s) => [s.category_id, s])) };
-  }, []);
-  const categories = data?.categories ?? [];
-  useSeo(data ? categoriesMeta(locale(), categories.map((c) => ({ slug: c.slug, name: categoryName(c) }))) : null);
+  // Both are known at once when the page was opened as static HTML (embedded data), so the
+  // list appears without a loading state.
+  const { data, loading, error, reload } = useCategories();
+  const listingQ = useCityListing(DEFAULT_CITY.name);
+  const categories = useMemo(() => data ?? [], [data]);
+  // The numbers on a card follow the rule of the page it opens: real businesses that can be booked.
+  const bookable = useMemo(() => (listingQ.data ?? []).filter(isBookable), [listingQ.data]);
+  const lang = locale();
+  const meta = useMemo(() => {
+    if (!data) return null;
+    // The structured list names only the categories whose own page may be indexed.
+    const indexable = categories.filter((c) => isLandingIndexable('cityCategory', bookable.filter((b) => b.categories?.slug === c.slug).length));
+    return categoriesMeta(lang, indexable.map((c) => ({ slug: c.slug, name: categoryName(c) })));
+  }, [data, categories, bookable, lang]);
+  useSeo(meta);
 
   return (
     <div>
       <p className="eyebrow mb-2">{tx('Kategoriler', 'Categories')}</p>
       <h1 className="font-display text-4xl text-white">{tx('Size iyi gelecek her şey', 'Everything that feels good')}</h1>
-      <p className="mt-2 max-w-xl text-sm text-mist">{tx('Kadın ve erkek müşterilere özel hizmet veren seçkin işletmeleri kategoriye göre keşfedin.', 'Browse selected businesses for women and men by category.')}</p>
+      <p className="mt-2 max-w-xl text-sm text-mist">{tx('Kadınlara ve erkeklere hizmet veren işletmeleri kategoriye göre keşfedin.', 'Browse businesses for women and men by category.')}</p>
 
       {error ? (
         <div className="mt-8"><ErrorState onRetry={reload} error={error} /></div>
@@ -32,9 +42,9 @@ export default function Categories() {
           {loading
             ? Array.from({ length: 6 }).map((_, i) => <div key={i} className="skeleton h-40" />)
             : categories.map((c, idx) => {
-                const stat = data?.stats.get(c.id);
-                const count = stat?.business_count ?? 0;
-                const minPrice = stat?.min_price ?? 0;
+                const listed = bookable.filter((b) => b.categories?.slug === c.slug);
+                const count = listed.length;
+                const minPrice = lowestPrice(listed) ?? 0;
                 return (
                   <Link
                     key={c.id}
@@ -51,9 +61,16 @@ export default function Categories() {
                     </div>
                     <h2 className="relative mt-5 font-display text-2xl text-white">{categoryName(c)}</h2>
                     <p className="relative mt-1 line-clamp-2 text-xs text-mist-2">{categoryDescription(c)}</p>
-                    <p className="relative mt-4 text-xs text-mist">
-                      <span className="text-white">{tx(`${count} işletme`, count === 1 ? '1 business' : `${count} businesses`)}</span>
-                      {minPrice > 0 && <> · {tx(`${formatTRY(minPrice)}’den başlayan`, `from ${formatTRY(minPrice)}`)}</>}
+                    {/* The line keeps its height while the numbers load, so the cards do not jump. */}
+                    <p className="relative mt-4 min-h-4 text-xs text-mist">
+                      {count > 0 ? (
+                        <>
+                          <span className="text-white">{tx(`${count} işletme`, count === 1 ? '1 business' : `${count} businesses`)}</span>
+                          {minPrice > 0 && <> · {tx(`${formatTRY(minPrice)}’den başlayan`, `from ${formatTRY(minPrice)}`)}</>}
+                        </>
+                      ) : (
+                        listingQ.data && <span className="text-mist-2">{tx('Yakında', 'Coming soon')}</span>
+                      )}
                     </p>
                   </Link>
                 );

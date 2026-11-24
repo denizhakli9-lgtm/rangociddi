@@ -8,6 +8,9 @@ import { businessPath, clip, type SeoBusiness, type SeoHours, type SeoLang, type
 import { districtByName, type PlaceCity, type PlaceDistrict } from './places';
 import { coverChoice } from '../sectorCovers';
 import { isTestBusiness } from './config';
+import { formatPrice } from './format';
+
+export { formatPrice };
 
 export interface ListingBusiness extends SeoBusiness {
   id?: string;
@@ -15,18 +18,6 @@ export interface ListingBusiness extends SeoBusiness {
   services: SeoService[];
   working_hours?: SeoHours[];
   booking_count?: number | null;
-}
-
-/** ₺250 (whole lira), matching the app's `formatTRY`. */
-export function formatPrice(value: number | string, lang: SeoLang = 'tr'): string {
-  const amount = Number(value);
-  return new Intl.NumberFormat(lang === 'en' ? 'en-GB' : 'tr-TR', {
-    style: 'currency',
-    currency: 'TRY',
-    currencyDisplay: 'narrowSymbol',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: Number.isInteger(amount) ? 0 : 2,
-  }).format(Number.isFinite(amount) ? amount : 0);
 }
 
 /** Seeded sample businesses have no owner; they are shown as examples and cannot be booked. */
@@ -152,7 +143,8 @@ export function toSummary(b: ListingBusiness, lang: SeoLang, options: SummaryOpt
     priceFrom: prices.length ? formatPrice(Math.min(...prices), lang) : undefined,
     rating: reviews > 0 && rating > 0 ? rating.toFixed(1) : undefined,
     reviewCount: reviews > 0 ? reviews : undefined,
-    description: b.description?.trim() ? clip(b.description, 140) : undefined,
+    // Sample businesses carry invented marketing texts; their cards show facts only.
+    description: !isSampleBusiness(b) && b.description?.trim() ? clip(b.description, 140) : undefined,
     image: {
       src: cover.placeholder ? `/${cover.src}` : cardImageSrc(cover.src),
       alt: [b.name, [b.district, category].filter(Boolean).join(' ')].filter(Boolean).join(' – '),

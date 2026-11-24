@@ -7,6 +7,7 @@
  */
 import { COMPANY, LEGAL_LINKS, type LegalSlug } from '../legal';
 import { isTestBusiness } from './config';
+import { formatPrice } from './format';
 import { DEFAULT_CITY, cityCategoryPath, cityPath } from './places';
 
 export const SITE_URL = 'https://rango.com.tr';
@@ -134,11 +135,6 @@ export function websiteSchema(): Record<string, unknown> {
     url: `${SITE_URL}/`,
     inLanguage: 'tr-TR',
     publisher: { '@id': ORGANIZATION_ID },
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: { '@type': 'EntryPoint', urlTemplate: `${SITE_URL}/ara?q={search_term_string}` },
-      'query-input': 'required name=search_term_string',
-    },
   };
 }
 
@@ -194,6 +190,11 @@ const BUSINESS_TYPES: Record<string, string> = {
 };
 
 const MAX_SCHEMA_REVIEWS = 5;
+
+/** Same test as `isDistrictCentre` in src/lib/maps.ts. */
+function isDistrictCentre(latitude: number, longitude: number): boolean {
+  return DEFAULT_CITY.districts.some((d) => Math.abs(d.lat - latitude) < 0.00005 && Math.abs(d.lng - longitude) < 0.00005);
+}
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 export function businessPath(slug: string): string {
@@ -225,7 +226,8 @@ export function localBusinessSchema(b: SeoBusiness, services: SeoService[] = [],
   };
   if (b.description?.trim()) schema.description = clip(b.description, 300);
   if (extras.photo) schema.image = extras.photo;
-  if (b.latitude != null && b.longitude != null) {
+  // A business created without a map pin is stored with its district's centre; that is not its location.
+  if (b.latitude != null && b.longitude != null && !isDistrictCentre(Number(b.latitude), Number(b.longitude))) {
     schema.geo = { '@type': 'GeoCoordinates', latitude: Number(b.latitude), longitude: Number(b.longitude) };
   }
   if (prices.length) {
@@ -284,14 +286,20 @@ export const DEFAULT_TITLE: Record<SeoLang, string> = {
   en: 'Rango | The new way to book.',
 };
 
+/** Keep in step with the tags in index.html (the shell every address starts from). */
+export const HOME_TITLE: Record<SeoLang, string> = {
+  tr: 'Rango | Online Kuaför, Berber ve Güzellik Randevusu',
+  en: 'Rango | Book Hair, Barber & Beauty Appointments Online',
+};
+export const HOME_DESCRIPTION: Record<SeoLang, string> = {
+  tr: 'Rango ile kuaför, berber ve güzellik işletmelerinden online randevu alın. İzmir’deki işletmeleri inceleyin, hizmet ve fiyatları karşılaştırın, saatinizi seçin.',
+  en: 'Book hair, barber and beauty businesses online with Rango. Browse businesses in İzmir, compare services and prices, and pick a time that suits you.',
+};
+
 export function homeMeta(lang: SeoLang): PageMeta {
   return {
-    title: pick(lang, 'Rango | İzmir Online Kuaför, Berber ve Güzellik Randevusu', 'Rango | Book Hair, Barber & Beauty Appointments in İzmir'),
-    description: pick(
-      lang,
-      'İzmir’de kuaför, berber, güzellik merkezi, spa ve cilt bakımı için online randevu. Hizmetleri ve fiyatları karşılaştırın, uygun saati seçin, yerinizi saniyeler içinde ayırtın.',
-      'Book hair salons, barbers, beauty salons, spas and skin care in İzmir online. Compare services and prices, pick a time and secure your spot in seconds.',
-    ),
+    title: HOME_TITLE[lang],
+    description: HOME_DESCRIPTION[lang],
     path: '/',
     jsonLd: [organizationSchema(), websiteSchema()],
   };
@@ -362,23 +370,45 @@ export function businessMeta(
 ): PageMeta {
   const category = categoryLabel || b.categories?.name || '';
   const place = [b.district, b.city].filter(Boolean).join(', ');
-  const titleMiddle = [b.district, category].filter(Boolean).join(' ');
   const indexable = isIndexableBusiness(b, services);
-  const intro = b.description?.trim() ? `${b.description.trim().replace(/[.!?]+$/, '')}. ` : '';
   const crumbs = [
     { name: SITE_NAME, path: '/' },
     { name: DEFAULT_CITY.name, path: cityPath(DEFAULT_CITY) },
   ];
   if (b.categories?.slug && category) crumbs.push({ name: category, path: categoryPath(b.categories.slug) });
   crumbs.push({ name: b.name, path: businessPath(b.slug) });
+
+  // Title: the fullest form that fits a search result; optional parts are dropped, never cut mid-word.
+  const brand = pick(lang, 'Rango Randevu', 'Book on Rango');
+  const lowerName = b.name.toLocaleLowerCase('tr-TR');
+  const categoryPart = category && !lowerName.includes(category.toLocaleLowerCase('tr-TR')) ? category : '';
+  const districtPart = b.district && !lowerName.includes(b.district.toLocaleLowerCase('tr-TR')) ? b.district : '';
+  const title =
+    [
+      `${b.name} – ${[districtPart, categoryPart].filter(Boolean).join(' ')} | ${brand}`,
+      `${b.name} – ${districtPart} | ${brand}`,
+      `${b.name} | ${brand}`,
+    ].find((candidate) => !candidate.includes('–  |') && !candidate.includes('– |') && candidate.length <= 60) ?? `${clip(b.name, 50)} | ${SITE_NAME}`;
+
+  // Description: the business's own text when it has one, otherwise what it offers.
+  const about = b.description?.trim() ? `${b.description.trim().replace(/[.!?]+$/, '')}. ` : '';
+  const names = services.slice(0, 3).map((service) => service.name.trim()).filter(Boolean);
+  const prices = services.map((service) => Number(service.price)).filter((p) => Number.isFinite(p) && p > 0);
+  const offer =
+    !about && names.length
+      ? pick(
+          lang,
+          ` ${names.join(', ')}${services.length > names.length ? ' ve diğer hizmetler' : ''}.${prices.length ? ` En düşük hizmet fiyatı ${formatPrice(Math.min(...prices), lang)}.` : ''}`,
+          ` ${names.join(', ')}${services.length > names.length ? ' and more' : ''}.${prices.length ? ` Prices start at ${formatPrice(Math.min(...prices), lang)}.` : ''}`,
+        )
+      : '';
+  const who = `${b.name}${place ? ` (${place})` : ''}`;
   return {
-    title: clip(`${b.name}${titleMiddle ? ` – ${titleMiddle}` : ''} | ${pick(lang, 'Rango Randevu', 'Book on Rango')}`, 70),
+    title,
     description: clip(
-      pick(
-        lang,
-        `${intro}${b.name}${place ? ` (${place})` : ''}: hizmetler, fiyatlar ve online randevu Rango’da.`,
-        `${intro}${b.name}${place ? ` (${place})` : ''}: services, prices and online booking on Rango.`,
-      ),
+      offer
+        ? pick(lang, `${who}:${offer} Online randevu Rango’da.`, `${who}:${offer} Book online on Rango.`)
+        : pick(lang, `${about}${who}: hizmetler, fiyatlar ve online randevu Rango’da.`, `${about}${who}: services, prices and online booking on Rango.`),
     ),
     path: businessPath(b.slug),
     noindex: !indexable,

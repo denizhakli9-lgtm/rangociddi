@@ -22,7 +22,7 @@ function normalize(rows: ListedBusiness[]): ListedBusiness[] {
 }
 
 export async function fetchCityListing(city: string): Promise<ListedBusiness[]> {
-  const { data, error } = await supabase.from('businesses').select(LISTING_SELECT).eq('status', 'approved').eq('city', city).order('name').limit(1000);
+  const { data, error } = await supabase.from('businesses').select(LISTING_SELECT).eq('status', 'approved').eq('city', city).eq('services.is_active', true).order('name').limit(1000);
   if (error) throw error;
   return normalize((data ?? []) as unknown as ListedBusiness[]);
 }

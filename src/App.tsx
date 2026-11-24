@@ -1,11 +1,16 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Link, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { CustomerLayout } from '@/components/layout/CustomerLayout';
-import { RequireAuth } from '@/components/layout/RequireAuth';
+import { ProfileLoadError, RequireAuth } from '@/components/layout/RequireAuth';
 import { PageLoader } from '@/components/ui/Feedback';
 import { ScrollToTop } from '@/components/ScrollToTop';
 import { CookieNotice } from '@/components/legal/CookieNotice';
 import { maintenanceActive } from '@/lib/maintenance';
+import { isNative } from '@/lib/platform';
+import { lazyPage } from '@/lib/lazyPage';
+import { homePathFor, useAuth } from '@/contexts/AuthContext';
+import { RouteSeo } from '@/lib/seo/useSeo';
+import { CITIES } from '@/lib/seo/places';
 import Splash from '@/pages/Splash';
 import Login from '@/pages/auth/Login';
 import Home from '@/pages/customer/Home';
@@ -15,9 +20,9 @@ const Register = lazy(() => import('@/pages/auth/Register'));
 const ForgotPassword = lazy(() => import('@/pages/auth/ForgotPassword'));
 const ResetPassword = lazy(() => import('@/pages/auth/ResetPassword'));
 const LocationSelect = lazy(() => import('@/pages/customer/LocationSelect'));
-const SearchPage = lazy(() => import('@/pages/customer/Search'));
-const Categories = lazy(() => import('@/pages/customer/Categories'));
-const BusinessDetail = lazy(() => import('@/pages/customer/BusinessDetail'));
+const SearchPage = lazyPage(() => import('@/pages/customer/Search'), /^\/ara\/?$/);
+const Categories = lazyPage(() => import('@/pages/customer/Categories'), /^\/kategoriler\/?$/);
+const BusinessDetail = lazyPage(() => import('@/pages/customer/BusinessDetail'), /^\/i\/[^/]+\/?$/);
 const BookingWizard = lazy(() => import('@/pages/customer/booking/BookingWizard'));
 const Payment = lazy(() => import('@/pages/customer/booking/Payment'));
 const Confirmation = lazy(() => import('@/pages/customer/booking/Confirmation'));
@@ -26,18 +31,47 @@ const Favorites = lazy(() => import('@/pages/customer/Favorites'));
 const Profile = lazy(() => import('@/pages/customer/Profile'));
 const SupportCenter = lazy(() => import('@/pages/support/SupportCenter'));
 const Notifications = lazy(() => import('@/pages/Notifications'));
-const LegalPage = lazy(() => import('@/pages/legal/LegalPage'));
+const LegalPage = lazyPage(() => import('@/pages/legal/LegalPage'), /^\/yasal\//);
+const Landing = lazyPage(() => import('@/pages/customer/Landing'), new RegExp(`^/(?:${CITIES.map((c) => c.slug).join('|')})(?:/|$)`));
+const Faq = lazyPage(() => import('@/pages/Faq'), /^\/sss\/?$/);
+const ForBusiness = lazyPage(() => import('@/pages/ForBusiness'), /^\/isletmeler-icin\/?$/);
 
 const OwnerArea = lazy(() => import('@/pages/owner/OwnerArea'));
 const AdminArea = lazy(() => import('@/pages/admin/AdminArea'));
 const AdminSetup = lazy(() => import('@/pages/admin/AdminSetup'));
 const Maintenance = lazy(() => import('@/pages/Maintenance'));
 
+/** True when the site was opened through a password-recovery link (read before the auth client tidies the address). */
+const OPENED_WITH_RECOVERY = /type=recovery/.test(window.location.hash);
+
+/**
+ * The website's home page. The mobile app starts with the splash screen and the welcome
+ * slides; on the web "/" shows the home page itself, without a redirect, because it is the
+ * address search engines index and most visitors land on.
+ *
+ * It is used for both "/" and "/kesfet", so moving between the two addresses keeps the page
+ * mounted. What the old splash screen decided happens only when the site is opened at "/".
+ */
+function WebHome() {
+  const location = useLocation();
+  const { session, profile, loading } = useAuth();
+  if (location.pathname === '/') {
+    // `key` is "default" only for the address the site was opened with.
+    if (OPENED_WITH_RECOVERY && location.key === 'default') return <Navigate to="/sifre-yenile" replace />;
+    // Signed in, but the profile could not be read: offer retry / sign-out.
+    if (!loading && session && !profile) return <ProfileLoadError />;
+    // Business owners and admins continue to their own panel.
+    if (!loading && profile && homePathFor(profile) !== '/kesfet') return <Navigate to={homePathFor(profile)} replace />;
+  }
+  return <Home />;
+}
+
 /** The website while maintenance mode is on: every page shows the notice, only the legal texts stay open. */
 function MaintenanceRoutes() {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      <RouteSeo />
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/yasal" element={<Navigate to="/yasal/aydinlatma-metni" replace />} />
@@ -69,9 +103,10 @@ export default function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      <RouteSeo />
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          <Route path="/" element={<Splash />} />
+          {isNative && <Route path="/" element={<Splash />} />}
           <Route path="/hosgeldin" element={<Onboarding />} />
           <Route path="/giris" element={<Login />} />
           <Route path="/kayit" element={<Register />} />
@@ -79,7 +114,8 @@ export default function App() {
           <Route path="/sifre-yenile" element={<ResetPassword />} />
 
           <Route element={<CustomerLayout />}>
-            <Route path="/kesfet" element={<Home />} />
+            {!isNative && <Route path="/" element={<WebHome />} />}
+            <Route path="/kesfet" element={isNative ? <Home /> : <WebHome />} />
             <Route path="/konum" element={<LocationSelect />} />
             <Route path="/ara" element={<SearchPage />} />
             <Route path="/kategoriler" element={<Categories />} />
@@ -94,6 +130,12 @@ export default function App() {
             <Route path="/bildirimler" element={<RequireAuth><Notifications /></RequireAuth>} />
             <Route path="/yasal" element={<Navigate to="/yasal/aydinlatma-metni" replace />} />
             <Route path="/yasal/:slug" element={<LegalPage />} />
+            <Route path="/sss" element={<Faq />} />
+            <Route path="/isletmeler-icin" element={<ForBusiness />} />
+            {/* City, district and category pages: /izmir, /izmir/kuafor, /izmir/karsiyaka, /izmir/karsiyaka/berber */}
+            {CITIES.map((city) => (
+              <Route key={city.slug} path={`/${city.slug}/:first?/:second?`} element={<Landing />} />
+            ))}
           </Route>
 
           <Route path="/isletme/*" element={<RequireAuth roles={['business']}><OwnerArea /></RequireAuth>} />

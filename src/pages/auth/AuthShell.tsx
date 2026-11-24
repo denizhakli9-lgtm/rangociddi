@@ -6,11 +6,13 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { LanguageToggle } from '@/components/ui/LanguageToggle';
 import { useT } from '@/i18n/I18nProvider';
 import { tx } from '@/i18n/locale';
+import { useHomePath } from '@/lib/homePath';
 
 const IMAGE = 'https://images.pexels.com/photos/10317447/pexels-photo-10317447.jpeg?auto=compress&cs=tinysrgb&h=1400&w=1000';
 
 export function AuthShell({ eyebrow, title, subtitle, children }: { eyebrow: string; title: string; subtitle: string; children: ReactNode }) {
   const t = useT();
+  const homePath = useHomePath();
   return (
     <div className="grid min-h-screen bg-ink lg:grid-cols-[1.05fr_1fr]">
       <div className="relative hidden overflow-hidden lg:block">
@@ -23,7 +25,7 @@ export function AuthShell({ eyebrow, title, subtitle, children }: { eyebrow: str
       </div>
       <div className="flex flex-col px-6 py-8 sm:px-12 lg:px-20">
         <div className="mb-12 flex items-center justify-between gap-4">
-          <Link to="/kesfet" aria-label={tx('Rango ana sayfa', 'Rango home')}>
+          <Link to={homePath} aria-label={tx('Rango ana sayfa', 'Rango home')}>
             <Logo size="sm" />
           </Link>
           <div className="flex items-center gap-2">

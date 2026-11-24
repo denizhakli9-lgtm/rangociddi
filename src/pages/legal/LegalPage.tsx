@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { ChevronRight, Download, Languages, Mail } from 'lucide-react';
 import { COMPANY, LEGAL_LINKS, isPlaceholder, legalPath, type LegalSlug } from '@/lib/legal';
@@ -89,13 +88,6 @@ function ApplicationHelper() {
 export default function LegalPage() {
   const { slug } = useParams();
   const doc = slug ? LEGAL_DOCUMENTS[slug as LegalSlug] : undefined;
-
-  useEffect(() => {
-    if (doc) document.title = `${doc.title} | ${COMPANY.brand}`;
-    return () => {
-      document.title = `${COMPANY.brand} | ${tx('Randevunun yeni yolu.', 'The new way to book.')}`;
-    };
-  }, [doc]);
 
   if (!doc) return <Navigate to={legalPath('aydinlatma-metni')} replace />;
 

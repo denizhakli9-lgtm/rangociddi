@@ -1,0 +1,23 @@
+# Rango - https://rango.com.tr
+# Giriş gerektiren ve kişiye özel sayfalar taranmaz. Arama sayfası (/ara ve tüm filtreleri)
+# burada engellenmez: sayfanın kendisi "noindex" taşır ve tarayıcının bunu görebilmesi gerekir.
+# /_seo/ altındaki dosyalar asıl adreslerinde sunulur; kendi yollarının taranması gerekmez.
+
+User-agent: *
+Allow: /
+Disallow: /isletme/
+Disallow: /yonetim/
+Disallow: /odeme/
+Disallow: /onay/
+Disallow: /randevularim
+Disallow: /favoriler
+Disallow: /profil
+Disallow: /bildirimler
+Disallow: /destek
+Disallow: /sifre-yenile
+Disallow: /sifremi-unuttum
+Disallow: /odeme-sonuc.html
+Disallow: /_seo/
+Disallow: /i/*/randevu
+
+Sitemap: https://rango.com.tr/sitemap.xml

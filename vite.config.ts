@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath, URL } from 'node:url';
+import { seoPrerender } from './seo/prerender';
 
 /**
  * Writes the project's own Supabase host into dist/.htaccess so the
@@ -27,6 +28,38 @@ function supabaseCsp(supabaseUrl: string | undefined): Plugin {
         /* keep the safe-but-broad fallback */
       }
       writeFileSync(file, readFileSync(file, 'utf8').replaceAll('__SUPABASE_HOST__', host));
+    },
+  };
+}
+
+/**
+ * Sayfa açılışını hızlandıran <head> ipuçları (yalnızca derlemede eklenir):
+ *  - İlk ekrandaki metnin iki yazı tipi dosyası önceden istenir; böylece yedek yazı tipinden
+ *    asıl yazı tipine geçiş (ve bunun yol açtığı sayfa kayması) kısalır.
+ *  - Supabase'e bağlantı önceden kurulur; sayfanın ilk veri isteği beklemeden gider.
+ * Dosya adları her derlemede değiştiği (içerik özeti) için bu satırlar elle yazılamaz.
+ */
+function headHints(supabaseUrl: string): Plugin {
+  const PRELOAD_FONTS = [/^assets\/manrope-latin-400-normal-[\w-]+\.woff2$/, /^assets\/cormorant-garamond-latin-500-normal-[\w-]+\.woff2$/];
+  return {
+    name: 'rango-head-hints',
+    apply: 'build',
+    transformIndexHtml: {
+      order: 'post',
+      handler(_html, ctx) {
+        const files = Object.keys(ctx.bundle ?? {});
+        const fonts = PRELOAD_FONTS.map((pattern) => files.find((file) => pattern.test(file))).filter((file): file is string => !!file);
+        let origin: string | null = null;
+        try {
+          origin = new URL(supabaseUrl).origin;
+        } catch {
+          /* no hint without a valid address */
+        }
+        return [
+          ...(origin ? [{ tag: 'link', attrs: { rel: 'preconnect', href: origin, crossorigin: '' }, injectTo: 'head' as const }] : []),
+          ...fonts.map((file) => ({ tag: 'link', attrs: { rel: 'preload', as: 'font', type: 'font/woff2', href: `/${file}`, crossorigin: '' }, injectTo: 'head' as const })),
+        ];
+      },
     },
   };
 }
@@ -171,7 +204,21 @@ export default defineConfig(({ mode }) => {
       'import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY': JSON.stringify(supabase.key),
       'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(supabase.key),
     },
-    plugins: [react(), supabaseCsp(supabase.url)],
+    plugins: [react(), headHints(supabase.url), supabaseCsp(supabase.url), seoPrerender(supabase)],
+    build: {
+      rollupOptions: {
+        output: {
+          // Nadiren değişen kütüphaneler ayrı dosyalarda durur: uygulama her yayınlandığında
+          // ziyaretçiler yalnızca değişen uygulama dosyasını yeniden indirir.
+          manualChunks(id: string) {
+            if (!id.includes('node_modules')) return undefined;
+            if (/node_modules\/(react|react-dom|scheduler|react-router|react-router-dom)\//.test(id)) return 'react';
+            if (/node_modules\/(@supabase|iceberg-js|tslib)\//.test(id)) return 'supabase';
+            return undefined;
+          },
+        },
+      },
+    },
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),

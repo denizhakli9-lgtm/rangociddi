@@ -14,7 +14,9 @@ import { EmptyState, ErrorState } from '@/components/ui/Feedback';
 import { useT } from '@/i18n/I18nProvider';
 import { categoryDescription, categoryName, englishQueryToCategory } from '@/i18n/categories';
 import type { GenderFocus } from '@/lib/types';
-import { tx } from '@/i18n/locale';
+import { locale, tx } from '@/i18n/locale';
+import { searchMeta } from '@/lib/seo/meta';
+import { useSeo } from '@/lib/seo/useSeo';
 
 type Sort = DiscoverySort;
 const SORTS: { value: Sort; label: [string, string] }[] = [
@@ -73,6 +75,13 @@ export default function SearchPage() {
 
   const activeFilters = [maxPrice, minRating, gender, today].filter(Boolean).length;
   const currentCategory = categories.find((c) => c.slug === category);
+
+  // The search page is never indexed (see searchMeta); it only names the category it is showing.
+  useSeo(
+    category && !categoryData
+      ? null
+      : searchMeta(locale(), { category: currentCategory ? { slug: currentCategory.slug, name: categoryName(currentCategory), description: categoryDescription(currentCategory) } : null }),
+  );
 
   return (
     <div>

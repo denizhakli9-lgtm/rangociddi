@@ -14,11 +14,6 @@ interface I18nValue {
 
 const I18nContext = createContext<I18nValue | null>(null);
 
-const TITLES: Record<Locale, string> = {
-  tr: 'Rango | Randevunun yeni yolu.',
-  en: 'Rango | The new way to book.',
-};
-
 export function I18nProvider({ children, sloganIndex }: { children: ReactNode; sloganIndex: number }) {
   const [locale, setState] = useState<Locale>(chosenLocale);
 
@@ -28,8 +23,8 @@ export function I18nProvider({ children, sloganIndex }: { children: ReactNode; s
   }, []);
 
   useEffect(() => {
+    // Titles and descriptions follow the language too: RouteSeo re-runs when the app remounts.
     document.documentElement.lang = locale;
-    document.title = TITLES[locale];
   }, [locale]);
 
   const value = useMemo(() => ({ locale, setLocale, slogan: sloganFor(sloganIndex, locale) }), [locale, setLocale, sloganIndex]);

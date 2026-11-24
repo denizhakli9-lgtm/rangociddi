@@ -266,6 +266,7 @@ WHERE a.booking_code = 'VY…';
 ```
 
 **"PayTR canlı"ya geçmeden önce yapılması gerekenler (hukuki):**
+0. **Site metinleri:** Canlıya geçtiğiniz gün `src/lib/seo/config.ts` içindeki `PAYMENTS_IN_TEST_MODE` değerini `false` yapın (bkz. bölüm 7.6); aksi halde Sık Sorulan Sorular'da "test modu" notu kalır.
 1. **Cayma hakkı:** Sözleşme ve ön bilgilendirme, Mesafeli Sözleşmeler Yönetmeliği'ne göre 14 günlük cayma hakkını yazar; bu hak hizmete başlanana kadar geçerlidir. Gerçek tahsilatta iptal kuralı da buna uymalıdır. Müşteri cayma süresi içinde ve randevu başlamadan iptal ederse kapora iade edilmelidir. Bunun için `cancel_appointment` ve iptal penceresindeki uyarı güncellenmelidir. Kuaför ve güzellik hizmetlerinde istisna (md. 15/1-g) uygulanabileceğini düşünüyorsanız bunu bir avukatla netleştirin; o durumda metinler de değişmelidir (yeni sürüm).
 2. **Sözleşme örneğinin iletilmesi:** Ödemeden sonra müşteriye ön bilgilendirme ve sözleşmenin onayladığı sürümü e-postayla gönderilmelidir. E-posta bir "kalıcı veri saklayıcı"dır (TKHK md. 4, MSY md. 7). Şu an otomatik gönderim yok; isteyen müşteriye destekten gönderilir.
 3. **Hizmet sağlayıcı kimliği:** Ön bilgilendirmede işletmenin unvanı, vergi numarası, açık adresi ve telefonu gösterilmelidir (MSY md. 5/1-b, c). Bu bilgiler işletmelerden toplanmalıdır; PayTR alt işyeri tanımı için de gerekir.
@@ -275,7 +276,92 @@ WHERE a.booking_code = 'VY…';
 
 ---
 
-## 7. Bilerek ertelenen konular
+## 7. SEO (arama motoru görünürlüğü) – 23 Kasım 2026
+
+Bu bölümdeki her şey kodda hazırdır ve site yayınlandığında (GitHub'da `main`'e birleştirilip yeniden derlendiğinde) kendiliğinden devreye girer.
+
+### 7.1 Hangi sayfa dizine girer?
+
+| Adres | Arama motorunda | Not |
+| --- | --- | --- |
+| `/` | Evet | Ana sayfa. Web'de yönlendirme yoktur; `/kesfet` aynı sayfadır ve canonical adresi `/` olur. Mobil uygulama açılış ekranıyla başlamaya devam eder. |
+| `/izmir` | En az 1 işletme varsa | Şehir sayfası. |
+| `/izmir/<kategori>` (ör. `/izmir/berber`) | En az 1 işletme varsa | Kategori sayfası. Ana sayfadaki ve `/kategoriler`deki kategori kutuları buraya gider. |
+| `/izmir/<semt>` ve `/izmir/<semt>/<kategori>` | En az 2 işletme varsa | Tek işletmeli bir liste, o işletmenin kendi sayfasının kopyası olur; ikinci işletme gelince kendiliğinden açılır. |
+| `/i/<işletme>` | Sahibi ve en az bir hizmeti varsa | Örnek (sahipsiz) ve deneme işletmeleri hariç. |
+| `/kategoriler`, `/sss`, `/isletmeler-icin`, `/yasal/...` | Evet | |
+| `/ara` (her türlü arama, filtre, sıralama), `/giris`, `/kayit`, giriş gerektiren sayfalar | Hayır | `noindex`. |
+
+- "İşletme" burada **gerçek ve randevu alınabilir** işletme demektir: sahibi olan, en az bir aktif hizmeti olan ve deneme listesinde olmayan. Eşikler `src/lib/seo/listing.ts` → `INDEX_THRESHOLDS` içindedir.
+- Eşiğin altındaki sayfalar çalışır ama `noindex` taşır ve sitemap'e girmez. Bir şehir/semt/kategori sayfasında hiç gerçek işletme yoksa, sayfa boş kalmasın diye örnek işletmeler "Örnek işletme" etiketiyle gösterilir.
+- **Deneme işletmeleri:** `src/lib/seo/config.ts` → `TEST_BUSINESS_SLUGS`. Şu an yalnızca `black-blade` var (PayTR testinde kullanılan, tohum verisinden gelen işletme). Bu listedeki işletmeler uygulamada görünmeye devam eder ama Google'a gerçek işletme olarak sunulmaz. Yeni bir deneme işletmesi açarsanız adresindeki `/i/<...>` kısmını bu listeye ekleyin; işletmeyi kaldırırsanız listeden silin.
+
+### 7.2 Metinler nerede, nasıl değişir?
+
+- Şehir/semt/kategori sayfalarının tamamı (başlık, açıklama, liste, fiyat tablosu, sık sorulan sorular, bağlantılar) işletme verisinden üretilir: `src/lib/seo/pages/landing.ts`. Elle yazılmış, yere özgü bir iddia yoktur.
+- Sık Sorulan Sorular: `src/lib/seo/pages/faq.ts`. "İşletmeler için": `src/lib/seo/pages/forBusiness.ts`. Ana sayfanın alt bölümleri: `src/lib/seo/pages/home.ts`. Ortak bloklar: `src/lib/seo/pages/common.ts`.
+- **Metin kuralı:** Bu dosyalardaki her cümle uygulamanın gerçek davranışını ya da yasal metinleri anlatır. Sayı ("500+ salon"), üstünlük ("en iyi"), garanti, sabit komisyon oranı, ödeme takvimi, mağaza uygulaması gibi doğrulanamayan iddialar bilerek yazılmamıştır. İptal, cayma ve iade yanıtları İptal, Erteleme ve İade Koşulları'ndaki ifadeyle aynıdır; o metin, kapora/iptal kuralı ya da komisyon modeli değişirse bu dosyaları da güncelleyin.
+
+### 7.3 Teknik yapı (özet)
+
+- Her sayfanın başlığı, açıklaması, canonical adresi, paylaşım etiketleri ve yapısal verisi (schema.org: Organization, WebSite, LocalBusiness, BreadcrumbList, ItemList, FAQPage): `src/lib/seo/`.
+- Derleme (`npm run build`) sonunda `seo/prerender.ts`, dizine girecek her sayfa için `dist/_seo/` altına statik bir HTML yazar, sayfanın verisini içine gömer (uygulama açılınca "yükleniyor" ekranı göstermeden devralır) ve `sitemap.xml` üretir. Kategoriler ve işletmeler derleme anında Supabase'den okunur.
+- Aynı derleme, `dist/.htaccess` içine bu sayfaları asıl adreslerinde sunan kuralları yazar. `public/.htaccess` içindeki `# __SEO_STATIC_PAGES__` satırını **silmeyin**; kurallar onun yerine yazılır.
+- Arama motoru botları siteyi her zaman Türkçe görür (`src/i18n/locale.ts`).
+- Var olmayan dosya adresleri (ör. eski bir `/assets/...js`) artık uygulama sayfası yerine gerçek 404 döner. Statik sayfalardan biri sunucuda eksikse site bozulmaz; o adreste uygulamanın kendisi açılır.
+- İşletme ve liste sayfaları "önce kapalı" çalışır: sayfa verisini yükleyip dizine girebileceğini doğrulayana kadar (ve veri yüklenemezse) `noindex` kalır.
+
+### 7.4 Yayından sonra kontrol
+
+```bash
+curl -s https://rango.com.tr/robots.txt | head -3
+```
+```bash
+curl -s https://rango.com.tr/sitemap.xml | grep -c "<loc>"
+```
+```bash
+curl -s https://rango.com.tr/izmir | grep -o "<title>.*</title>"
+```
+```bash
+curl -s https://rango.com.tr/sss | grep -o "<title>.*</title>"
+```
+
+- İlk komut `# Rango - https://rango.com.tr` ile başlamalı, ikincisi 10'dan büyük bir sayı vermeli.
+- Üçüncü komut "İzmir … Randevusu | Rango" (başlık, o an listelenen kategorilerden oluşur), dördüncüsü "Sık Sorulan Sorular…" yazmalı. İkisi de "Rango | Online Kuaför, Berber ve Güzellik Randevusu" yazıyorsa statik sayfa kuralları çalışmıyordur (site yine çalışır); derleme günlüğünde `[rango] SEO: … statik sayfa` satırını ve sunucudaki `.htaccess` içinde `/_seo/` geçen `RewriteRule` satırlarını kontrol edin.
+- Bir işletme sayfasını [Rich Results Test](https://search.google.com/test/rich-results) ile deneyin.
+
+### 7.5 Sizin yapmanız gerekenler
+
+1. **Google Search Console:** `rango.com.tr` için "Alan adı" mülkü ekleyin (Hostinger DNS'e TXT kaydı). Site Haritaları → `https://rango.com.tr/sitemap.xml` gönderin; ana sayfa, `/izmir` ve `/isletmeler-icin` için "Dizine eklenmesini iste" deyin.
+2. **Bing Webmaster Tools** ve **Yandex Webmaster:** aynı sitemap'i ekleyin (Bing, Search Console'dan içe aktarabilir).
+3. **İşletme kazanın.** Sıralamayı en çok belirleyen şey gerçek işletme sayısıdır: şu an randevu alınabilen 2 gerçek işletme var, bu yüzden dizine giren liste sayfası da azdır. Her yeni işletme kendi sayfasını, kategori ve (ikinci işletmeyle) semt sayfalarını kendiliğinden açar. `/isletmeler-icin` sayfası bu amaçla hazırlandı; işletme sahiplerine bu adresi gönderin.
+4. **Google İşletme Profili:** İşletmelere, kendi Google profillerindeki "Randevu" bağlantısına Rango sayfalarını (`https://rango.com.tr/i/…`) eklemelerini önerin; Instagram profillerine de aynı bağlantıyı koysunlar. Yerel aramalarda en etkili adım budur.
+5. **Yeni işletme veya kategori eklendiğinde** siteyi yeniden yayınlayın: statik sayfası ve sitemap kaydı derlemede oluşur. Yayınlamasanız da sayfa çalışır ve Google onu bulabilir, yalnızca daha yavaş.
+6. **İçerik:** İşletmelerin açıklama, fotoğraf, hizmet ve çalışma saatlerini eksiksiz doldurmasını sağlayın; sayfanın Google'daki metni, fiyat tablosu ve "pazar günü açık mı" yanıtı bunlardan oluşur.
+7. **Örnek (demo) işletmeler:** Gerçek işletme sayısı arttıkça yayından kaldırın.
+
+### 7.6 Onayınızı bekleyen metin konuları
+
+Aşağıdakiler bilinmediği için sayfalarda **yazılmadı**; karar verirseniz ilgili dosyaya eklenebilir:
+- Komisyon oranı ve başka ücret olup olmadığı (`/isletmeler-icin` yalnızca "komisyon modeli" der, oran vermez).
+- Kaporaların işletmeye ne zaman ve nasıl ödendiği.
+- WhatsApp hattının gerçekten 7/24 yanıtlanıp yanıtlanmadığı (sayfalar "7/24" demez).
+- Mobil uygulamanın mağaza bağlantıları (sayfalarda uygulama indirme çağrısı yoktur).
+- **Site "PayTR canlı"ya geçtiğinde:** `src/lib/seo/config.ts` içindeki `PAYMENTS_IN_TEST_MODE` değerini `false` yapıp yeniden yayınlayın. Bu değer `true` iken kapora anlatılan yerlerde "test modunda gerçek tahsilat yapılmaz" notu ve `/sss` içinde test modu sorusu gösterilir.
+- Şirket künyesi (`src/lib/legal.ts`): açık adres ve telefon eklenirse Google'daki kurum bilgisi (Organization) de zenginleşir.
+
+### 7.7 Sonraki adım olarak önerilenler (bu çalışmada yapılmadı)
+
+- İngilizce için ayrı adresler (`/en/...`) ve `hreflang`: şu an dil aynı adreste değiştiği için Google yalnızca Türkçe sürümü dizine ekler.
+- Bir rehber/blog bölümü (ör. hizmet fiyat rehberleri); gerçek işletme verisi çoğaldıkça anlam kazanır.
+- Başlık yazı tipi (Cormorant Garamond) için ölçüleri eşleştirilmiş bir yedek yazı tipi: uzun başlıklı sayfalarda (ör. `/isletmeler-icin`) yazı tipi yüklenirken oluşan küçük sayfa kaymasını giderir.
+- İşletme sayfalarında "benzer işletmeler" bölümü (aynı kategorideki diğer işletmelere bağlantı); işletme sayısı arttığında iç bağlantıları güçlendirir.
+- Ziyaret ölçümü (ör. çerezsiz bir analiz aracı). Çerez politikası şu an "analitik kullanmıyoruz" dediği için eklenirse metin de güncellenmelidir.
+- Yeni işletmeler için yeniden yayın beklemeyen, Supabase'den beslenen dinamik bir sitemap.
+
+---
+
+## 8. Bilerek ertelenen konular
 
 - **E-posta bağlantıları için PKCE akışı:** Supabase e-posta şablonlarının değiştirilmesini gerektirir.
 - **Yorumlarda müşteri kimliğinin sütun düzeyinde gizlenmesi:** Yeni site yayına girdikten sonra ayrıca uygulanabilir.
@@ -284,7 +370,7 @@ WHERE a.booking_code = 'VY…';
 
 ---
 
-## 8. Bolt'ta çalışmaya devam edecekseniz
+## 9. Bolt'ta çalışmaya devam edecekseniz
 
 Bu zip'i Bolt projenize **içe aktarın**. Aksi halde Bolt'taki eski kod, bu düzeltmelerin üzerine yazılır.
 

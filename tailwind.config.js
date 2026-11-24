@@ -1,6 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  // seo/: derleme sırasında üretilen statik sayfalar da aynı sınıfları kullanır.
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}', './seo/**/*.ts'],
   theme: {
     extend: {
       colors: {

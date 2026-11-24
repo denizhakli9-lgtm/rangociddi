@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { COMPANY, LEGAL_LINKS, PAYMENT_PROVIDER, isPlaceholder, legalPath } from '@/lib/legal';
-import { tx } from '@/i18n/locale';
+import { locale, tx } from '@/i18n/locale';
+import { siteLinks } from '@/lib/seo/pages/common';
 import { newTabClick } from '@/lib/platform';
 
 export function LegalFooter({ className = '' }: { className?: string }) {
@@ -8,7 +9,14 @@ export function LegalFooter({ className = '' }: { className?: string }) {
   const owner = isPlaceholder(COMPANY.legalName) ? COMPANY.brand : COMPANY.legalName;
   return (
     <footer className={`border-t border-line-soft pt-6 text-xs text-mist-2 ${className}`}>
-      <nav aria-label={tx('Yasal bağlantılar', 'Legal links')} className="flex flex-wrap gap-x-5 gap-y-2">
+      <nav aria-label={tx('Site bağlantıları', 'Site links')} className="flex flex-wrap gap-x-5 gap-y-2 text-mist">
+        {siteLinks(locale()).map((l) => (
+          <Link key={l.path} to={l.path} className="transition hover:text-white">
+            {l.label}
+          </Link>
+        ))}
+      </nav>
+      <nav aria-label={tx('Yasal bağlantılar', 'Legal links')} className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
         {LEGAL_LINKS.map((l) => (
           <Link key={l.slug} to={legalPath(l.slug)} className="transition hover:text-white">
             {tx(l.label, l.labelEn)}

@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, BadgeCheck, CalendarClock, Clock, Heart, MapPin, MessageSquare, Navigation, Share2, ShieldCheck, Star, Store } from 'lucide-react';
 import { fetchBusinessDetail, fetchBusinessReviews } from '@/lib/api';
-import { useAsync } from '@/lib/useAsync';
+import { useCached } from '@/lib/useCached';
+import { prerendered } from '@/lib/prerenderData';
 import { useFavorites } from '@/lib/useFavorites';
 import { depositFor, formatDuration, formatRelative, formatTRY, isoWeekday, dateKey, shortTime } from '@/lib/format';
 import { isOpenNow } from '@/lib/hours';
@@ -10,6 +11,7 @@ import { distanceKm, formatDistance } from '@/lib/geo';
 import { fullAddress, hasExactPin } from '@/lib/maps';
 import { isDemoBusiness } from '@/lib/demo';
 import { safeImageUrl } from '@/lib/safeUrl';
+import { leadPhoto } from '@/lib/sectorCovers';
 import { categoryName } from '@/i18n/categories';
 import { businessCover } from '@/lib/placeholderImages';
 import { PlaceholderTag } from '@/components/ui/PlaceholderTag';
@@ -22,9 +24,19 @@ import { Avatar, Segmented, Stars } from '@/components/ui/Brand';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, ErrorState, PageLoader } from '@/components/ui/Feedback';
-import { tx } from '@/i18n/locale';
+import { locale, tx } from '@/i18n/locale';
+import { businessMeta, categoryPath } from '@/lib/seo/meta';
+import { DEFAULT_CITY, cityPath } from '@/lib/seo/places';
+import { Blocks } from '@/components/seo/Blocks';
+import { useSeo } from '@/lib/seo/useSeo';
 
 type Tab = 'services' | 'staff' | 'reviews' | 'info';
+
+/** The business's own first photo (never a ready-made sector cover), for share previews and structured data. */
+function ownPhoto(b: Parameters<typeof leadPhoto>[0]): string | undefined {
+  const photo = leadPhoto(b, import.meta.env.VITE_SUPABASE_URL as string | undefined, import.meta.env.DEV);
+  return photo.placeholder ? undefined : photo.src;
+}
 
 export default function BusinessDetail() {
   const t = useT();
@@ -36,12 +48,35 @@ export default function BusinessDetail() {
   const [tab, setTab] = useState<Tab>('services');
   const [photo, setPhoto] = useState(0);
 
-  const { data, loading, error, reload } = useAsync(async () => {
-    const detail = await fetchBusinessDetail(slug);
-    if (!detail) return null;
-    const reviews = await fetchBusinessReviews(detail.business.id);
-    return { ...detail, reviews };
-  }, [slug]);
+  // A page published as static HTML embeds its data, so the app shows the business at once
+  // instead of a spinner; it is always refreshed from the server (ttl 0) because prices and
+  // hours must be current.
+  const { data, loading, error, reload } = useCached(
+    `business:${slug}`,
+    async () => {
+      const detail = await fetchBusinessDetail(slug);
+      if (!detail) return null;
+      const reviews = await fetchBusinessReviews(detail.business.id);
+      return { ...detail, reviews };
+    },
+    {
+      ttl: 0,
+      seed: () => {
+        const embedded = prerendered('business');
+        if (!embedded || embedded.slug !== slug || !embedded.business) return undefined;
+        return { business: embedded.business, services: embedded.services ?? [], employees: embedded.employees ?? [], hours: embedded.hours ?? [], reviews: embedded.reviews ?? [] };
+      },
+    },
+  );
+
+  // A missing business answers 200 (single-page app), so it is explicitly kept out of search results.
+  useSeo(
+    loading || error
+      ? null
+      : data
+        ? businessMeta(locale(), data.business, data.services, data.hours, categoryName(data.business.categories), { photo: ownPhoto(data.business), reviews: data.reviews })
+        : { title: `${tx('İşletme bulunamadı', 'Business not found')} | Rango`, description: tx('Aradığınız işletme yayından kaldırılmış olabilir.', 'The business you are looking for may have been removed.'), path: `/i/${slug}`, noindex: true },
+  );
 
   if (loading) return <PageLoader />;
   // Raw backend details only in development; visitors see the Turkish message.
@@ -56,6 +91,14 @@ export default function BusinessDetail() {
   // No photos yet: a labelled sector photo instead of an empty header.
   const placeholderPhoto = ownPhotos.length === 0;
   const photos = placeholderPhoto ? [businessCover(b).src] : ownPhotos;
+  const categoryLabel = categoryName(b.categories);
+  const photoAlt = [b.name, [b.district, categoryLabel].filter(Boolean).join(' ')].filter(Boolean).join(' – ');
+  const crumbs = [
+    { name: 'Rango', path: '/' },
+    { name: DEFAULT_CITY.name, path: cityPath(DEFAULT_CITY) },
+    ...(b.categories?.slug ? [{ name: categoryLabel, path: categoryPath(b.categories.slug) }] : []),
+    { name: b.name },
+  ];
   const todayWd = isoWeekday(dateKey());
   const open = isOpenNow(hours.find((h) => h.weekday === todayWd));
   const fav = ids.has(b.id);
@@ -83,7 +126,7 @@ export default function BusinessDetail() {
       <div className="relative -mx-4 -mt-6 sm:mx-0 sm:mt-0">
         <div className="relative aspect-[4/3] overflow-hidden sm:aspect-[21/9] sm:rounded-3xl sm:border sm:border-gold-500/20">
           {photos.map((src, i) => (
-            <img key={src + i} src={src} alt={b.name} loading={i === 0 ? "eager" : "lazy"} decoding="async" className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${i === photo ? 'opacity-100' : 'opacity-0'}`} />
+            <img key={src + i} src={src} alt={i === 0 ? photoAlt : `${photoAlt} (${i + 1})`} loading={i === 0 ? 'eager' : 'lazy'} fetchPriority={i === 0 ? 'high' : 'auto'} decoding="async" className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${i === photo ? 'opacity-100' : 'opacity-0'}`} />
           ))}
           <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/20 to-ink/40" />
           {placeholderPhoto && <PlaceholderTag className="bottom-4 left-4" />}
@@ -113,8 +156,9 @@ export default function BusinessDetail() {
       <div className="mt-6 grid gap-10 lg:grid-cols-[1fr_340px]">
         <div className="min-w-0">
           <div className="animate-fade-up">
+            <div className="mb-4"><Blocks blocks={[{ kind: 'breadcrumb', items: crumbs }]} /></div>
             <div className="flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-gold-500">
-              {categoryName(b.categories)}
+              {b.categories?.slug ? <Link to={categoryPath(b.categories.slug)} className="hover:underline">{categoryLabel}</Link> : categoryLabel}
               <span className="text-mist-3">·</span>
               <span className="text-mist">{t.genderFocus[b.gender_focus]}</span>
             </div>
@@ -166,9 +210,11 @@ export default function BusinessDetail() {
             />
           </div>
 
-          <div className="mt-6 animate-fade-in" key={tab}>
-            {tab === 'services' && (
-              services.length ? (
+          {/* Every panel stays in the page (the unselected ones are hidden), so services, team, reviews and opening hours are all part of the page's content. */}
+          <div className="mt-6">
+            <section hidden={tab !== 'services'} className="animate-fade-in">
+              <h2 className="sr-only">{tx('Hizmetler ve fiyatlar', 'Services and prices')}</h2>
+              {services.length ? (
                 <div className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-coal">
                   {services.map((s) => (
                     <div key={s.id} className="flex items-center gap-4 px-5 py-4 transition hover:bg-white/[0.02]">
@@ -187,10 +233,11 @@ export default function BusinessDetail() {
                 </div>
               ) : (
                 <EmptyState icon={<CalendarClock className="h-6 w-6" />} title={tx('Henüz hizmet yok', 'No services yet')} text={tx('Bu işletme yakında hizmetlerini ekleyecek.', 'This business will add its services soon.')} />
-              )
-            )}
+              )}
+            </section>
 
-            {tab === 'staff' && (
+            <section hidden={tab !== 'staff'} className="animate-fade-in">
+              <h2 className="sr-only">{tx('Uzmanlar', 'Specialists')}</h2>
               <div className="grid gap-3 sm:grid-cols-2">
                 {employees.map((e) => (
                   <div key={e.id} className="card flex items-center gap-4 p-4">
@@ -204,10 +251,11 @@ export default function BusinessDetail() {
                 ))}
                 {!employees.length && <p className="text-sm text-mist-2">{tx('Uzman bilgisi yakında eklenecek.', 'Specialist details coming soon.')}</p>}
               </div>
-            )}
+            </section>
 
-            {tab === 'reviews' && (
-              reviews.length ? (
+            <section hidden={tab !== 'reviews'} className="animate-fade-in">
+              <h2 className="sr-only">{tx('Değerlendirmeler', 'Reviews')}</h2>
+              {reviews.length ? (
                 <div className="space-y-3">
                   {reviews.map((r) => (
                     <div key={r.id} className="card p-5">
@@ -231,10 +279,11 @@ export default function BusinessDetail() {
                 </div>
               ) : (
                 <EmptyState icon={<MessageSquare className="h-6 w-6" />} title={tx('Henüz yorum yok', 'No reviews yet')} text={tx('İlk değerlendirmeyi siz yapın.', 'Be the first to leave a review.')} />
-              )
-            )}
+              )}
+            </section>
 
-            {tab === 'info' && (
+            <section hidden={tab !== 'info'} className="animate-fade-in">
+              <h2 className="sr-only">{tx('Çalışma saatleri ve adres', 'Opening hours and address')}</h2>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="card p-5">
                   <p className="eyebrow mb-4">{tx('Çalışma saatleri', 'Opening hours')}</p>
@@ -263,7 +312,7 @@ export default function BusinessDetail() {
                   </div>
                 </div>
               </div>
-            )}
+            </section>
           </div>
         </div>
 

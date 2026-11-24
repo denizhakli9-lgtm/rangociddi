@@ -18,6 +18,7 @@ import { en } from '@/i18n/en';
 export type Locale = 'tr' | 'en';
 
 const STORAGE_KEY = 'rango-lang';
+const CRAWLER = /bot\b|crawler|spider|slurp|facebookexternalhit|Google-InspectionTool|GoogleOther|Storebot/i;
 const TURKISH_ONLY = /^\/(isletme|yonetim)(\/|$)/;
 
 function detect(): Locale {
@@ -28,6 +29,10 @@ function detect(): Locale {
     /* storage blocked */
   }
   if (typeof navigator === 'undefined') return 'tr';
+  // Search engine crawlers report English (Googlebot: en-US) and send no language preference.
+  // Rango's content is Turkish first, so they get the Turkish pages; otherwise Google would
+  // index the English texts for a site whose visitors search in Turkish.
+  if (CRAWLER.test(navigator.userAgent)) return 'tr';
   const langs = navigator.languages?.length ? navigator.languages : [navigator.language];
   const first = langs.find(Boolean);
   if (!first) return 'tr';

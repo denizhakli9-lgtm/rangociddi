@@ -64,6 +64,8 @@ export default function Overview() {
         { done: data.employees > 0, label: 'Ekibinizi ve uzmanlıklarını tanımlayın', to: '/isletme/calisanlar' },
         { done: data.openDays > 0, label: 'Çalışma saatlerinizi belirleyin', to: '/isletme/saatler' },
         { done: !!business.cover_url, label: 'Kapak görseli ve galeri yükleyin', to: '/isletme/profil' },
+        { done: business.address.trim().length >= 5, label: 'Açık adresinizi ekleyin', to: '/isletme/profil' },
+        { done: !!business.description.trim(), label: 'İşletmenizi anlatan bir açıklama yazın', to: '/isletme/profil' },
       ]
     : [];
   const setupLeft = checklist.filter((c) => !c.done).length;
@@ -103,7 +105,7 @@ export default function Overview() {
               <h2 className="mb-4 font-display text-2xl text-white">Yayına hazır olmanıza {setupLeft} adım kaldı</h2>
               <ul className="grid gap-2 sm:grid-cols-2">
                 {checklist.map((c) => (
-                  <li key={c.to}>
+                  <li key={c.label}>
                     <Link to={c.to} className="flex items-center gap-3 rounded-xl border border-line bg-ink/40 px-4 py-3 text-sm transition hover:border-gold-500/40">
                       {c.done ? <CheckCircle2 className="h-4 w-4 text-success-500" /> : <Circle className="h-4 w-4 text-mist-3" />}
                       <span className={c.done ? 'text-mist-2 line-through' : 'text-white'}>{c.label}</span>

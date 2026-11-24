@@ -7,6 +7,18 @@ export const isPhone = (v: string) => {
   return digits.length >= 10 && digits.length <= 13;
 };
 
+/**
+ * Formats a Turkish phone number while it is being typed: "0532 123 45 67".
+ * Accepts +90 / 90 / 5XX… prefixes and always shows the national 0XXX form.
+ */
+export function formatTrPhone(v: string): string {
+  let d = v.replace(/\D/g, '');
+  if (d.startsWith('90') && d.length > 10) d = d.slice(2);
+  if (d && !d.startsWith('0')) d = `0${d}`;
+  d = d.slice(0, 11);
+  return [d.slice(0, 4), d.slice(4, 7), d.slice(7, 9), d.slice(9, 11)].filter(Boolean).join(' ');
+}
+
 export function luhn(num: string): boolean {
   const digits = num.replace(/\D/g, '');
   if (digits.length < 15 || digits.length > 19) return false;

@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { CalendarRange, CreditCard, LayoutDashboard, MessageSquareWarning, Percent, Settings, Shapes, Store, Undo2, Users } from 'lucide-react';
+import { CalendarRange, CreditCard, Megaphone, LayoutDashboard, MessageSquareWarning, Percent, Settings, Shapes, Store, Undo2, Users } from 'lucide-react';
 import { DashboardLayout, type DashNavItem } from '@/components/layout/DashboardLayout';
 import Notifications from '@/pages/Notifications';
 import AdminOverview from './AdminOverview';
@@ -12,6 +12,7 @@ import AdminReviews from './AdminReviews';
 import AdminCategories from './AdminCategories';
 import AdminCommissions from './AdminCommissions';
 import AdminSettings from './AdminSettings';
+import AdminBroadcasts from './AdminBroadcasts';
 import SupportCenter from '@/pages/support/SupportCenter';
 
 const ITEMS: DashNavItem[] = [
@@ -24,6 +25,7 @@ const ITEMS: DashNavItem[] = [
   { to: '/yonetim/yorumlar', label: 'Yorum moderasyonu', icon: MessageSquareWarning },
   { to: '/yonetim/kategoriler', label: 'Kategoriler', icon: Shapes },
   { to: '/yonetim/komisyon', label: 'Komisyon', icon: Percent },
+  { to: '/yonetim/duyurular', label: 'Bildirim gönder', icon: Megaphone },
   { to: '/yonetim/destek', label: 'Destek Merkezi', icon: MessageSquareWarning },
   { to: '/yonetim/ayarlar', label: 'Platform ayarları', icon: Settings },
 ];
@@ -41,6 +43,7 @@ export default function AdminArea() {
         <Route path="yorumlar" element={<AdminReviews />} />
         <Route path="kategoriler" element={<AdminCategories />} />
         <Route path="komisyon" element={<AdminCommissions />} />
+        <Route path="duyurular" element={<AdminBroadcasts />} />
         <Route path="destek" element={<SupportCenter workspace />} />
         <Route path="ayarlar" element={<AdminSettings />} />
         <Route path="bildirimler" element={<Notifications />} />

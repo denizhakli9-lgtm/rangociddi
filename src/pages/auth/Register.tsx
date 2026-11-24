@@ -1,9 +1,9 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Check, Lock, Mail, Phone, Store, User } from 'lucide-react';
+import { Check, Eye, EyeOff, Lock, Mail, Phone, Store, User } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { friendlyError } from '@/lib/errors';
-import { isEmail, isPhone } from '@/lib/validation';
+import { formatTrPhone, isEmail, isPhone } from '@/lib/validation';
 import { safeInternalPath } from '@/lib/safeRedirect';
 import { LEGAL_VERSIONS, legalPath } from '@/lib/legal';
 import { Input, Select } from '@/components/ui/Field';
@@ -29,7 +29,6 @@ interface Form {
   phone: string;
   gender: Gender;
   password: string;
-  password2: string;
   terms: boolean;
 }
 
@@ -38,22 +37,40 @@ export default function Register() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const [type, setType] = useState<AccountType>(params.get('tip') === 'isletme' ? 'business' : 'customer');
-  const [form, setForm] = useState<Form>({ fullName: '', email: '', phone: '', gender: 'unspecified', password: '', password2: '', terms: false });
+  const [form, setForm] = useState<Form>({ fullName: '', email: '', phone: '', gender: 'unspecified', password: '', terms: false });
   const [errors, setErrors] = useState<Partial<Record<keyof Form, string>>>({});
   const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const set = <K extends keyof Form>(key: K, value: Form[K]) => setForm((f) => ({ ...f, [key]: value }));
+  // Typing in a field clears its error; leaving it checks it right away.
+  const set = <K extends keyof Form>(key: K, value: Form[K]) => {
+    setForm((f) => ({ ...f, [key]: value }));
+    setErrors((e) => (e[key] ? { ...e, [key]: undefined } : e));
+  };
+
+  const check = (key: keyof Form): string | undefined => {
+    if (key === 'fullName') return form.fullName.trim().length < 3 ? t.validation.name : undefined;
+    if (key === 'email') return isEmail(form.email) ? undefined : t.validation.email;
+    if (key === 'phone') return isPhone(form.phone) ? undefined : t.validation.phone;
+    if (key === 'password') return form.password.length < 8 ? t.validation.password : undefined;
+    if (key === 'terms') return form.terms ? undefined : t.validation.terms;
+    return undefined;
+  };
+
+  const blur = (key: keyof Form) => () => {
+    // An untouched, empty field is not an error yet.
+    if (!String(form[key]).trim()) return;
+    setErrors((e) => ({ ...e, [key]: check(key) }));
+  };
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     const next: typeof errors = {};
-    if (form.fullName.trim().length < 3) next.fullName = t.validation.name;
-    if (!isEmail(form.email)) next.email = t.validation.email;
-    if (!isPhone(form.phone)) next.phone = t.validation.phone;
-    if (form.password.length < 8) next.password = t.validation.password;
-    if (form.password !== form.password2) next.password2 = t.validation.passwordMatch;
-    if (!form.terms) next.terms = t.validation.terms;
+    for (const key of ['fullName', 'email', 'phone', 'password', 'terms'] as const) {
+      const msg = check(key);
+      if (msg) next[key] = msg;
+    }
     setErrors(next);
     setFormError('');
     if (Object.keys(next).length) return;
@@ -127,6 +144,12 @@ export default function Register() {
     { value: 'business', title: tx('İşletme', 'Business'), text: tx('Salonumu listelemek istiyorum', 'I want to list my salon'), icon: Store },
   ];
 
+  const businessSteps = [
+    { title: tx('Hesabınızı oluşturun', 'Create your account'), text: tx('Şu an buradasınız · yaklaşık 1 dakika', 'You are here · about 1 minute') },
+    { title: tx('İşletmenizi tanıtın', 'Introduce your business'), text: tx('Ad, kategori ve ilçe yeterli · yaklaşık 2 dakika', 'Name, category and district are enough · about 2 minutes') },
+    { title: tx('Onay ve yayın', 'Approval and launch'), text: tx('Ekibimiz başvurunuzu inceler, onaylanınca müşteriler sizi görür', 'Our team reviews your application; once approved, customers can find you') },
+  ];
+
   return (
     <AuthShell
       eyebrow={tx('Ayrıcalıklı dünyaya katılın', 'Join Rango')}
@@ -156,11 +179,25 @@ export default function Register() {
         })}
       </div>
 
+      {type === 'business' && (
+        <ol className="mb-6 space-y-3 rounded-2xl border border-line bg-coal p-4">
+          {businessSteps.map((s, i) => (
+            <li key={s.title} className="flex items-start gap-3">
+              <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${i === 0 ? 'bg-gold-500 text-ink' : 'border border-line text-mist-2'}`}>{i + 1}</span>
+              <span>
+                <span className={`block text-sm font-medium ${i === 0 ? 'text-white' : 'text-mist'}`}>{s.title}</span>
+                <span className="block text-xs text-mist-2">{s.text}</span>
+              </span>
+            </li>
+          ))}
+        </ol>
+      )}
+
       <form onSubmit={submit} className="space-y-4" noValidate>
-        <Input label={tx('Ad Soyad', 'Full name')} name="fullName" autoComplete="name" value={form.fullName} onChange={(e) => set('fullName', e.target.value)} error={errors.fullName} icon={<User className="h-4 w-4" />} />
+        <Input label={tx('Ad Soyad', 'Full name')} name="fullName" autoComplete="name" value={form.fullName} onChange={(e) => set('fullName', e.target.value)} onBlur={blur('fullName')} error={errors.fullName} icon={<User className="h-4 w-4" />} />
         <div className="grid gap-4 sm:grid-cols-2">
-          <Input label={tx('E-posta', 'Email')} name="email" type="email" autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={form.email} onChange={(e) => set('email', e.target.value)} error={errors.email} icon={<Mail className="h-4 w-4" />} />
-          <Input label={tx('Telefon', 'Phone')} name="phone" type="tel" autoComplete="tel" placeholder="05XX XXX XX XX" value={form.phone} onChange={(e) => set('phone', e.target.value)} error={errors.phone} icon={<Phone className="h-4 w-4" />} />
+          <Input label={tx('E-posta', 'Email')} name="email" type="email" autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={form.email} onChange={(e) => set('email', e.target.value)} onBlur={blur('email')} error={errors.email} icon={<Mail className="h-4 w-4" />} />
+          <Input label={tx('Telefon', 'Phone')} name="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="05XX XXX XX XX" value={form.phone} onChange={(e) => set('phone', formatTrPhone(e.target.value))} onBlur={blur('phone')} error={errors.phone} icon={<Phone className="h-4 w-4" />} />
         </div>
         {type === 'customer' && (
           <Select label={tx('Cinsiyet', 'Gender')} name="gender" value={form.gender} onChange={(e) => set('gender', e.target.value as Gender)} hint={tx('Size uygun işletmeleri öne çıkarmamıza yardımcı olur.', 'Helps us highlight businesses that suit you.')}>
@@ -169,10 +206,31 @@ export default function Register() {
             ))}
           </Select>
         )}
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Input label={tx('Şifre', 'Password')} name="password" type="password" autoComplete="new-password" autoCapitalize="none" autoCorrect="off" value={form.password} onChange={(e) => set('password', e.target.value)} error={errors.password} icon={<Lock className="h-4 w-4" />} />
-          <Input label={tx('Şifre Tekrar', 'Repeat password')} name="password2" type="password" autoComplete="new-password" autoCapitalize="none" autoCorrect="off" value={form.password2} onChange={(e) => set('password2', e.target.value)} error={errors.password2} icon={<Lock className="h-4 w-4" />} />
-        </div>
+        <Input
+          label={tx('Şifre', 'Password')}
+          name="password"
+          type={showPassword ? 'text' : 'password'}
+          autoComplete="new-password"
+          autoCapitalize="none"
+          autoCorrect="off"
+          value={form.password}
+          onChange={(e) => set('password', e.target.value)}
+          onBlur={blur('password')}
+          error={errors.password}
+          hint={tx('En az 8 karakter.', 'At least 8 characters.')}
+          icon={<Lock className="h-4 w-4" />}
+          trailing={
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={showPassword ? tx('Şifreyi gizle', 'Hide password') : tx('Şifreyi göster', 'Show password')}
+              aria-pressed={showPassword}
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-mist-2 transition hover:text-white"
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          }
+        />
         <label className="flex cursor-pointer items-start gap-3 pt-1 text-xs text-mist">
           <input
             type="checkbox"

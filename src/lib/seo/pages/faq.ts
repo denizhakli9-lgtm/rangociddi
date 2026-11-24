@@ -165,8 +165,8 @@ function businessGroup(lang: SeoLang): FaqItem[] {
       q: pick(lang, 'İşletmemi Rango’ya nasıl eklerim?', 'How do I add my business to Rango?'),
       a: pick(
         lang,
-        '“İşletme” türünde bir hesap açıp işletme formunu doldurun: işletme adı, kategori, ilçe, adres ve iletişim bilgileri. Başvurunuz incelenir; onaylandıktan sonra işletmeniz yayına alınır. Onay beklerken hizmetlerinizi, ekibinizi ve çalışma saatlerinizi hazırlayabilirsiniz.',
-        'Open a “Business” account and fill in the business form: name, category, district, address and contact details. Your application is reviewed and your business goes live once it is approved. While you wait you can set up your services, team and opening hours.',
+        '“İşletme” türünde bir hesap açıp üç adımlık işletme formunu doldurun: işletme adı, kategori, ilçe ve telefon yeterlidir; adres ve açıklamayı sonradan da ekleyebilirsiniz. Başvurunuz incelenir; onaylandıktan sonra işletmeniz yayına alınır. Onay beklerken hizmetlerinizi, ekibinizi ve çalışma saatlerinizi hazırlayabilirsiniz.',
+        'Open a “Business” account and fill in the three-step business form: name, category, district and phone are enough; you can add the address and description later. Your application is reviewed and your business goes live once it is approved. While you wait you can set up your services, team and opening hours.',
       ),
       link: { label: pick(lang, 'İşletmeler için Rango', 'Rango for businesses'), path: FOR_BUSINESS_PATH },
     },

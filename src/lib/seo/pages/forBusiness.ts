@@ -122,8 +122,8 @@ export function forBusinessPage(lang: SeoLang): PageModel {
           title: pick(lang, 'İşletmenizi tanıtın', 'Describe your business'),
           text: pick(
             lang,
-            'İşletme adı, kategori, ilçe, adres ve iletişim bilgilerinizi girin. Başvurunuz incelenir; sonuç size bildirilir.',
-            'Enter your business name, category, district, address and contact details. Your application is reviewed and you are notified of the result.',
+            'İşletme adı, kategori, ilçe ve telefon bilgilerinizi girin; adres ve açıklamayı sonradan da ekleyebilirsiniz. Başvurunuz incelenir; sonuç size bildirilir.',
+            'Enter your business name, category, district and phone; you can add the address and description later. Your application is reviewed and you are notified of the result.',
           ),
         },
         {

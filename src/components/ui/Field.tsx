@@ -53,16 +53,19 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: string;
   hint?: string;
   icon?: ReactNode;
+  /** Interactive element shown at the right edge of the input (e.g. a show-password button). */
+  trailing?: ReactNode;
 }
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(function Input({ label, error, hint, icon, id, className = '', ...rest }, ref) {
+export const Input = forwardRef<HTMLInputElement, InputProps>(function Input({ label, error, hint, icon, trailing, id, className = '', ...rest }, ref) {
   const autoId = useId();
   const fid = id ?? rest.name ?? autoId;
   return (
     <FieldWrap label={label} error={error} hint={hint} htmlFor={fid}>
       <div className="relative">
         {icon && <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-mist-2">{icon}</span>}
-        <input ref={ref} id={fid} className={`${base} h-12 ${borderCls(error)} ${icon ? 'pl-11' : ''} ${className}`} {...rest} {...describe(fid, error, hint, rest)} />
+        <input ref={ref} id={fid} className={`${base} h-12 ${borderCls(error)} ${icon ? 'pl-11' : ''} ${trailing ? 'pr-12' : ''} ${className}`} {...rest} {...describe(fid, error, hint, rest)} />
+        {trailing && <span className="absolute right-2 top-1/2 -translate-y-1/2">{trailing}</span>}
       </div>
     </FieldWrap>
   );

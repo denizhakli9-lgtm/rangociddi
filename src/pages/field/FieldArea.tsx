@@ -1,7 +1,7 @@
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, ShieldAlert, Store, Wallet } from 'lucide-react';
 import { DashboardLayout, type DashNavItem } from '@/components/layout/DashboardLayout';
-import { PageLoader } from '@/components/ui/Feedback';
+import { ErrorState, PageLoader } from '@/components/ui/Feedback';
 import { Button } from '@/components/ui/Button';
 import { useAsync } from '@/lib/useAsync';
 import { fetchFieldAgentBusinesses, fetchFieldAgentMe } from '@/lib/fieldAgent';
@@ -23,6 +23,14 @@ export default function FieldArea() {
   const list = useAsync(() => (me.data ? fetchFieldAgentBusinesses() : Promise.resolve(null)), [me.data?.code]);
 
   if (me.loading && !me.data) return <PageLoader />;
+  // A failed check is not "no access": offer a retry instead of telling an agent they were removed.
+  if (me.error && !me.data) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-ink px-6">
+        <ErrorState onRetry={me.reload} />
+      </div>
+    );
+  }
   if (!me.data) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-ink px-6 text-center">

@@ -86,7 +86,8 @@ export default function FieldBusinesses() {
         <div className="space-y-4">
           {list.map((b) => {
             const gaps = setupGaps(b);
-            const canDecide = b.status === 'pending' || b.status === 'rejected';
+            // A rejection can be reopened only by the agent who made it (an admin's rejection stays).
+            const canDecide = b.status === 'pending' || (b.status === 'rejected' && !!b.rejected_by_me);
             return (
               <article key={b.id} className="card overflow-hidden">
                 <div className="p-4 sm:p-5">
@@ -191,7 +192,7 @@ export default function FieldBusinesses() {
           onChange={(e) => setReason(e.target.value)}
           placeholder="ör. Adres ve çalışma saatleri eksik; tamamlandığında tekrar onaylayacağım."
         />
-        <p className="mt-2 text-xs text-mist-2">Reddedilen başvuruyu eksikler tamamlanınca buradan tekrar onaylayabilirsiniz.</p>
+        <p className="mt-2 text-xs text-mist-2">Sizin reddettiğiniz başvuruyu eksikler tamamlanınca buradan tekrar onaylayabilirsiniz.</p>
       </Modal>
     </div>
   );

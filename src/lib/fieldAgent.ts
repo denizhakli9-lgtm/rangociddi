@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { publicOrigin } from '@/lib/platform';
 import type { BusinessStatus } from '@/lib/types';
 
 /** The signed-in person's field-agent record, or null when they are not an active field agent. */
@@ -34,12 +35,14 @@ export interface FieldAgentBusiness {
   open_days: number;
   completed_appointments: number;
   bonus: { amount: number; status: BonusStatus } | null;
+  /** Rejected by this agent and untouched since: the agent may approve it again. */
+  rejected_by_me?: boolean;
 }
 
+/** Null when the signed-in person is not an active field agent; throws on network or server errors. */
 export async function fetchFieldAgentMe(): Promise<FieldAgentMe | null> {
   const { data, error } = await supabase.rpc('field_agent_me');
-  // Before the migration runs the function does not exist: treat everyone as "not an agent".
-  if (error) return null;
+  if (error) throw error;
   if (!data) return null;
   const d = data as FieldAgentMe;
   return { ...d, bonus_amount: Number(d.bonus_amount) };
@@ -83,17 +86,24 @@ export function setupGaps(b: FieldAgentBusiness): string[] {
 const REF_KEY = 'rango.referral';
 const REF_TTL_MS = 30 * 24 * 3600 * 1000;
 export const REFERRAL_CODE_PATTERN = /^[A-Z0-9]{6}$/;
+/** Codes the server generates: 6 characters without 0/O/1/I. */
+const AGENT_CODE_PATTERN = /^[A-HJ-NP-Z2-9]{6}$/;
 
 export function normalizeReferralCode(raw: string): string {
   return raw.replace(/[^a-z0-9]/gi, '').toUpperCase().slice(0, 6);
 }
 
-/** Stores a ?ref= code from the current address so it survives sign-up and e-mail confirmation. */
+/**
+ * Stores the code from an agent's sign-up link (/kayit?tip=isletme&ref=CODE) so it survives sign-up and
+ * e-mail confirmation. Only that link counts, and only an exact agent code: `ref` is also a common
+ * marketing parameter (?ref=google) that must not become, or overwrite, a referral.
+ */
 export function captureReferralFromUrl(): void {
   if (typeof window === 'undefined') return;
   try {
-    const code = normalizeReferralCode(new URLSearchParams(window.location.search).get('ref') ?? '');
-    if (REFERRAL_CODE_PATTERN.test(code)) localStorage.setItem(REF_KEY, JSON.stringify({ code, at: Date.now() }));
+    if (!/^\/kayit\/?$/.test(window.location.pathname)) return;
+    const code = (new URLSearchParams(window.location.search).get('ref') ?? '').trim().toUpperCase();
+    if (AGENT_CODE_PATTERN.test(code)) localStorage.setItem(REF_KEY, JSON.stringify({ code, at: Date.now() }));
   } catch {
     /* storage blocked: the owner can still type the code */
   }
@@ -126,6 +136,6 @@ export async function claimBusinessReferral(businessId: string, code: string): P
 
 /** The link an agent shares with a salon: opens business sign-up with the agent's code. */
 export function referralLink(code: string): string {
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://rango.com.tr';
-  return `${origin}/kayit?tip=isletme&ref=${code}`;
+  // publicOrigin(): inside the mobile app window.location is https://localhost, never a shareable address.
+  return `${publicOrigin()}/kayit?tip=isletme&ref=${code}`;
 }

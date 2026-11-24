@@ -214,6 +214,8 @@ export default function CreateBusiness({ onCreated }: { onCreated: (b: Business)
           await claimBusinessReferral(business.id, code);
           clearStoredReferralCode();
         } catch (refErr) {
+          // A code the server does not know will not start working later: forget it.
+          if (/VEYRA_INVALID_CODE/.test(String((refErr as { message?: unknown })?.message ?? ''))) clearStoredReferralCode();
           toast(`Referans kodu eklenemedi: ${friendlyError(refErr)}`, 'error');
         }
       }

@@ -30,7 +30,7 @@ export default function Profile() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ full_name: '', phone: '', gender: 'unspecified' as Gender });
   const [errors, setErrors] = useState<{ full_name?: string; phone?: string }>({});
-  const fieldAgent = useAsync(() => fetchFieldAgentMe(), [profile?.id]);
+  const fieldAgent = useAsync(() => fetchFieldAgentMe().catch(() => null), [profile?.id]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {

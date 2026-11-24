@@ -46,7 +46,7 @@ export default function Login() {
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).maybeSingle();
     let home = homePathFor(profile as Profile | null);
     // Field agents have ordinary customer accounts; send them to their own panel.
-    if (!redirect && home === '/kesfet' && (await fetchFieldAgentMe())) home = '/saha';
+    if (!redirect && home === '/kesfet' && (await fetchFieldAgentMe().catch(() => null))) home = '/saha';
     setLoading(false);
     navigate(redirect ?? home, { replace: true });
   };

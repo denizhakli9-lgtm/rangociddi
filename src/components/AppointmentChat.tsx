@@ -34,14 +34,15 @@ export function AppointmentChat({ appointmentId, role, canSend, otherName, onRea
       .from('appointment_messages')
       .select('id, appointment_id, sender_role, body, read_at, created_at')
       .eq('appointment_id', appointmentId)
-      .order('created_at', { ascending: true })
+      // The newest 300, so a long conversation still shows (and marks read) its latest messages.
+      .order('created_at', { ascending: false })
       .limit(300);
     if (error) {
       setFailed(true);
       return;
     }
     setFailed(false);
-    const rows = (data ?? []) as AppointmentMessage[];
+    const rows = ((data ?? []) as AppointmentMessage[]).reverse();
     setMessages(rows);
     if (rows.some((m) => m.sender_role !== role && !m.read_at)) {
       const { error: markError } = await supabase.rpc('mark_appointment_messages_read', { p_appointment: appointmentId });

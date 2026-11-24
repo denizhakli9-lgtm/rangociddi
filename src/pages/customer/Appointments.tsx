@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { CalendarDays, CalendarX2, Clock, CreditCard, MapPin, RefreshCw, Repeat, Star, XCircle } from 'lucide-react';
+import { CalendarDays, CalendarX2, Clock, CreditCard, MapPin, MessageCircle, RefreshCw, Repeat, Star, XCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { fetchSettings } from '@/lib/api';
 import { useAsync } from '@/lib/useAsync';
@@ -16,6 +16,8 @@ import type { Appointment } from '@/lib/types';
 import { DirectionsButton } from '@/components/DirectionsSheet';
 import { CancelModal, RescheduleModal, ReviewModal } from './AppointmentModals';
 import { tx } from '@/i18n/locale';
+import { AppointmentChat } from '@/components/AppointmentChat';
+import { canMessage, fetchUnreadMessageCounts, hasChat } from '@/lib/appointmentMessages';
 
 type Tab = 'upcoming' | 'past';
 const ACTIVE = ['pending_payment', 'pending_approval', 'confirmed'];
@@ -27,6 +29,7 @@ export default function Appointments() {
   const [cancelling, setCancelling] = useState<Appointment | null>(null);
   const [rescheduling, setRescheduling] = useState<Appointment | null>(null);
   const [reviewing, setReviewing] = useState<Appointment | null>(null);
+  const [chatOpen, setChatOpen] = useState<string | null>(null);
 
   const { data, loading, error, reload } = useAsync(async () => {
     const [{ data: rows, error: err }, settings] = await Promise.all([
@@ -42,6 +45,7 @@ export default function Appointments() {
     return { rows: (rows ?? []) as Appointment[], settings };
   }, [profile?.id]);
   const settings = data?.settings ?? null;
+  const unread = useAsync(() => fetchUnreadMessageCounts('customer'), [profile?.id]);
 
   const { upcoming, past } = useMemo(() => {
     const now = Date.now();
@@ -129,7 +133,7 @@ export default function Appointments() {
                           </>
                         )}
                       </div>
-                      {a.cancellation_reason && a.status === 'cancelled' && <p className="mt-2 text-xs text-mist-2">{tx('Not:', 'Note:')} {a.cancellation_reason}</p>}
+                      {a.cancellation_reason && (a.status === 'cancelled' || a.status === 'rejected') && <p className="mt-2 text-xs text-mist-2">{tx('Not:', 'Note:')} {a.cancellation_reason}</p>}
                     </div>
                   </div>
 
@@ -148,6 +152,20 @@ export default function Appointments() {
                     {ACTIVE.includes(a.status) && !expiredHold && tab === 'upcoming' && (
                       <Button size="sm" variant="ghost" icon={<XCircle className="h-3.5 w-3.5" />} onClick={() => setCancelling(a)}>{tx('İptal et', 'Cancel')}</Button>
                     )}
+                    {hasChat(a) && (canMessage(a) || (unread.data?.get(a.id) ?? 0) > 0 || chatOpen === a.id) && (
+                      <Button
+                        size="sm"
+                        variant={chatOpen === a.id ? 'outline' : 'dark'}
+                        icon={<MessageCircle className="h-3.5 w-3.5" />}
+                        aria-expanded={chatOpen === a.id}
+                        onClick={() => setChatOpen(chatOpen === a.id ? null : a.id)}
+                      >
+                        {tx('Mesajlar', 'Messages')}
+                        {(unread.data?.get(a.id) ?? 0) > 0 && (
+                          <span className="ml-1 rounded-full bg-gold-500 px-1.5 text-[10px] font-bold text-ink">{unread.data?.get(a.id)}</span>
+                        )}
+                      </Button>
+                    )}
                     {a.status === 'completed' && !reviewed && (
                       <Button size="sm" variant="outline" icon={<Star className="h-3.5 w-3.5" />} onClick={() => setReviewing(a)}>{tx('Değerlendir', 'Review')}</Button>
                     )}
@@ -155,6 +173,17 @@ export default function Appointments() {
                       <Button size="sm" variant="ghost" icon={<Repeat className="h-3.5 w-3.5" />} onClick={() => navigate(`/i/${a.businesses!.slug}/randevu${a.service_id ? `?hizmet=${a.service_id}` : ''}`)}>{tx('Tekrar randevu al', 'Book again')}</Button>
                     )}
                   </div>
+                  {chatOpen === a.id && (
+                    <div className="border-t border-line p-3 sm:p-4">
+                      <AppointmentChat
+                        appointmentId={a.id}
+                        role="customer"
+                        canSend={canMessage(a)}
+                        otherName={a.businesses?.name ?? tx('İşletme', 'Business')}
+                        onRead={unread.reload}
+                      />
+                    </div>
+                  )}
                 </article>
               );
             })}

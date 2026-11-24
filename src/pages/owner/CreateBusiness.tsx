@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAsync } from '@/lib/useAsync';
 import { BUSINESS_LIST_COLUMNS, fetchCategories } from '@/lib/api';
+import { claimBusinessReferral, clearStoredReferralCode, normalizeReferralCode, REFERRAL_CODE_PATTERN, storedReferralCode } from '@/lib/fieldAgent';
 import { slugify } from '@/lib/format';
 import { friendlyError } from '@/lib/errors';
 import { IZMIR_DISTRICTS, distanceKm } from '@/lib/geo';
@@ -137,6 +138,8 @@ export default function CreateBusiness({ onCreated }: { onCreated: (b: Business)
   const [pin, setPin] = useState<Coords | null>(draft?.pin ?? null);
   const [saving, setSaving] = useState(false);
   const [created, setCreated] = useState<Business | null>(null);
+  // Code of the Rango field agent who visited the business, carried over from their link.
+  const [referral, setReferral] = useState(() => storedReferralCode());
 
   // Keep a draft on this device so a refresh or a closed app does not lose the answers.
   useEffect(() => {
@@ -204,6 +207,18 @@ export default function CreateBusiness({ onCreated }: { onCreated: (b: Business)
       if (error) throw error;
       if (!data) throw new Error('insert returned nothing');
       const business = data as unknown as Business;
+      const code = normalizeReferralCode(referral);
+      if (REFERRAL_CODE_PATTERN.test(code)) {
+        // The business is created either way; a wrong code only means no agent is credited.
+        try {
+          await claimBusinessReferral(business.id, code);
+          clearStoredReferralCode();
+        } catch (refErr) {
+          // A code the server does not know will not start working later: forget it.
+          if (/VEYRA_INVALID_CODE/.test(String((refErr as { message?: unknown })?.message ?? ''))) clearStoredReferralCode();
+          toast(`Referans kodu eklenemedi: ${friendlyError(refErr)}`, 'error');
+        }
+      }
       const { error: hoursErr } = await supabase.from('working_hours').insert(DEFAULT_HOURS.map((h) => ({ ...h, business_id: business.id })));
       if (hoursErr) console.error(hoursErr);
       try {
@@ -323,6 +338,17 @@ export default function CreateBusiness({ onCreated }: { onCreated: (b: Business)
               onChange={(e) => set('phone', formatTrPhone(e.target.value))}
               onBlur={blur('phone')}
               placeholder="05XX XXX XX XX"
+            />
+            <Input
+              label="Referans kodu (isteğe bağlı)"
+              name="referral"
+              value={referral}
+              autoCapitalize="characters"
+              autoComplete="off"
+              maxLength={6}
+              hint="Sizi ziyaret eden Rango saha temsilcisinin 6 haneli kodu."
+              onChange={(e) => setReferral(normalizeReferralCode(e.target.value))}
+              placeholder="ör. K7M2PX"
             />
           </div>
         )}

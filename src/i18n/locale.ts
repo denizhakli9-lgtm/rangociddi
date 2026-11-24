@@ -19,7 +19,7 @@ export type Locale = 'tr' | 'en';
 
 const STORAGE_KEY = 'rango-lang';
 const CRAWLER = /bot\b|crawler|spider|slurp|facebookexternalhit|Google-InspectionTool|GoogleOther|Storebot/i;
-const TURKISH_ONLY = /^\/(isletme|yonetim)(\/|$)/;
+const TURKISH_ONLY = /^\/(isletme|yonetim|saha)(\/|$)/;
 
 function detect(): Locale {
   try {

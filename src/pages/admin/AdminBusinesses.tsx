@@ -17,6 +17,7 @@ import { EmptyState, ErrorState, SkeletonList } from '@/components/ui/Feedback';
 import { PageHeader } from '@/components/layout/PageHeader';
 import type { Business, BusinessStatus, Profile } from '@/lib/types';
 import { PayoutReview } from './PayoutReview';
+import { BusinessAgentField } from './BusinessAgentField';
 import { newTabClick } from '@/lib/platform';
 
 type Tab = 'all' | BusinessStatus;
@@ -176,6 +177,7 @@ function BusinessModal({ business, onClose, onSaved }: { business: Business; onC
           <Item label="Randevu sayısı" value={String(business.booking_count)} />
         </dl>
         <PayoutReview businessId={business.id} />
+        {business.owner_id && <BusinessAgentField businessId={business.id} />}
         {business.description && <p className="text-sm leading-relaxed text-mist">{business.description}</p>}
         <div className="grid gap-2 sm:grid-cols-2">
           <Toggle checked={verified} onChange={setVerified} label="Doğrulanmış işletme" description="Profilde doğrulama rozeti gösterilir." />

@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bell, CalendarDays, ChevronRight, Heart, LayoutDashboard, LogOut, MapPin, Phone, ShieldCheck, User } from 'lucide-react';
+import { Bell, Briefcase, CalendarDays, ChevronRight, Heart, LayoutDashboard, LogOut, MapPin, Phone, ShieldCheck, User } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { friendlyError } from '@/lib/errors';
 import { isPhone } from '@/lib/validation';
@@ -19,6 +19,8 @@ import { WhatsAppIcon } from '@/components/WhatsAppSupport';
 import { WHATSAPP_SUPPORT, whatsAppLinkProps } from '@/lib/whatsapp';
 import { PrivacyPanel } from './PrivacyPanel';
 import { tx } from '@/i18n/locale';
+import { useAsync } from '@/lib/useAsync';
+import { fetchFieldAgentMe } from '@/lib/fieldAgent';
 
 export default function Profile() {
   const t = useT();
@@ -28,6 +30,7 @@ export default function Profile() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ full_name: '', phone: '', gender: 'unspecified' as Gender });
   const [errors, setErrors] = useState<{ full_name?: string; phone?: string }>({});
+  const fieldAgent = useAsync(() => fetchFieldAgentMe().catch(() => null), [profile?.id]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -60,6 +63,7 @@ export default function Profile() {
       : []),
     ...(profile.role === 'business' ? [{ to: '/isletme', label: tx('İşletme Paneli', 'Business panel (Turkish)'), icon: LayoutDashboard }] : []),
     ...(profile.role === 'admin' ? [{ to: '/yonetim', label: tx('Yönetim Paneli', 'Admin panel (Turkish)'), icon: ShieldCheck }] : []),
+    ...(fieldAgent.data ? [{ to: '/saha', label: tx('Saha Paneli', 'Field panel (Turkish)'), icon: Briefcase }] : []),
     { to: '/destek', label: tx('Yardım ve Destek', 'Help & support'), icon: Phone },
     { to: '/bildirimler', label: t.nav.notifications, icon: Bell },
     { to: '/konum', label: `${tx('Konum', 'Location')} · ${location.label}`, icon: MapPin },

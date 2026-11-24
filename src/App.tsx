@@ -39,6 +39,7 @@ const ForBusiness = lazyPage(() => import('@/pages/ForBusiness'), /^\/isletmeler
 const OwnerArea = lazy(() => import('@/pages/owner/OwnerArea'));
 const AdminArea = lazy(() => import('@/pages/admin/AdminArea'));
 const AdminSetup = lazy(() => import('@/pages/admin/AdminSetup'));
+const FieldArea = lazy(() => import('@/pages/field/FieldArea'));
 const Maintenance = lazy(() => import('@/pages/Maintenance'));
 
 /** True when the site was opened through a password-recovery link (read before the auth client tidies the address). */
@@ -142,6 +143,8 @@ export default function App() {
           <Route path="/yonetim/kurulum" element={<RequireAuth><AdminSetup /></RequireAuth>} />
           <Route path="/yonetim/destek-ekibi" element={<RequireAuth><div className="min-h-screen bg-ink p-4 sm:p-8"><SupportCenter workspace /></div></RequireAuth>} />
           <Route path="/yonetim/*" element={<RequireAuth roles={['admin']}><AdminArea /></RequireAuth>} />
+          {/* Field agents are ordinary accounts listed in field_agents; FieldArea checks membership itself. */}
+          <Route path="/saha/*" element={<RequireAuth><FieldArea /></RequireAuth>} />
           <Route path="*" element={<Navigate to="/kesfet" replace />} />
         </Routes>
       </Suspense>

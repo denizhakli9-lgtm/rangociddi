@@ -147,11 +147,26 @@ export interface Appointment {
    * fall back to businesses.cancellation_hours.
    */
   cancellation_hours?: number | null;
+  /**
+   * Set when the business explicitly approved the booking. A confirmed booking with null here was
+   * confirmed automatically after payment and can still be declined by the business until it starts.
+   * Undefined before the 20261124150000 migration runs.
+   */
+  approved_at?: string | null;
   created_at: string;
   businesses?: Pick<Business, 'id' | 'name' | 'slug' | 'cover_url' | 'address' | 'district' | 'city' | 'latitude' | 'longitude' | 'cancellation_hours'> & Partial<Pick<Business, 'owner_id' | 'phone' | 'auto_confirm'>> | null;
   profiles?: Pick<Profile, 'full_name' | 'phone' | 'email' | 'gender'> | null;
   payments?: Pick<Payment, 'id' | 'status' | 'amount' | 'card_last4' | 'provider_payment_id'>[];
   reviews?: { id: string }[];
+}
+
+export interface AppointmentMessage {
+  id: string;
+  appointment_id: string;
+  sender_role: 'customer' | 'business';
+  body: string;
+  read_at: string | null;
+  created_at: string;
 }
 
 export interface Payment {

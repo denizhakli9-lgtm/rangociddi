@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { formatTRY } from '@/lib/format';
 import { referralLink } from '@/lib/fieldAgent';
 import { useField } from './FieldContext';
+import { FieldDailyPlan } from './FieldDailyPlan';
 
 export default function FieldOverview() {
   const { profile } = useAuth();
@@ -55,6 +56,8 @@ export default function FieldOverview() {
   return (
     <div>
       <PageHeader eyebrow="Saha paneli" title={`Merhaba, ${profile?.full_name?.split(' ')[0] || 'saha ekibi'}`} text="Ziyaret ettiğiniz işletmeleri kodunuzla Rango'ya kazandırın, başvurularını takip edin." />
+
+      <FieldDailyPlan code={me.code} bonusAmount={me.bonus_amount} businesses={error ? null : businesses} onShare={share} />
 
       <section className="card-gold mb-8 p-6">
         <p className="eyebrow mb-2">Referans kodunuz</p>

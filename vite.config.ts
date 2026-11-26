@@ -75,9 +75,16 @@ function headHints(supabaseUrl: string): Plugin {
  * sb_secret_ / service_role anahtarı koymayın (aşağıdaki denetim derlemeyi durdurur).
  */
 const SUPABASE_DEFAULTS = {
-  url: 'https://ocgqkdhrmjesrbksnrlh.supabase.co',
-  key: 'sb_publishable_4XWej0uOwOHjYXDwXYB7AQ_e2b8xLXr',
+  url: 'https://lvpmtvixzfhyndfnyyvn.supabase.co',
+  key: 'sb_publishable_QYneF84_HqC8NdctqQ1mPA_496aY6Z5',
 };
+
+/**
+ * Kullanımdan kalkan Supabase projeleri. Rango Kasım 2026'da Tokyo'daki (ap-northeast-1) projeden Frankfurt'taki
+ * (eu-central-1) projeye taşındı. Bir panelde ya da .env'de eski projenin adresi kalmışsa site ve uygulama sessizce
+ * eski veritabanına bağlanmasın diye derleme SUPABASE_DEFAULTS'taki yeni projeyi kullanır ve uyarı yazar.
+ */
+const RETIRED_PROJECT_REFS = ['ocgqkdhrmjesrbksnrlh'];
 
 interface SupabaseSettings {
   url: string;
@@ -137,6 +144,18 @@ function projectRef(url: string): string | undefined {
   }
 }
 
+/** Ayarlar kullanımdan kalkmış bir projeyi gösteriyorsa (bkz. RETIRED_PROJECT_REFS) yerine yeni projeyi koyar. */
+function replaceRetiredProject(settings: SupabaseSettings): SupabaseSettings {
+  const ref = projectRef(settings.url);
+  if (!ref || !RETIRED_PROJECT_REFS.includes(ref)) return settings;
+  console.warn(
+    `[rango] UYARI: ${settings.source} kullanımdan kalkan eski Supabase projesini (${ref}, Tokyo) gösteriyor; yerine ` +
+      `${SUPABASE_DEFAULTS.url} (Frankfurt) kullanıldı. Paneldeki/.env'deki değeri yeni adres ve anahtarla değiştirin ya da silin ` +
+      '(YAYINLAMA-REHBERI.md, "Frankfurt\'a taşınma").',
+  );
+  return { url: SUPABASE_DEFAULTS.url, key: SUPABASE_DEFAULTS.key, source: `${settings.source} (eski proje yerine varsayılan)` };
+}
+
 /**
  * .env'de, Bolt'ta ya da Hostinger panelinde Rango projesinin eski (legacy) anon anahtarı kalmışsa derleme durmaz:
  * aynı projenin SUPABASE_DEFAULTS içindeki yayınlanabilir anahtarı kullanılır ve uyarı yazılır. Böylece panellerdeki
@@ -191,7 +210,7 @@ function assertPublicSupabase({ url, key, source }: SupabaseSettings): void {
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
-  const supabase = upgradeLegacyKey(resolveSupabase(env));
+  const supabase = upgradeLegacyKey(replaceRetiredProject(resolveSupabase(env)));
   assertPublicSupabase(supabase);
   if (!supabase.source.startsWith('VITE_')) {
     console.info(`[rango] Supabase ayarları: ${supabase.source}`);

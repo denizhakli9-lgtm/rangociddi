@@ -4,6 +4,7 @@ import { Check, Eye, EyeOff, Lock, Mail, Phone, Store, User } from 'lucide-react
 import { supabase } from '@/lib/supabase';
 import { friendlyError } from '@/lib/errors';
 import { formatTrPhone, isEmail, isPhone } from '@/lib/validation';
+import { isReservedEmail, isTrMobile, phoneLoginEmail } from '@/lib/phoneLogin';
 import { safeInternalPath } from '@/lib/safeRedirect';
 import { LEGAL_VERSIONS, legalPath } from '@/lib/legal';
 import { Input, Select } from '@/components/ui/Field';
@@ -15,6 +16,8 @@ import { newTabClick, publicUrl } from '@/lib/platform';
 import { chosenLocale, tx } from '@/i18n/locale';
 
 type AccountType = 'customer' | 'business';
+/** How a business owner signs up; customers always use e-mail (payments need a real address). */
+type SignupMethod = 'phone' | 'email';
 
 function isAlreadyRegistered(err: unknown): boolean {
   const o = (err ?? {}) as { code?: unknown; message?: unknown };
@@ -37,11 +40,20 @@ export default function Register() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const [type, setType] = useState<AccountType>(params.get('tip') === 'isletme' ? 'business' : 'customer');
+  const [method, setMethod] = useState<SignupMethod>('phone');
   const [form, setForm] = useState<Form>({ fullName: '', email: '', phone: '', gender: 'unspecified', password: '', terms: false });
   const [errors, setErrors] = useState<Partial<Record<keyof Form, string>>>({});
   const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  const usePhone = type === 'business' && method === 'phone';
+
+  const chooseMethod = (m: SignupMethod) => {
+    setMethod(m);
+    setErrors((e) => ({ ...e, email: undefined, phone: undefined }));
+    setFormError('');
+  };
 
   // Typing in a field clears its error; leaving it checks it right away.
   const set = <K extends keyof Form>(key: K, value: Form[K]) => {
@@ -51,8 +63,16 @@ export default function Register() {
 
   const check = (key: keyof Form): string | undefined => {
     if (key === 'fullName') return form.fullName.trim().length < 3 ? t.validation.name : undefined;
-    if (key === 'email') return isEmail(form.email) ? undefined : t.validation.email;
-    if (key === 'phone') return isPhone(form.phone) ? undefined : t.validation.phone;
+    if (key === 'email') {
+      if (usePhone) return undefined;
+      if (!isEmail(form.email)) return t.validation.email;
+      return isReservedEmail(form.email) ? t.validation.reservedEmail : undefined;
+    }
+    if (key === 'phone') {
+      // A phone sign-up uses the number to log in, so it must be a real mobile number.
+      if (usePhone) return isTrMobile(form.phone) ? undefined : t.validation.mobile;
+      return isPhone(form.phone) ? undefined : t.validation.phone;
+    }
     if (key === 'password') return form.password.length < 8 ? t.validation.password : undefined;
     if (key === 'terms') return form.terms ? undefined : t.validation.terms;
     return undefined;
@@ -67,7 +87,8 @@ export default function Register() {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     const next: typeof errors = {};
-    for (const key of ['fullName', 'email', 'phone', 'password', 'terms'] as const) {
+    const keys = usePhone ? (['fullName', 'phone', 'password', 'terms'] as const) : (['fullName', 'email', 'phone', 'password', 'terms'] as const);
+    for (const key of keys) {
       const msg = check(key);
       if (msg) next[key] = msg;
     }
@@ -76,7 +97,9 @@ export default function Register() {
     if (Object.keys(next).length) return;
     if (loading) return;
 
-    const email = form.email.trim().toLowerCase();
+    // Phone sign-up: the number becomes a technical login address that is never shown or mailed
+    // (src/lib/phoneLogin.ts); the database keeps profiles.email empty for it.
+    const email = usePhone ? phoneLoginEmail(form.phone) : form.email.trim().toLowerCase();
     setLoading(true);
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -87,7 +110,8 @@ export default function Register() {
         data: {
           account_type: type,
           full_name: form.fullName.trim(),
-          phone: form.phone.trim(),
+          phone: usePhone ? formatTrPhone(form.phone) : form.phone.trim(),
+          signup_method: usePhone ? 'phone' : 'email',
           gender: form.gender,
           // Record of what the person accepted / was informed with, at sign-up time.
           terms_version: LEGAL_VERSIONS.terms,
@@ -116,17 +140,23 @@ export default function Register() {
           return;
         }
         setLoading(false);
-        setFormError(tx('Kayıt tamamlanamadı. Bu e-posta ile hesabınız varsa giriş yapın veya şifrenizi sıfırlayın.', 'Sign-up could not be completed. If you already have an account with this email, sign in or reset your password.'));
+        setFormError(
+          usePhone
+            ? tx('Bu telefon numarasıyla kayıtlı bir hesap var. Giriş yapın; şifrenizi hatırlamıyorsanız WhatsApp destek hattımıza yazın.', 'There is already an account with this phone number. Sign in; if you do not remember your password, message our WhatsApp support line.')
+            : tx('Kayıt tamamlanamadı. Bu e-posta ile hesabınız varsa giriş yapın veya şifrenizi sıfırlayın.', 'Sign-up could not be completed. If you already have an account with this email, sign in or reset your password.'),
+        );
         return;
       }
       setLoading(false);
-      setFormError(friendlyError(error));
+      // The database refuses a phone sign-up whose number and login address disagree (handle_new_user).
+      setFormError(usePhone && /database error saving new user/i.test(error.message) ? t.errors.VEYRA_PHONE_LOGIN_INVALID : friendlyError(error));
       return;
     }
 
     setLoading(false);
     if (!data.session) {
-      setFormError(t.errors.confirmEmail);
+      // Phone accounts cannot confirm an e-mail; this only happens if e-mail confirmation is switched on in Supabase.
+      setFormError(usePhone ? tx('Hesabınız oluşturuldu ancak oturum açılamadı. Lütfen giriş yapmayı deneyin veya destek ekibimize yazın.', 'Your account was created but you could not be signed in. Please try signing in or contact our support team.') : t.errors.confirmEmail);
       return;
     }
     go(type);
@@ -163,7 +193,11 @@ export default function Register() {
             <button
               key={value}
               type="button"
-              onClick={() => setType(value)}
+              onClick={() => {
+                setType(value);
+                setErrors((e) => ({ ...e, email: undefined, phone: undefined }));
+                setFormError('');
+              }}
               className={`relative rounded-2xl border p-4 text-left transition ${active ? 'border-gold-500/70 bg-gold-500/10 shadow-gold' : 'border-line bg-coal hover:border-gold-500/30'}`}
             >
               {active && (
@@ -195,10 +229,55 @@ export default function Register() {
 
       <form onSubmit={submit} className="space-y-4" noValidate>
         <Input label={tx('Ad Soyad', 'Full name')} name="fullName" autoComplete="name" value={form.fullName} onChange={(e) => set('fullName', e.target.value)} onBlur={blur('fullName')} error={errors.fullName} icon={<User className="h-4 w-4" />} />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Input label={tx('E-posta', 'Email')} name="email" type="email" autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={form.email} onChange={(e) => set('email', e.target.value)} onBlur={blur('email')} error={errors.email} icon={<Mail className="h-4 w-4" />} />
-          <Input label={tx('Telefon', 'Phone')} name="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="05XX XXX XX XX" value={form.phone} onChange={(e) => set('phone', formatTrPhone(e.target.value))} onBlur={blur('phone')} error={errors.phone} icon={<Phone className="h-4 w-4" />} />
-        </div>
+        {type === 'business' && (
+          <fieldset>
+            <legend className="mb-2 block text-sm font-medium text-mist">{tx('Nasıl kaydolmak istersiniz?', 'How would you like to sign up?')}</legend>
+            <div className="grid grid-cols-2 gap-2" role="radiogroup">
+              {(
+                [
+                  { value: 'phone', label: tx('Telefon numarası', 'Phone number'), icon: Phone },
+                  { value: 'email', label: tx('E-posta adresi', 'Email address'), icon: Mail },
+                ] as const
+              ).map(({ value, label, icon: Icon }) => {
+                const active = method === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => chooseMethod(value)}
+                    className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition ${active ? 'border-gold-500/70 bg-gold-500/10 text-white' : 'border-line bg-coal text-mist hover:border-gold-500/30'}`}
+                  >
+                    <Icon className={`h-4 w-4 ${active ? 'text-gold-400' : 'text-mist-2'}`} />
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+        )}
+        {usePhone ? (
+          <Input
+            label={tx('Cep telefonu', 'Mobile number')}
+            name="phone"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            placeholder="05XX XXX XX XX"
+            value={form.phone}
+            onChange={(e) => set('phone', formatTrPhone(e.target.value))}
+            onBlur={blur('phone')}
+            error={errors.phone}
+            hint={tx('Giriş yaparken bu numarayı ve şifrenizi kullanacaksınız. E-posta adresi gerekmez.', 'You will sign in with this number and your password. No email address needed.')}
+            icon={<Phone className="h-4 w-4" />}
+          />
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Input label={tx('E-posta', 'Email')} name="email" type="email" autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={form.email} onChange={(e) => set('email', e.target.value)} onBlur={blur('email')} error={errors.email} icon={<Mail className="h-4 w-4" />} />
+            <Input label={tx('Telefon', 'Phone')} name="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="05XX XXX XX XX" value={form.phone} onChange={(e) => set('phone', formatTrPhone(e.target.value))} onBlur={blur('phone')} error={errors.phone} icon={<Phone className="h-4 w-4" />} />
+          </div>
+        )}
         {type === 'customer' && (
           <Select label={tx('Cinsiyet', 'Gender')} name="gender" value={form.gender} onChange={(e) => set('gender', e.target.value as Gender)} hint={tx('Size uygun işletmeleri öne çıkarmamıza yardımcı olur.', 'Helps us highlight businesses that suit you.')}>
             {(Object.keys(t.gender) as Gender[]).map((g) => (

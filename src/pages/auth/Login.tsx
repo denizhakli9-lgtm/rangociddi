@@ -1,10 +1,12 @@
 import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
-import { Lock, Mail } from 'lucide-react';
+import { Lock, MessageCircle, UserRound } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { fetchFieldAgentMe } from '@/lib/fieldAgent';
 import { friendlyError } from '@/lib/errors';
 import { isEmail } from '@/lib/validation';
+import { isTrMobile, looksLikePhone, phoneLoginEmail } from '@/lib/phoneLogin';
+import { whatsAppLinkProps } from '@/lib/whatsapp';
 import { safeInternalPath } from '@/lib/safeRedirect';
 import { homePathFor, useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/Field';
@@ -20,9 +22,10 @@ export default function Login() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const redirect = safeInternalPath(params.get('sonra'));
-  const [email, setEmail] = useState('');
+  // E-mail address, or the mobile number of a business account that signed up by phone.
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ identifier?: string; password?: string }>({});
   const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(false);
   const { session, profile: authProfile, loading: authLoading } = useAuth();
@@ -30,17 +33,23 @@ export default function Login() {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     const next: typeof errors = {};
-    if (!isEmail(email)) next.email = t.validation.email;
+    const byPhone = looksLikePhone(identifier);
+    if (byPhone ? !isTrMobile(identifier) : !isEmail(identifier)) next.identifier = t.validation.loginId;
     if (!password) next.password = t.validation.required;
     setErrors(next);
     setFormError('');
     if (Object.keys(next).length) return;
 
     setLoading(true);
-    const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
+    const email = byPhone ? phoneLoginEmail(identifier) : identifier.trim().toLowerCase();
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error || !data.user) {
       setLoading(false);
-      setFormError(friendlyError(error));
+      setFormError(
+        byPhone && /invalid login credentials/i.test(error?.message ?? '')
+          ? tx('Telefon numarası veya şifre hatalı. Telefonla giriş yalnızca telefon numarasıyla kaydolan işletme hesaplarında geçerlidir; e-postayla kaydolduysanız e-posta adresinizi girin.', 'Incorrect phone number or password. Phone sign-in only works for business accounts created with a phone number; if you signed up with email, enter your email address.')
+          : friendlyError(error),
+      );
       return;
     }
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).maybeSingle();
@@ -63,7 +72,20 @@ export default function Login() {
   return (
     <AuthShell eyebrow={tx('Tekrar hoş geldiniz', 'Welcome back')} title={tx('Giriş Yap', 'Sign in')} subtitle={tx('Randevularınızı yönetmek için hesabınıza giriş yapın.', 'Sign in to your account to manage your bookings.')}>
       <form onSubmit={submit} className="space-y-5" noValidate>
-        <Input label={tx('E-posta', 'Email')} name="email" type="email" autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={email} onChange={(e) => setEmail(e.target.value)} error={errors.email} icon={<Mail className="h-4 w-4" />} placeholder={tx('ornek@eposta.com', 'you@example.com')} />
+        <Input
+          label={tx('E-posta veya telefon', 'Email or phone')}
+          name="username"
+          type="text"
+          autoComplete="username"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          value={identifier}
+          onChange={(e) => setIdentifier(e.target.value)}
+          error={errors.identifier}
+          icon={<UserRound className="h-4 w-4" />}
+          placeholder={tx('ornek@eposta.com veya 05XX XXX XX XX', 'you@example.com or 05XX XXX XX XX')}
+        />
         <div>
           <Input label={tx('Şifre', 'Password')} name="password" type="password" autoComplete="current-password" autoCapitalize="none" autoCorrect="off" value={password} onChange={(e) => setPassword(e.target.value)} error={errors.password} icon={<Lock className="h-4 w-4" />} placeholder="••••••••" />
           <div className="mt-2 text-right">
@@ -82,6 +104,12 @@ export default function Login() {
         <Link to={`/kayit${redirect ? `?sonra=${encodeURIComponent(redirect)}` : ''}`} className="font-semibold text-gold-400 hover:text-gold-300">
           {tx('Hemen kaydolun', 'Sign up now')}
         </Link>
+      </p>
+      <p className="mt-3 text-center text-xs text-mist-2">
+        <a {...whatsAppLinkProps(tx('Merhaba, Rango hesabıma giriş yapamıyorum.', 'Hello, I cannot sign in to my Rango account.'))} className="inline-flex items-center gap-1 hover:text-white">
+          <MessageCircle className="h-3.5 w-3.5" />
+          {tx('Giriş yapamıyor musunuz? WhatsApp’tan yazın', 'Cannot sign in? Message us on WhatsApp')}
+        </a>
       </p>
       <p className="mt-3 text-center text-xs text-mist-2">
         <Link to="/kesfet" className="hover:text-white">{tx('Giriş yapmadan keşfetmeye devam et', 'Continue browsing without signing in')}</Link>

@@ -2,7 +2,7 @@
 # Ayrıntı ve bir kerelik kurulum: MOBIL-REHBERI.md, "Otomatik derleme (GitHub Actions)".
 #
 # - İmza sırları (ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS,
-#   ANDROID_KEY_PASSWORD) tanımlıysa: Google Play'e yüklenecek imzalı .aab ve telefona
+#   ANDROID_KEY_PASSWORD; aynı sırlar RANGO_ önekiyle de olur) tanımlıysa: Google Play'e yüklenecek imzalı .aab ve telefona
 #   kurulabilen imzalı .apk üretilir.
 # - Tanımlı değilse: yalnızca deneme için imzasız (debug) .apk üretilir.
 # - PLAY_SERVICE_ACCOUNT_JSON da tanımlıysa .aab Google Play'e (varsayılan: dahili test kanalı)
@@ -60,10 +60,26 @@ jobs:
 
       - name: İmza anahtarı
         env:
-          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 || secrets.RANGO_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD || secrets.RANGO_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS || secrets.RANGO_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD || secrets.RANGO_KEY_PASSWORD }}
         run: |
           if [ -n "$KEYSTORE_B64" ]; then
-            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+            # Half-configured signing must not silently fall back to an unsigned build.
+            for v in STORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+              if [ -z "${!v}" ]; then echo "::error::İmza sırlarından biri boş: $v (MOBIL-REHBERI.md 3b)"; exit 1; fi
+            done
+            # Windows'ta üretilen metinde satır sonu / boşluk olabilir.
+            printf '%s' "$KEYSTORE_B64" | tr -d '\r\n\t ' | base64 -d > "$RUNNER_TEMP/upload.jks"
+            # Anahtar, şifre ve alias'ı derlemeden önce doğrula; SHA-1'i Play Console'daki
+            # "Yükleme anahtarı sertifikası" ile karşılaştırmak için yazdır.
+            if ! keytool -list -v -keystore "$RUNNER_TEMP/upload.jks" -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS" > "$RUNNER_TEMP/cert.txt" 2>&1; then
+              echo "::error::Keystore açılamadı: şifre ya da alias yanlış, veya ANDROID_KEYSTORE_BASE64 eksik kopyalandı."
+              grep -m1 "keytool error" "$RUNNER_TEMP/cert.txt" || true
+              exit 1
+            fi
+            echo "İmza sertifikası:"; grep -E "SHA1:|SHA256:|Owner:|Valid" "$RUNNER_TEMP/cert.txt"
             echo "SIGN=1" >> "$GITHUB_ENV"
           else
             echo "::warning::İmza sırları tanımlı değil; yalnızca deneme (debug) APK üretilecek. Kurulum: MOBIL-REHBERI.md"
@@ -72,9 +88,9 @@ jobs:
       - name: Derleme
         working-directory: android
         env:
-          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD || secrets.RANGO_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS || secrets.RANGO_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD || secrets.RANGO_KEY_PASSWORD }}
         run: |
           if [ "$SIGN" = "1" ]; then
             ./gradlew --no-daemon bundleRelease assembleRelease \

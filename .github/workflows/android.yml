@@ -1,0 +1,121 @@
+# Rango Android uygulaması: her `main` güncellemesinde GitHub kendi bilgisayarında derler.
+# Ayrıntı ve bir kerelik kurulum: MOBIL-REHBERI.md, "Otomatik derleme (GitHub Actions)".
+#
+# - İmza sırları (ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS,
+#   ANDROID_KEY_PASSWORD) tanımlıysa: Google Play'e yüklenecek imzalı .aab ve telefona
+#   kurulabilen imzalı .apk üretilir.
+# - Tanımlı değilse: yalnızca deneme için imzasız (debug) .apk üretilir.
+# - PLAY_SERVICE_ACCOUNT_JSON da tanımlıysa .aab Google Play'e (varsayılan: dahili test kanalı)
+#   kendiliğinden yüklenir; kanal, depo değişkeni PLAY_TRACK ile değiştirilebilir.
+# Dosyalar her çalıştırmanın sayfasında "Artifacts" altında 30 gün durur.
+name: Android uygulaması
+
+on:
+  push:
+    branches: [main, 'claude/**']
+    paths-ignore: ['**.md']
+  workflow_dispatch:
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Paketler
+        run: npm ci
+
+      - name: Web derlemesi
+        run: npm run build
+
+      - name: Android projesi (simge, açılış ekranı, izinler, sürüm)
+        run: |
+          # Play yalnızca öncekilerden büyük sürüm kodunu kabul eder; 100000 + çalıştırma numarası
+          # elle verilmiş eski kodların (1, 2, 3…) hep üstünde kalır.
+          export ANDROID_VERSION_CODE=$((100000 + GITHUB_RUN_NUMBER))
+          export ANDROID_VERSION_NAME="1.${GITHUB_RUN_NUMBER}"
+          node scripts/android-prepare.mjs
+          echo "VERSION_NAME=$ANDROID_VERSION_NAME" >> "$GITHUB_ENV"
+
+      - name: Supabase anahtarı kontrolü
+        run: |
+          # Yeni (sb_publishable_) anahtar olmalı, eski JWT anahtarı olmamalı (MOBIL-REHBERI.md 3a).
+          test "$(grep -l sb_publishable_ dist/assets/index-*.js | wc -l)" -ge 1
+          ! grep -q eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9 dist/assets/index-*.js
+
+      - name: İmza anahtarı
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+            echo "SIGN=1" >> "$GITHUB_ENV"
+          else
+            echo "::warning::İmza sırları tanımlı değil; yalnızca deneme (debug) APK üretilecek. Kurulum: MOBIL-REHBERI.md"
+          fi
+
+      - name: Derleme
+        working-directory: android
+        env:
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ "$SIGN" = "1" ]; then
+            ./gradlew --no-daemon bundleRelease assembleRelease \
+              -Pandroid.injected.signing.store.file="$RUNNER_TEMP/upload.jks" \
+              -Pandroid.injected.signing.store.password="$STORE_PASSWORD" \
+              -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
+              -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
+          else
+            ./gradlew --no-daemon assembleDebug
+          fi
+
+      - name: Dosyaları topla
+        run: |
+          mkdir -p out
+          find android/app/build/outputs -name '*.aab' -exec cp {} "out/rango-${VERSION_NAME}.aab" \;
+          find android/app/build/outputs -name '*-release.apk' -exec cp {} "out/rango-${VERSION_NAME}.apk" \;
+          find android/app/build/outputs -name '*-debug.apk' -exec cp {} "out/rango-${VERSION_NAME}-deneme.apk" \;
+          ls -la out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rango-android-${{ env.VERSION_NAME }}
+          path: out/
+          retention-days: 30
+
+      - name: Google Play'e yükle
+        if: env.SIGN == '1' && github.ref == 'refs/heads/main'
+        env:
+          PLAY_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          if [ -z "$PLAY_JSON" ]; then
+            echo "PLAY_SERVICE_ACCOUNT_JSON tanımlı değil: .aab dosyasını Play Console'a elle yükleyin."
+            exit 0
+          fi
+          echo "PLAY_UPLOAD=1" >> "$GITHUB_ENV"
+
+      - uses: r0adkll/upload-google-play@v1
+        if: env.PLAY_UPLOAD == '1'
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: tr.com.rango.app
+          releaseFiles: out/*.aab
+          track: ${{ vars.PLAY_TRACK || 'internal' }}
+          status: completed

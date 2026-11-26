@@ -41,7 +41,7 @@ npx cap add android
 npx cap add ios        # yalnızca Mac'te
 ```
 
-Bu komutlar `android/` ve `ios/` klasörlerini oluşturur. Bu klasörleri GitHub'a gönder.
+Bu komutlar `android/` ve `ios/` klasörlerini oluşturur. `android/` git'te tutulmaz; her derlemede `scripts/android-prepare.mjs` ile yeniden oluşturulur (bkz. 3b). `ios/` klasörünü GitHub'a gönder.
 
 ---
 
@@ -99,10 +99,46 @@ Supabase anahtarı derleme anında uygulamanın içine gömülür. Telefondaki b
 
 ---
 
+## 3b. Otomatik derleme (GitHub Actions) – önerilen yol
+
+`.github/workflows/android.yml`: GitHub'a (`main`) her kod gönderildiğinde uygulama GitHub'ın kendi bilgisayarında derlenir. Android Studio açmana gerek kalmaz.
+
+- `android/` klasörü artık git'te tutulmaz. Her derlemede `scripts/android-prepare.mjs` onu sıfırdan oluşturur. Bu betik simge ve açılış ekranını `assets/` klasöründen üretir, konum izinlerini ekler ve sürüm numarasını yazar. Bilgisayarında da aynısı `npm run android` ile olur.
+- **Sürüm kodu** `100000 + çalıştırma numarası` olur (ör. 100007). Böylece daha önce elle yüklediğin sürümlerin (1, 2, 3…) hep üstünde kalır. Bundan sonra elle derleyeceksen `build.gradle`'daki kodu Play'deki en büyük koddan büyük yap.
+- Derlenen dosyalar: GitHub → **Actions** → "Android uygulaması" → son çalıştırma → **Artifacts** (30 gün durur).
+
+**Bir kerelik: imza anahtarını GitHub'a tanıt.** Play'e yüklenen her sürüm, ilk sürümü imzaladığın anahtarla (keystore, `.jks`) imzalanmalı. Anahtar dosyasını metne çevir:
+
+- Windows (PowerShell, `.jks` dosyasının olduğu klasörde):
+  ```powershell
+  [Convert]::ToBase64String([IO.File]::ReadAllBytes("rango.jks")) | Set-Content rango-jks.txt
+  ```
+- Mac / Linux:
+  ```bash
+  base64 -i rango.jks -o rango-jks.txt
+  ```
+
+GitHub'da depo → **Settings → Secrets and variables → Actions → New repository secret** ile şu dördünü ekle:
+
+| Ad | Değer |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | `rango-jks.txt` dosyasının içeriğinin tamamı |
+| `ANDROID_KEYSTORE_PASSWORD` | keystore şifresi |
+| `ANDROID_KEY_ALIAS` | anahtar adı (alias; Android Studio'da imzalarken seçtiğin, ör. `key0`) |
+| `ANDROID_KEY_PASSWORD` | anahtar şifresi (çoğu zaman keystore şifresiyle aynı) |
+
+Sonra `rango-jks.txt` dosyasını sil. Şifreleri sohbet, e-posta ya da kod içine yazma; yalnızca bu ekrana gir. Sırlar tanımlı değilse iş akışı yine çalışır, ama yalnızca telefona kurulup denenebilen **imzasız deneme APK'sı** üretir.
+
+GitHub → **Actions** → "Android uygulaması" → **Run workflow** ile elle de başlatabilirsin.
+
+**İsteğe bağlı: Play'e kendiliğinden yükleme.** Play Console → **Kurulum → API erişimi** bölümünden bir hizmet hesabı (service account) oluştur ve ona "Sürümleri yayınla" izni ver. JSON anahtarının içeriğini `PLAY_SERVICE_ACCOUNT_JSON` adlı sır olarak ekle. Bundan sonra her `main` derlemesi Play'in **dahili test** kanalına kendiliğinden yüklenir. Başka bir kanal için depo değişkeni `PLAY_TRACK` tanımla (`alpha`, `beta`, `production`). Uygulama Play'de henüz hiç yayınlanmadıysa ilk sürümü elle yükle.
+
+---
+
 ## 4. Simge ve açılış ekranı
 
-1. Proje kökünde `assets/` klasörü aç. İçine 1024×1024 `icon.png` ve 2732×2732 `splash.png` koy (logo ortada, zemin `#f8f7f3`).
-2. Şunu çalıştır:
+Android'de bu adım `scripts/android-prepare.mjs` ile kendiliğinden yapılır. `assets/` klasöründe sitedeki logodan üretilmiş 1024×1024 `icon.png`, 2732×2732 `splash.png` (açık zemin `#f8f7f3`) ve `splash-dark.png` (koyu tema) var. Değiştirmek için bu dosyaları aynı boyutta yenileriyle değiştir.
+iOS için elle:
 
 ```bash
 npx @capacitor/assets generate --iconBackgroundColor '#f8f7f3' --splashBackgroundColor '#f8f7f3'

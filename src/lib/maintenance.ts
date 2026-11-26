@@ -9,7 +9,7 @@ import { isNative } from '@/lib/platform';
  *
  * Siteyi yeniden açmak için bu değeri `false` yapıp yayınlayın.
  */
-export const MAINTENANCE_ENABLED = false;
+export const MAINTENANCE_ENABLED = true;
 
 /** Mobil uygulama bakım modundan etkilenmez; yalnızca web sitesi kapanır. */
 export const maintenanceActive = MAINTENANCE_ENABLED && !isNative;

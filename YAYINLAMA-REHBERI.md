@@ -5,6 +5,50 @@ Aşağıdaki adımları **sırayla** uygulayın.
 
 ---
 
+## Frankfurt'a taşınma (26 Kasım 2026) – yeni proje hazır, geçiş bekliyor
+
+**Neden:** İlk Supabase projesi (`ocgqkdhrmjesrbksnrlh`, adı "dating") Tokyo'da (ap-northeast-1). Kullanıcılar Türkiye'de olduğu için veritabanı Frankfurt'taki yeni projeye (`lvpmtvixzfhyndfnyyvn`, adı "rangociddi", eu-central-1) taşınıyor. Supabase'de bir projenin bölgesi sonradan değiştirilemez, bu yüzden her şey yeni projeye kopyalanır.
+
+| | Eski (Tokyo) | Yeni (Frankfurt) |
+|---|---|---|
+| Adres | `https://ocgqkdhrmjesrbksnrlh.supabase.co` | `https://lvpmtvixzfhyndfnyyvn.supabase.co` |
+| Yayınlanabilir anahtar | `sb_publishable_4XWej0uOwOHjYXDwXYB7AQ_e2b8xLXr` | `sb_publishable_QYneF84_HqC8NdctqQ1mPA_496aY6Z5` |
+| PayTR Bildirim URL | `…ocgqkdhrmjesrbksnrlh…/functions/v1/paytr-callback` | `https://lvpmtvixzfhyndfnyyvn.supabase.co/functions/v1/paytr-callback` |
+
+**Hazır olanlar (Claude, Supabase bağlantısıyla):**
+- **Şema:** 46 migration'ın hepsi aynı sürüm numaralarıyla uygulandı. Migration geçmişi eski projedekiyle birebir aynı. 14 Kasım'dan önceki 30 migration eski projede bozuk biçimde (kaçışlı satır sonları, yanlış bölünmüş ifadeler) kayıtlı olduğu için bunlar `supabase/migrations/` dosyalarından çalıştırıldı. İçerikleri kayıtlı olanlarla aynı.
+- **Karşılaştırma:** tablolar, sütunlar, 174 kısıtlama, 93 indeks, 125 fonksiyon (gövde ve yetkileriyle birlikte), 72 RLS kuralı, tablo ve sütun yetkileri, tetikleyiciler, event trigger'lar, 3 pg_cron işi, realtime yayını ve depolama klasörü iki projede de birebir aynı. Farklı olan tek şey `claim_first_admin` yetkisiydi: migration'daki yetki kaldırma "yönetici varsa" koşuluna bağlı olduğu için yeni projede açık kalmıştı. Yetki elle kaldırıldı.
+- **Edge Function'lar:** `support-ai`, `paytr-token`, `paytr-status`, `paytr-refund` (`verify_jwt` açık) ve `paytr-callback` (`verify_jwt` kapalı) depodaki koddan yayınlandı. Paket özetleri (`ezbr_sha256`) eski projede çalışan sürümlerle birebir aynı.
+- **Deneme veri kopyası:** 34 tablo (auth.users ve auth.identities dahil, yani şifreler de taşınıyor) ve 2 depolama dosyası kopyalandı. Satır sayıları ve içerik özetleri eşleşti. Verilerde eski adresi gösteren 2 görsel bağlantısı yeni adrese çevrildi. Geçiş anında bu kopya silinip yeniden alınacak.
+- **Kod:** `vite.config.ts` içindeki varsayılan adres ve anahtar yeni projeye çevrildi. Ayrıca bir panelde ya da `.env`'de eski Tokyo adresi kalmışsa derleme onu kullanmaz: yeni projeye geçer ve `[rango] UYARI: … kullanımdan kalkan eski Supabase projesini … gösteriyor` yazar (`RETIRED_PROJECT_REFS`). Bu değişiklik geçiş anına kadar `main`'e alınmaz.
+- **Bakım ekranı:** `src/pages/Maintenance.tsx` (Art Deco tasarım). `src/lib/maintenance.ts` içindeki `MAINTENANCE_ENABLED = true` ile açılır.
+
+**Sizin yeni projede yapmanız gerekenler (geçişten önce, Supabase paneli → `rangociddi` projesi):**
+1. **Authentication → Sign In / Providers → Email → "Confirm email": KAPALI.** Yeni projede açık geliyor. Açık kalırsa geçişten sonra kimse kayıt olamaz (telefonla kayıt "oturum açılamadı" hatası verir).
+2. **Authentication → URL Configuration → Site URL:** `https://rango.com.tr` (varsayılanı `http://localhost:3000`).
+3. **Redirect URLs:** `https://rango.com.tr/giris`, `https://rango.com.tr/sifre-yenile`, `https://www.rango.com.tr/giris`, `https://www.rango.com.tr/sifre-yenile`. Eski projede başka adres varsa onları da ekleyin.
+4. **Sign In / Providers:** yalnızca Email açık. "Allow new users to sign up" açık, Anonymous sign-ins kapalı (kod anonim giriş kullanmıyor), Phone ve OAuth kapalı. "Secure password change" açık.
+5. **Şifre:** Minimum password length 8, "Leaked password protection" açık. Diğer şifre kuralları eski projedekiyle aynı olsun.
+6. **Authentication → Emails → Security** altındaki "Password changed" / "Email changed" bildirimleri kapalı (telefon hesaplarının teknik adreslerine posta gitmesin). CAPTCHA kapalı.
+7. **E-posta:** eski projede özel SMTP ya da Türkçe şablon tanımladıysanız aynısını girin. Rate limit, JWT süresi ve oturum ayarlarını da eski projedekiyle eşleyin. Bunlar MCP ile okunamıyor; eski projenin ilgili sayfalarına bakarak kopyalayın.
+8. **Edge Functions → Secrets:** `PAYTR_MERCHANT_ID`, `PAYTR_MERCHANT_KEY`, `PAYTR_MERCHANT_SALT` girilmiş görünüyor (fonksiyonlar anahtar eksik hatası vermiyor). `OPENAI_API_KEY` ile, eski projede varsa `OPENAI_SUPPORT_MODEL`, `SITE_URL`, `SUPPORT_AI_USER_HOURLY` ve `SUPPORT_AI_GLOBAL_DAILY` değerlerini de eski projenin Secrets sayfasından kopyalayın.
+9. **Hostinger:** hPanel → rango.com.tr → Node.js → ortam değişkenlerinde `VITE_SUPABASE_URL` / `SUPABASE_URL` ve anahtar değişkenleri varsa yeni adres ve anahtarla değiştirin ya da silin (silinirse `vite.config.ts` içindeki varsayılan kullanılır). Bolt'taki `.env` ve Bolt'un Supabase bağlantısı için de aynısı geçerli.
+
+**Geçiş sırası (yaklaşık 10–15 dakika kesinti):**
+1. Bakım modu `main`'e alınır (`MAINTENANCE_ENABLED = true`). Site yaklaşık 20 saniye içinde bakım ekranına geçer.
+2. Eski projede yazma durdurulur. Mobil uygulama bakım modundan etkilenmez; o yüzden eski veritabanında anon/authenticated rollerinin yazması kapatılır. Bunun için ya Supabase → Settings → API Keys → "Disable JWT-based API keys" kullanılır (kurulu Android sürümü eski anahtarı kullanıyor), ya da Claude bir PostgREST `db_pre_request` engeli ekler. İki yol da geri alınabilir.
+3. Eski projede başlamış ama bitmemiş PayTR ödemesi olmadığı kontrol edilir (`private.paytr_orders`, durum `started`).
+4. Claude veriyi son kez kopyalar ve doğrular: tablo tablo satır sayısı ve içerik özeti, dosyalar ve adres düzeltmesi.
+5. **Siz:** PayTR Mağaza Paneli → Destek & Kurulum → Ayarlar → **Bildirim URL** = `https://lvpmtvixzfhyndfnyyvn.supabase.co/functions/v1/paytr-callback`.
+6. Yeni adres ve `MAINTENANCE_ENABLED = false` birlikte `main`'e alınır. Hostinger siteyi yeni veritabanından derler; statik SEO sayfaları da yeni veriden üretilir.
+7. Kontrol: canlı CSP başlığında `lvpmtvixzfhyndfnyyvn` görünmeli. Gizli pencerede giriş, yeni kayıt, telefonla işletme girişi, şifremi unuttum ve randevu akışı denenmeli.
+8. Eski projede pg_cron işleri durdurulur, "Allow new users to sign up" kapatılır. Geçici taşıma fonksiyonları (`tasima-disa` eski projede, `tasima-ici` yeni projede) etkisiz bir sürümle değiştirilir. Panelden silmeniz önerilir.
+9. **Herkes bir kez yeniden giriş yapar.** Şifreler taşınır ama oturumlar taşınmaz: yeni projenin imza anahtarı farklıdır.
+
+**Android:** Kurulu uygulamalar eski adresi içinde taşır ve bakım modundan etkilenmez. Yeni adresli sürüm, geçiş commit'inden sonra `main`'den derlenip Play'e yüklenmeli (bkz. `MOBIL-REHBERI.md`). Yeni sürüm yayılana kadar eski projeyi **duraklatmayın ve silmeyin**. Son 24 saatte uygulama trafiği 2 cihazdan geliyordu ve hepsi okuma isteğiydi.
+
+---
+
 ## 0. Supabase API anahtarı geçişi (23 Kasım 2026) – site ve fonksiyonlar geçti; Android sürümü ve eski anahtarların kapatılması bekliyor
 
 **Neden:** Supabase eski (legacy) JWT tabanlı `anon` ve `service_role` anahtarlarını kaldırıyor. [Resmî geçiş rehberine](https://supabase.com/docs/guides/getting-started/migrating-to-new-api-keys) göre eski anahtarlar 2026 sonuna kadar çalışıyor. [GitHub duyurusunda](https://github.com/orgs/supabase/discussions/29260) tarih "Late 2026, TBC" olarak geçiyor, yani kesin gün açıklanmadı. Eski anahtarlar kapandığında bu anahtarı kullanan site, uygulama sürümü ve fonksiyonlar hiçbir isteği tamamlayamaz. Yerlerine yayınlanabilir (`sb_publishable_…`, tarayıcı ve uygulama için) ve gizli (`sb_secret_…`, yalnızca sunucu için) anahtarlar geçiyor.
@@ -44,8 +88,8 @@ Fonksiyonlar gizli anahtarla veritabanına ulaştı: `paytr-status`, `paytr-toke
 - **Hostinger:** hPanel → Web Siteleri → rango.com.tr → Node.js uygulaması → ortam değişkenleri. `VITE_SUPABASE_ANON_KEY` ya da `SUPABASE_ANON_KEY` değeri `eyJ…` ile başlıyorsa yeni anahtarla değiştirin. Hiç tanımlı değilse bir şey yapmanıza gerek yok.
 - **Bolt** (`.env`) ve mobil uygulamayı derlediğiniz bilgisayardaki `.env`: aynı değişikliği yapın. Adres satırı aynı kalır; tırnak ve boşluk koymayın:
   ```
-  VITE_SUPABASE_URL=https://ocgqkdhrmjesrbksnrlh.supabase.co
-  VITE_SUPABASE_ANON_KEY=sb_publishable_4XWej0uOwOHjYXDwXYB7AQ_e2b8xLXr
+  VITE_SUPABASE_URL=https://lvpmtvixzfhyndfnyyvn.supabase.co
+  VITE_SUPABASE_ANON_KEY=sb_publishable_QYneF84_HqC8NdctqQ1mPA_496aY6Z5
   ```
 - Anahtar Supabase panelinde **Settings → API Keys → "Publishable and secret API keys"** sekmesindeki **Publishable key** değeridir ve gizli değildir; zaten sitenin koduna gömülür. **Secret key'i (`sb_secret_…`) hiçbir yere kopyalamayın.**
 - Bolt'tan Edge Function yayınlamadan önce Bolt'taki kodun son `main` olduğundan emin olun. Eski bir kopya yayınlanırsa fonksiyonlar eski anahtar değişkenlerine döner ve eski anahtarlar kapanınca çalışmaz.
@@ -229,7 +273,7 @@ Kaporalar **PayTR iFrame API** ile alınır. Müşteri kart bilgisini PayTR'nin 
 
 **Sizin yapmanız gerekenler (PayTR paneli):**
 1. **Bildirim URL (zorunlu):** PayTR Mağaza Paneli → Destek & Kurulum → Ayarlar → Bildirim URL:
-   `https://ocgqkdhrmjesrbksnrlh.supabase.co/functions/v1/paytr-callback`
+   `https://lvpmtvixzfhyndfnyyvn.supabase.co/functions/v1/paytr-callback` (26 Kasım 2026'daki Frankfurt taşınmasından önce `ocgqkdhrmjesrbksnrlh` idi)
    Bu girilmezse PayTR ödemeyi "Devam Ediyor" olarak bekletir: para mağaza hesabınıza aktarılmaz ve iade yapılamaz (PayTR hata 007).
 2. Site "PayTR test" modundayken bir test ödemesi yapın. PayTR panelinde İşlem & Rapor → İşlemler sayfasında işlemin "Başarılı" göründüğünü kontrol edin ("Devam Ediyor" görünüyorsa Bildirim URL'yi kontrol edin).
 3. Canlıya geçiş: PayTR panelinde Destek & Kurulum → Canlı Mod → "Evet, Entegrasyonu Tamamladım" → "Canlı Moda Geçiş Talebi Gönder".

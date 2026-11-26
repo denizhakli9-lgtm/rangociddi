@@ -1,5 +1,6 @@
 // Göreli import: bu dosyayı derleme eklentisi de okur (seo/prerender.ts); orada "@/" takma adı yoktur.
 import { COMPANY, LEGAL_UPDATED_AT, LEGAL_VERSIONS, PAYMENT_PROVIDER, SALE_CONSENT_TEXT, SALE_CONSENT_TEXT_TEST, filled, type LegalSlug } from '../../lib/legal';
+import { WHATSAPP_SUPPORT } from '../../lib/contact';
 
 const PAYTR_PAGE = `${PAYMENT_PROVIDER.shortName}’nin güvenli ödeme sayfasında (${PAYMENT_PROVIDER.website.replace('https://', '')})`;
 
@@ -52,8 +53,8 @@ const contactLine = [
   .join(' · ');
 
 const writtenChannels = filled(COMPANY.kep)
-  ? `yazılı olarak, KEP adresimize ya da sistemimizde kayıtlı e-posta adresinizden ${COMPANY.kvkkEmail} adresine`
-  : `yazılı olarak ya da sistemimizde kayıtlı e-posta adresinizden ${COMPANY.kvkkEmail} adresine`;
+  ? `yazılı olarak, KEP adresimize, sistemimizde kayıtlı e-posta adresinizden ${COMPANY.kvkkEmail} adresine ya da uygulamaya giriş yaparak Destek merkezinden`
+  : `yazılı olarak, sistemimizde kayıtlı e-posta adresinizden ${COMPANY.kvkkEmail} adresine ya da uygulamaya giriş yaparak Destek merkezinden`;
 
 const aydinlatma: LegalDocument = {
   slug: 'aydinlatma-metni',
@@ -76,14 +77,14 @@ const aydinlatma: LegalDocument = {
           ['Veri kategorisi', 'Örnekler', 'Kimden'],
           [
             ['Kimlik', 'Ad soyad; isteğe bağlı cinsiyet bilgisi', 'Müşteri, işletme sahibi'],
-            ['İletişim', 'E-posta adresi, telefon numarası; işletmeler için işletme telefonu, e-postası ve adresi', 'Müşteri, işletme sahibi'],
+            ['İletişim', 'E-posta adresi, telefon numarası (işletme sahipleri e-posta adresi vermeden yalnızca cep telefonu numarasıyla da üye olabilir; bu durumda telefon numarası giriş bilgisi olarak da kullanılır); işletmeler için işletme telefonu, e-postası ve adresi', 'Müşteri, işletme sahibi'],
             ['Müşteri işlem', 'Randevu bilgileri (işletme, hizmet, çalışan, tarih-saat, randevu notu, durum, iptal nedeni), favoriler, bildirimler, değerlendirme ve yorumlar', 'Müşteri'],
             ['Hukuki işlem', 'Satış onayı kaydı (onay tarihi ve saati, kabul edilen sözleşme sürümü ve dili, onay anındaki işletme, hizmet, randevu ve tutar bilgileri); harcama itirazı ve iade süreçlerine ilişkin kayıtlar', 'Müşteri'],
             ['Konum', 'Seçtiğiniz semt/ilçe ve yaklaşık (yaklaşık 1 km hassasiyetinde) koordinat; konum izni verirseniz cihaz konumunuz yalnızca size yakın işletmeleri bulmak için kullanılır', 'Müşteri, işletme sahibi'],
             ['Finans', 'Kapora tutarı, ödeme durumu, ödeme kuruluşu işlem numarası, kart markası ve kartın son 4 hanesi, iade kayıtları; işletmeler için IBAN, hesap sahibi adı, banka adı, komisyon ve hak ediş kayıtları', 'Müşteri, işletme sahibi'],
             ['Müşteri destek', 'Destek talebi konusu ve yazışma içerikleri', 'Müşteri, işletme sahibi'],
             ['Görsel', 'Profil fotoğrafı; işletmenin yüklediği logo, kapak, galeri ve çalışan fotoğrafları', 'Müşteri, işletme sahibi'],
-            ['İşlem güvenliği', 'Hesap ve oturum bilgileri, şifrenin geri döndürülemez şekilde şifrelenmiş hali, IP adresi, erişim ve işlem kayıtları', 'Tüm kullanıcılar ve ziyaretçiler'],
+            ['İşlem güvenliği', 'Hesap ve oturum bilgileri (telefon numarasıyla üye olan işletme sahipleri için telefon numarasından türetilen ve e-posta gönderiminde kullanılmayan teknik giriş tanımlayıcısı dahil), şifrenin geri döndürülemez şekilde şifrelenmiş hali, IP adresi, erişim ve işlem kayıtları', 'Tüm kullanıcılar ve ziyaretçiler'],
           ],
         ),
         p('Kart numarası, son kullanma tarihi ve güvenlik kodu gibi kart bilgileriniz tarafımızca alınmaz ve saklanmaz; bu bilgiler doğrudan lisanslı ödeme kuruluşu tarafından işlenir. Platformda özel nitelikli kişisel veri (sağlık, biyometrik veri vb.) talep edilmez; randevu notlarına bu tür bilgileri yazmamanızı rica ederiz.'),
@@ -116,7 +117,8 @@ const aydinlatma: LegalDocument = {
         ul(
           'Randevu aldığınız işletme: ad soyad, telefon, e-posta, randevu ve not bilgileriniz, hizmetin sunulabilmesi ve sizinle iletişim kurulabilmesi için (sözleşmenin ifası).',
           `Lisanslı ödeme kuruluşu ${PAYMENT_PROVIDER.name}: kaporanın tahsili ve iadesi, ödeme ve sahtecilik önleme hizmetlerinin sunulması ve harcama itirazı (chargeback) süreçlerinin yürütülmesi için ad soyad, e-posta, telefon, ödeme anındaki IP adresi, profilinizdeki il/ilçe bilgisi ve sipariş bilgileri (sipariş numarası, tutar, işletme ve hizmet adı); harcama itirazı veya iade uyuşmazlığında ayrıca satış onayı kaydı ile randevu, iptal ve hizmet kayıtları. ${PAYMENT_PROVIDER.shortName} bu bilgileri harcama itirazı sürecinde kartı çıkaran bankaya ve iş ortağı bankalara iletebilir. Kart bilgileriniz ${COMPANY.brand}’ya uğramadan doğrudan ${PAYMENT_PROVIDER.shortName}’nin güvenli ödeme sayfasında işlenir (sözleşmenin kurulması ve ifası, hukuki yükümlülük, bir hakkın tesisi, kullanılması veya korunması).`,
-          'Altyapı ve barındırma hizmet sağlayıcıları: veritabanı, kimlik doğrulama, e-posta doğrulama gönderimi ve dosya depolama hizmeti veren Supabase, Inc. ile web barındırma hizmeti veren Hostinger; verileriniz bu hizmetler aracılığıyla saklanır.',
+          'Altyapı ve barındırma hizmet sağlayıcıları: veritabanı, kimlik doğrulama, şifre yenileme e-postalarının gönderimi ve dosya depolama hizmeti veren Supabase, Inc. ile web barındırma hizmeti veren Hostinger; verileriniz bu hizmetler aracılığıyla saklanır.',
+          `WhatsApp destek hattı (WhatsApp, Meta Platforms): destek hattımıza (${WHATSAPP_SUPPORT.display}) yazdığınızda telefon numaranız, WhatsApp profil adınız ve mesaj içerikleriniz; destek verilmesi, kimlik doğrulaması ve telefon numarasıyla üye olan işletme sahiplerine geçici şifre iletilmesi amacıyla bu hizmet üzerinden işlenir. WhatsApp’ı kullanmak sizin tercihinizdir; uygulama içi destek merkezi de kullanılabilir.`,
           'Yapay zekâ destek hizmeti sağlayıcısı (OpenAI, L.L.C.): yalnızca destek merkezinde yapay zekâ asistanı etkin olduğunda, yazdığınız mesaj içerikleri ön yanıt üretmek amacıyla iletilir. Gönderimden önce e-posta adresleri, telefon, IBAN, kart, kimlik numarası ve rezervasyon kodu gibi bilgiler otomatik olarak maskelenir; ödeme, iade, şifre, şikâyet, KVKK ve sağlık gibi konular tespit edildiğinde mesajınız yapay zekâya gönderilmeden temsilciye aktarılır. Ad ve adres gibi bilgileri destek mesajlarınıza yazmamanızı rica ederiz.',
           'Görsel içerik sağlayıcısı (Pexels): bazı tanıtım görselleri bu sağlayıcının sunucularından yüklenir; bu sırada tarayıcınız IP adresinizi iletir.',
           'Harita uygulamaları: “Yol tarifi al” bağlantısına tıkladığınızda seçtiğiniz harita uygulamasına (Google Haritalar, Apple Haritalar, Yandex Haritalar) yalnızca işletmenin konumu iletilir.',
@@ -127,7 +129,7 @@ const aydinlatma: LegalDocument = {
     {
       title: '5. Yurt dışına aktarım',
       blocks: [
-        p('Altyapı (Supabase, Inc.), web barındırma (Hostinger) ve etkinleştirildiğinde yapay zekâ destek (OpenAI, L.L.C. – ABD) hizmet sağlayıcılarımızın sunucuları yurt dışında bulunmaktadır. Bu aktarımlar KVKK’nın 9. maddesi kapsamında, Kişisel Verileri Koruma Kurulu tarafından ilan edilen standart sözleşmelerin düzenlenmesi ve Kuruma bildirilmesi suretiyle gerçekleştirilir. Yapay zekâ destek hizmetine, yukarıda açıklandığı şekilde maskelenmiş destek mesajı içerikleri dışında veri iletilmez.'),
+        p('Altyapı (Supabase, Inc.), web barındırma (Hostinger) ve etkinleştirildiğinde yapay zekâ destek (OpenAI, L.L.C. – ABD) hizmet sağlayıcılarımızın sunucuları yurt dışında bulunmaktadır. Bu aktarımlar KVKK’nın 9. maddesi kapsamında, Kişisel Verileri Koruma Kurulu tarafından ilan edilen standart sözleşmelerin düzenlenmesi ve Kuruma bildirilmesi suretiyle gerçekleştirilir. Yapay zekâ destek hizmetine, yukarıda açıklandığı şekilde maskelenmiş destek mesajı içerikleri dışında veri iletilmez. WhatsApp destek hattına yazdığınızda mesajlarınız WhatsApp’ın (Meta Platforms) yurt dışındaki sunucularında da işlenir.'),
       ],
     },
     {
@@ -192,6 +194,7 @@ const kosullar: LegalDocument = {
           'Platformu 18 yaşından küçükler ancak veli veya vasisinin onayıyla kullanabilir.',
           'Kayıt sırasında verdiğiniz bilgilerin doğru ve güncel olması sizin sorumluluğunuzdadır.',
           'Hesap şifrenizin gizliliğini korumak sizin sorumluluğunuzdadır; yetkisiz kullanımı fark ederseniz derhal bize bildirin.',
+          `İşletme sahipleri e-posta adresi yerine cep telefonu numarasıyla da üye olabilir. Bu durumda telefon numaranız giriş bilgisi olarak kullanılır; hesabınıza e-posta gönderilmez ve şifre yenileme bağlantısı e-postayla iletilemez. Şifrenizi unutursanız, hesabınızda kayıtlı telefon numarasından WhatsApp destek hattımıza (${WHATSAPP_SUPPORT.display}) yazarak kimliğiniz doğrulandıktan sonra yardım isteyebilirsiniz.`,
           'İşletme hesapları, yayına alınmadan önce tarafımızca incelenir; eksik veya yanıltıcı bilgi içeren işletmeler yayına alınmayabilir veya askıya alınabilir.',
         ),
       ],
@@ -254,7 +257,7 @@ const kosullar: LegalDocument = {
     {
       title: '9. Değişiklikler, bildirimler ve uyuşmazlıklar',
       blocks: [
-        p('Bu koşullarda yapılacak esaslı değişiklikler yürürlüğe girmeden önce platformda duyurulur. Bildirimler, hesabınızda kayıtlı e-posta adresine veya uygulama içi bildirim olarak yapılır.'),
+        p('Bu koşullarda yapılacak esaslı değişiklikler yürürlüğe girmeden önce platformda duyurulur. Bildirimler uygulama içi bildirim olarak ve hesabınızda e-posta adresi kayıtlıysa bu adrese yapılır. E-posta adresi olmadan telefon numarasıyla üye olan işletme sahiplerine bildirimler uygulama içinde iletilir.'),
         p(`Bu sözleşme Türk hukukuna tabidir. Tüketici işlemlerinden doğan uyuşmazlıklarda ${TUKETICI_UYUSMAZLIK}`),
       ],
     },
@@ -265,7 +268,7 @@ const cerez: LegalDocument = {
   slug: 'cerez-politikasi',
   eyebrow: 'Gizlilik',
   title: 'Çerez Politikası',
-  summary: `${COMPANY.brand}, reklam veya analitik amaçlı çerez kullanmaz. Tarayıcınızın yerel depolama alanını yalnızca sitenin çalışması ve sizin seçtiğiniz tercihlerin hatırlanması için kullanırız. Son güncelleme: ${LEGAL_UPDATED_AT}.`,
+  summary: `${COMPANY.brand}, reklam veya analitik amaçlı çerez kullanmaz. Tarayıcınızın yerel depolama alanını yalnızca sitenin çalışması ve sizin seçtiğiniz tercihlerin hatırlanması için kullanırız. Sürüm: ${LEGAL_VERSIONS.cookies}.`,
   sections: [
     {
       title: '1. Kullandığımız depolama kayıtları',
@@ -399,7 +402,7 @@ const iade: LegalDocument = {
   slug: 'iptal-iade',
   eyebrow: 'Ödeme',
   title: 'İptal, Erteleme ve İade Koşulları',
-  summary: `Kapora ödemeli randevularda iptal, erteleme, cayma ve iade kuralları. Ödeme ekranındaki satış onayıyla, Mesafeli Hizmet Satış Sözleşmesi ile birlikte kabul edilir (sürüm: ${LEGAL_VERSIONS.sale}). Son güncelleme: ${LEGAL_UPDATED_AT}.`,
+  summary: `Kapora ödemeli randevularda iptal, erteleme, cayma ve iade kuralları. Ödeme ekranındaki satış onayıyla, Mesafeli Hizmet Satış Sözleşmesi ile birlikte kabul edilir (sürüm: ${LEGAL_VERSIONS.sale}).`,
   sections: [
     {
       title: '1. Ödeme öncesi bilgilendirme',
@@ -455,6 +458,7 @@ const basvuru: LegalDocument = {
             `Islak imzalı dilekçe ile şahsen veya noter aracılığıyla: ${COMPANY.address}`,
             filled(COMPANY.kep) ? `Kayıtlı Elektronik Posta (KEP) ile: ${COMPANY.kep}` : '',
             `Güvenli elektronik imza veya mobil imza ile imzalanmış e-posta ya da sistemimizde kayıtlı e-posta adresinizden: ${COMPANY.kvkkEmail}`,
+            'Uygulamaya giriş yaparak Destek merkezinden “KVKK başvurusu” konulu bir talep açarak (e-posta adresi olmadan telefon numarasıyla üye olanlar için de geçerlidir).',
           ].filter(Boolean),
         ),
       ],
@@ -469,7 +473,7 @@ const basvuru: LegalDocument = {
           'Varsa bildirime esas e-posta adresi, telefon numarası,',
           'Talep konusu ve talebinize ilişkin bilgi ve belgeler.',
         ),
-        p('Kimliğinizi doğrulayabilmemiz için başvurunuzu, hesabınızda kayıtlı e-posta adresinden göndermenizi öneririz.'),
+        p('Kimliğinizi doğrulayabilmemiz için başvurunuzu, hesabınızda kayıtlı e-posta adresinden göndermenizi öneririz. E-posta adresi olmadan telefon numarasıyla üye olduysanız başvurunuzda hesabınıza kayıtlı telefon numarasını belirtin veya başvurunuzu uygulamadaki Destek merkezinden iletin.'),
       ],
     },
     {
@@ -530,13 +534,13 @@ const hesapSilme: LegalDocument = {
           '“Verilerim ve gizlilik” bölümündeki “Hesabımı sil” düğmesine dokunun.',
           'Açılan pencerede onay kutusunu işaretleyip “Hesabımı kalıcı olarak sil” düğmesine dokunun.',
         ),
-        p('Müşteri hesapları anında silinir. İşletme hesaplarında bekleyen ödeme ve hak edişler bulunabileceğinden, işletme sahipleri silme talebini işletme panelindeki “Yardım ve Destek” bölümünden veya 2. maddedeki e-posta yöntemiyle iletir; talep en geç 30 gün içinde sonuçlandırılır. Yaklaşan veya ödeme/onay bekleyen randevunuz ya da sonuçlanmamış bir iade talebiniz varsa, hesabınızı silmeden önce bunların iptal edilmesi veya tamamlanması gerekir.'),
+        p('Müşteri hesapları anında silinir. İşletme hesaplarında bekleyen ödeme ve hak edişler bulunabileceğinden, işletme sahipleri silme talebini işletme panelindeki “Yardım ve Destek” bölümünden veya 2. maddedeki yöntemlerle iletir; talep en geç 30 gün içinde sonuçlandırılır. Yaklaşan veya ödeme/onay bekleyen randevunuz ya da sonuçlanmamış bir iade talebiniz varsa, hesabınızı silmeden önce bunların iptal edilmesi veya tamamlanması gerekir.'),
       ],
     },
     {
       title: '2. Uygulamaya erişmeden silme talebi',
       blocks: [
-        p(`Uygulamaya erişemiyorsanız, hesabınızda kayıtlı e-posta adresinizden ${COMPANY.kvkkEmail} adresine “Hesap silme talebi” konulu bir e-posta gönderin. E-postada hesabınızda kayıtlı e-posta adresini belirtin. Kimliğinizi doğruladıktan sonra hesabınız silinir ve talebiniz en geç 30 gün içinde ücretsiz olarak sonuçlandırılır.`),
+        p(`Uygulamaya erişemiyorsanız, hesabınızda kayıtlı e-posta adresinizden ${COMPANY.kvkkEmail} adresine “Hesap silme talebi” konulu bir e-posta gönderin. E-postada hesabınızda kayıtlı e-posta adresini belirtin. E-posta adresi olmadan telefon numarasıyla üye olduysanız, talebinizi hesabınızda kayıtlı telefon numarasından WhatsApp destek hattımıza (${WHATSAPP_SUPPORT.display}) “Hesap silme talebi” yazarak iletin. Kimliğinizi doğruladıktan sonra hesabınız silinir ve talebiniz en geç 30 gün içinde ücretsiz olarak sonuçlandırılır.`),
       ],
     },
     {
@@ -569,7 +573,7 @@ const hesapSilme: LegalDocument = {
     {
       title: 'English summary',
       blocks: [
-        p(`To delete your ${COMPANY.brand} account (developer: ${COMPANY.legalName}): open the ${COMPANY.brand} app or ${COMPANY.website.replace('https://', '')}, sign in, go to Profile → “My data & privacy” → “Delete my account” and confirm. Customer accounts are deleted immediately. Business owners request deletion through “Help & Support” in the business panel or by email (below); it is completed within 30 days. If you cannot access the app, email ${COMPANY.kvkkEmail} from your account’s email address with the subject “Account deletion request”; it will be completed within 30 days.`),
+        p(`To delete your ${COMPANY.brand} account (developer: ${COMPANY.legalName}): open the ${COMPANY.brand} app or ${COMPANY.website.replace('https://', '')}, sign in, go to Profile → “My data & privacy” → “Delete my account” and confirm. Customer accounts are deleted immediately. Business owners request deletion through “Help & Support” in the business panel or by email or WhatsApp (below); it is completed within 30 days. If you cannot access the app, email ${COMPANY.kvkkEmail} from your account’s email address with the subject “Account deletion request”. If you signed up with a phone number and no email, send “Account deletion request” to our WhatsApp support line (${WHATSAPP_SUPPORT.display}) from that phone number instead. It will be completed within 30 days.`),
         p('Deleted: name, email, phone, profile, location preferences, favourites, notifications and sign-in access. Reviews remain anonymously as “Deleted user”. Kept without being linked to your identity: booking, payment, refund and purchase-confirmation records for 10 years (tax and commercial law), booking notes for 12 months and support messages for 2 years.'),
       ],
     },

@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { supportAction } from '@/lib/support';
 import { friendlyError } from '@/lib/errors';
 import { COMPANY } from '@/lib/legal';
+import { WHATSAPP_SUPPORT } from '@/lib/contact';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { Button } from '@/components/ui/Button';
@@ -26,7 +27,8 @@ async function requestDeletionViaSupport(profile: Profile) {
     thread,
     [
       'KVKK md. 11 ve md. 7 kapsamında hesabımın kapatılmasını ve kişisel verilerimin silinmesini / anonim hale getirilmesini talep ediyorum.',
-      `Hesap: ${profile.email ?? profile.id}`,
+      `Hesap: ${profile.email ?? profile.phone ?? profile.id}`,
+      ...(profile.email ? [] : ['Giriş yöntemi: telefon']),
       `Hesap türü: ${profile.role}`,
       'Yasal saklama yükümlülüğü bulunan kayıtların ilgili süre boyunca saklanacağını biliyorum.',
     ].join('\n'),
@@ -78,7 +80,12 @@ export function DeleteAccount({ profile }: { profile: Profile }) {
       } catch {
         // Support channel unavailable (e.g. suspended account or too many open
         // tickets). KVKK md. 11 rights do not depend on that, so offer e-mail.
-        setError(tx(`Talebiniz otomatik olarak iletilemedi. Lütfen hesabınızda kayıtlı e-posta adresinizden ${COMPANY.kvkkEmail} adresine “Hesap silme talebi” konulu bir e-posta gönderin; talebiniz en geç 30 gün içinde sonuçlandırılır.`, `Your request could not be sent automatically. Please email ${COMPANY.kvkkEmail} from your account’s email address with the subject “Account deletion request”; it will be completed within 30 days.`));
+        setError(
+          profile.email
+            ? tx(`Talebiniz otomatik olarak iletilemedi. Lütfen hesabınızda kayıtlı e-posta adresinizden ${COMPANY.kvkkEmail} adresine “Hesap silme talebi” konulu bir e-posta gönderin; talebiniz en geç 30 gün içinde sonuçlandırılır.`, `Your request could not be sent automatically. Please email ${COMPANY.kvkkEmail} from your account’s email address with the subject “Account deletion request”; it will be completed within 30 days.`)
+            : // Phone accounts have no mailbox of their own: the registered number identifies them instead.
+              tx(`Talebiniz otomatik olarak iletilemedi. Lütfen hesabınızda kayıtlı telefon numaranızdan WhatsApp destek hattımıza (${WHATSAPP_SUPPORT.display}) “Hesap silme talebi” yazın; talebiniz en geç 30 gün içinde sonuçlandırılır.`, `Your request could not be sent automatically. Please send “Account deletion request” to our WhatsApp support line (${WHATSAPP_SUPPORT.display}) from your account’s registered phone number; it will be completed within 30 days.`),
+        );
         return;
       }
       setOpen(false);

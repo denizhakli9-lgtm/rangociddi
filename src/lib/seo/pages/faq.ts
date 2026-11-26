@@ -165,10 +165,18 @@ function businessGroup(lang: SeoLang): FaqItem[] {
       q: pick(lang, 'İşletmemi Rango’ya nasıl eklerim?', 'How do I add my business to Rango?'),
       a: pick(
         lang,
-        '“İşletme” türünde bir hesap açıp üç adımlık işletme formunu doldurun: işletme adı, kategori, ilçe ve telefon yeterlidir; adres ve açıklamayı sonradan da ekleyebilirsiniz. Başvurunuz incelenir; onaylandıktan sonra işletmeniz yayına alınır. Onay beklerken hizmetlerinizi, ekibinizi ve çalışma saatlerinizi hazırlayabilirsiniz.',
-        'Open a “Business” account and fill in the three-step business form: name, category, district and phone are enough; you can add the address and description later. Your application is reviewed and your business goes live once it is approved. While you wait you can set up your services, team and opening hours.',
+        '“İşletme” türünde bir hesap açın (e-posta adresi ya da yalnızca cep telefonu numarasıyla) ve üç adımlık işletme formunu doldurun: işletme adı, kategori, ilçe ve telefon yeterlidir; adres ve açıklamayı sonradan da ekleyebilirsiniz. Başvurunuz incelenir; onaylandıktan sonra işletmeniz yayına alınır. Onay beklerken hizmetlerinizi, ekibinizi ve çalışma saatlerinizi hazırlayabilirsiniz.',
+        'Open a “Business” account (with an email address or just a mobile number) and fill in the three-step business form: name, category, district and phone are enough; you can add the address and description later. Your application is reviewed and your business goes live once it is approved. While you wait you can set up your services, team and opening hours.',
       ),
       link: { label: pick(lang, 'İşletmeler için Rango', 'Rango for businesses'), path: FOR_BUSINESS_PATH },
+    },
+    {
+      q: pick(lang, 'E-posta adresim yok, işletmemi kaydedebilir miyim?', 'I have no email address. Can I register my business?'),
+      a: pick(
+        lang,
+        'Evet. İşletme hesabı açarken e-posta yerine “Telefon numarası” seçeneğiyle kendi cep telefonu numaranızla kaydolabilirsiniz; girişte bu numarayı ve belirlediğiniz şifreyi kullanırsınız. Bu hesaplara e-posta gönderilmez; şifrenizi unutursanız kayıtlı numaranızdan WhatsApp destek hattımıza yazın.',
+        'Yes. When you open a business account you can choose “Phone number” instead of email and sign up with your own mobile number; you then sign in with that number and the password you chose. No emails are sent to these accounts; if you forget your password, message our WhatsApp support line from your registered number.',
+      ),
     },
     {
       q: pick(lang, 'Rango işletmelerden nasıl ücret alır?', 'How does Rango charge businesses?'),

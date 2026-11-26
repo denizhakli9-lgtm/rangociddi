@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { CalendarDays, Clock, LayoutDashboard, ListChecks, MessageSquare, Scissors, Store, Users, UserSquare2, Wallet } from 'lucide-react';
+import { CalendarDays, Clock, LayoutDashboard, ListChecks, MessageSquare, Scissors, Store, UserCog, Users, UserSquare2, Wallet } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAsync } from '@/lib/useAsync';
 import { BUSINESS_LIST_COLUMNS } from '@/lib/api';
@@ -35,6 +35,7 @@ const ITEMS: DashNavItem[] = [
   { to: '/isletme/kazanc', label: 'Kazanç & Komisyon', icon: Wallet, primary: true },
   { to: '/destek', label: 'Yardım ve Destek', icon: MessageSquare },
   { to: '/isletme/profil', label: 'İşletme Profili', icon: Store },
+  { to: '/profil', label: 'Hesap Ayarları', icon: UserCog },
 ];
 
 export default function OwnerArea() {

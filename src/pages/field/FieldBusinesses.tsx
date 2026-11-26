@@ -12,6 +12,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { friendlyError } from '@/lib/errors';
 import { formatDate, formatTRY } from '@/lib/format';
 import { fieldAgentSetBusinessStatus, setupGaps, type FieldAgentBusiness } from '@/lib/fieldAgent';
+import { isReservedEmail } from '@/lib/phoneLogin';
 import type { BusinessStatus } from '@/lib/types';
 import { useField } from './FieldContext';
 
@@ -115,7 +116,8 @@ export default function FieldBusinesses() {
                         <Phone className="h-3 w-3" /> {b.owner_phone || b.phone}
                       </a>
                     )}
-                    {b.owner_email && (
+                    {/* Owners who signed up by phone have no e-mail; their phone above is the contact. */}
+                    {b.owner_email && !isReservedEmail(b.owner_email) && (
                       <a href={`mailto:${b.owner_email}`} className="inline-flex min-w-0 items-center gap-1 truncate hover:text-gold-300">
                         <Mail className="h-3 w-3" /> {b.owner_email}
                       </a>

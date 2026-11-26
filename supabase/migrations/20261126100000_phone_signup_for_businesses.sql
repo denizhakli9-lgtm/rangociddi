@@ -10,12 +10,14 @@
      sign-up whose metadata phone is the same number, so nobody can take another person's number
      with a customer account or a hand-written address. For these accounts profiles.email is NULL
      (the technical address is never shown) and profiles.phone holds the number as "0532 123 45 67".
-     Every other sign-up behaves exactly as before.
+     Every other sign-up behaves exactly as before. An existing account cannot move into the range
+     by changing its e-mail either (trigger on auth.users), so a number cannot be taken that way.
   3. profiles.phone of a phone account can only be re-formatted, not changed to another number:
      the number is the login identifier, and changing only the profile copy would lock the owner out.
   4. admin_reset_phone_password(user): phone accounts cannot receive a reset e-mail, so an admin can
-     set a one-off temporary password and send it to the registered number over WhatsApp. Existing
-     sessions of that account are signed out. Refused for e-mail accounts (they use the e-mail reset).
+     set a one-off temporary password and send it to the registered number over WhatsApp. The
+     account's sessions are revoked (refresh tokens); access tokens already issued stay valid until
+     they expire (JWT expiry, 1 hour by default). Refused for e-mail accounts (they use the e-mail reset).
   5. admin_phone_login_users(): ids of phone accounts, so the admin panel can label them without
      reading auth.users from the client.
 */
@@ -85,6 +87,28 @@ END;
 $$;
 REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated;
 
+-- 2b. No way into the range except a business sign-up ------------------------
+-- With 'Confirm email' off, auth.updateUser({ email }) applies a new address at once; without this an
+-- e-mail account could switch to tel-90<someone's number>@rango.com.tr and take that number.
+CREATE OR REPLACE FUNCTION private.guard_phone_login_email_change() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+BEGIN
+  IF (lower(coalesce(NEW.email, '')) LIKE 'tel-%@rango.com.tr'
+      AND lower(btrim(coalesce(NEW.email, ''))) IS DISTINCT FROM lower(btrim(coalesce(OLD.email, ''))))
+     OR (lower(coalesce(NEW.email_change, '')) LIKE 'tel-%@rango.com.tr'
+      AND NEW.email_change IS DISTINCT FROM OLD.email_change) THEN
+    RAISE EXCEPTION 'VEYRA_PHONE_LOGIN_INVALID';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+REVOKE EXECUTE ON FUNCTION private.guard_phone_login_email_change() FROM PUBLIC, anon, authenticated;
+
+DROP TRIGGER IF EXISTS on_auth_user_phone_login_email_change ON auth.users;
+CREATE TRIGGER on_auth_user_phone_login_email_change
+  BEFORE UPDATE OF email, email_change ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION private.guard_phone_login_email_change();
+
 -- 3. Login number stays put ------------------------------------------------
 CREATE OR REPLACE FUNCTION private.guard_phone_login_number() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
@@ -123,7 +147,7 @@ DECLARE
   v_bytes bytea := extensions.gen_random_bytes(12);
   i int;
 BEGIN
-  IF NOT private.is_admin() THEN RAISE EXCEPTION 'VEYRA_FORBIDDEN'; END IF;
+  IF NOT coalesce(private.is_admin(), false) THEN RAISE EXCEPTION 'VEYRA_FORBIDDEN'; END IF;
   SELECT u.email INTO v_login FROM auth.users u WHERE u.id = p_user;
   IF v_login IS NULL THEN RAISE EXCEPTION 'VEYRA_NOT_FOUND'; END IF;
   IF NOT private.is_phone_login_email(v_login) THEN RAISE EXCEPTION 'VEYRA_INVALID_INPUT'; END IF;
@@ -139,7 +163,8 @@ BEGIN
      SET encrypted_password = extensions.crypt(v_password, extensions.gen_salt('bf')),
          updated_at = now()
    WHERE id = p_user;
-  -- Whoever was signed in to this account (e.g. someone who registered the number first) is signed out.
+  -- Revokes the refresh tokens of whoever was signed in (e.g. someone who registered the number first);
+  -- access tokens already issued stay valid until they expire (JWT expiry, 1 hour by default).
   DELETE FROM auth.sessions WHERE user_id = p_user;
 
   RETURN jsonb_build_object(
@@ -157,7 +182,7 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
 BEGIN
-  IF NOT private.is_admin() THEN RAISE EXCEPTION 'VEYRA_FORBIDDEN'; END IF;
+  IF NOT coalesce(private.is_admin(), false) THEN RAISE EXCEPTION 'VEYRA_FORBIDDEN'; END IF;
   RETURN coalesce(
     (SELECT array_agg(u.id) FROM auth.users u WHERE private.is_phone_login_email(u.email)),
     '{}'::uuid[]);

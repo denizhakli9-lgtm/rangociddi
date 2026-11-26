@@ -165,12 +165,29 @@ Yayındaki kodun bu dosyayla birebir aynı olduğu doğrulandı ve fonksiyonun �
 ## 4. Supabase kimlik doğrulama ayarları
 
 **Authentication → Sign In / Providers / URL Configuration** altında:
-- **Confirm email:** açık
-- **Secure password change:** açık
+- **Confirm email:** **kapalı** kalmalı. Telefonla kayıt olan işletme sahipleri, numaradan üretilen teknik bir giriş adresiyle (`tel-90…@rango.com.tr`) kaydedilir; bu adres e-posta alamaz. Ayar açılırsa telefonla kayıtlar tamamlanamaz (kayıttan sonra oturum açılmaz) ve onay e-postaları geri döner. Şu an kayıtta hiçbir onay e-postası gönderilmiyor; yasal metinler de buna göre yazıldı.
+- **Phone provider:** **kapalı** kalmalı. SMS sağlayıcısı yok; telefonla giriş, e-posta/şifre altyapısı üzerinden teknik adresle yapılır.
+- **Secure password change:** açık. Uygulama, şifre değiştirmeden önce mevcut şifreyle yeniden giriş yaptırdığı için telefon hesaplarına doğrulama e-postası gerekmez.
 - **Leaked password protection:** açık
+- **Güvenlik bildirim e-postaları** (**Authentication → Emails → Security**: "Password changed", "Email address changed" vb.): **kapalı** kalmalı. Açılırsa telefon hesaplarındaki her şifre değişikliği (yöneticinin verdiği geçici şifre dahil) teknik adrese e-posta gönderir; bu e-postalar geri döner ve gönderici itibarını düşürür.
 - **Site URL:** `https://rango.com.tr`
 - **Redirect URLs:** `https://rango.com.tr/giris` ve `https://rango.com.tr/sifre-yenile`
 - Yönetici hesapları için iki adımlı doğrulamayı (**MFA / TOTP**) açmanız önerilir.
+- `rango.com.tr` e-posta sunucusuna, alıcısı `tel-` ile başlayan iletileri **sessizce silen** (geri döndürmeyen, hiçbir kutuya teslim etmeyen) bir kural ekleyin; **tümünü yakala (catch-all)** ya da `tel-` ile başlayan kutu/takma ad tanımlamayın. Supabase'in şifre yenileme ve sihirli bağlantı uçlarını herkes çağırabildiği için teknik adreslere e-posta gönderilmesi sunucu tarafında engellenemez; bu kural olmadan bu iletiler geri döner (gönderici itibarı düşer) ya da bir kutuya düşer.
+
+### İşletmeler için telefonla kayıt (26 Kasım 2026)
+
+İşletme sahipleri e-posta yerine cep telefonu numarasıyla da kaydolabilir (müşteriler yalnızca e-postayla). Numara giriş bilgisidir; teknik adres hiçbir ekranda, dışa aktarımda veya üçüncü tarafa giden veride gösterilmez ve ona e-posta gönderilmez. Şifresini unutan telefon hesabı sahibi WhatsApp destek hattına kayıtlı numarasından yazar; yönetici kimliği doğruladıktan sonra geçici şifre verir.
+
+- Veritabanı: `supabase/migrations/20261126100000_phone_signup_for_businesses.sql`. Yeni site yayınlanmadan **önce** SQL Editor'de (ya da Supabase bağlantısıyla) uygulayın; eski siteyi etkilemez. Telefon hesaplarında `profiles.email` boş, `profiles.phone` kayıtlı numaradır; bu numara başka bir numarayla değiştirilemez. Yönetici fonksiyonları: `admin_reset_phone_password` (geçici şifre, açık oturumları kapatır) ve `admin_phone_login_users`.
+- Yasal metinler: Kullanım Koşulları ve KVKK Aydınlatma Metni bu değişiklikle güncellendi (`LEGAL_VERSIONS.terms` ve `.privacy` = `2026-11-26`).
+
+**Yayından sonra test edin** (gizli pencerede, deneme hesaplarıyla; test kayıtlarını sonra silin):
+- Kayıt → hesap türü "İşletme" → "Telefon numarası" ile kayıt. Kayıttan hemen sonra oturum açılmalı; Profil ve işletme panelinde teknik adres hiçbir yerde görünmemeli.
+- Çıkış → Giriş ekranında "E-posta veya telefon" alanına numarayı yazıp giriş.
+- Yönetim → Kullanıcılar → bu hesap → "Geçici şifre oluştur". Eski şifreyle giriş yapılamamalı, geçici şifreyle yapılabilmeli; açık oturumlar kapanmalı.
+- Geçici şifreyle girdikten sonra şifre değiştirme: mevcut şifre + yeni şifre. Yeni şifreyle yeniden giriş yapılabilmeli ve hiçbir e-posta gönderilmemeli (Supabase → Authentication → Logs).
+- Aynı numarayla ikinci bir işletme kaydı açılamamalı; müşteri kaydında e-posta alanına `tel-…@rango.com.tr` biçiminde bir adres yazılınca kayıt reddedilmeli.
 
 ---
 

@@ -116,7 +116,11 @@ export function forBusinessPage(lang: SeoLang): PageModel {
       items: [
         {
           title: pick(lang, 'İşletme hesabı açın', 'Open a business account'),
-          text: pick(lang, 'Kayıt sayfasında hesap türü olarak “İşletme”yi seçin.', 'Choose “Business” as the account type when you register.'),
+          text: pick(
+            lang,
+            'Kayıt sayfasında hesap türü olarak “İşletme”yi seçin; e-posta adresinizle ya da yalnızca cep telefonu numaranızla kaydolabilirsiniz.',
+            'Choose “Business” as the account type when you register; you can sign up with your email address or just your mobile number.',
+          ),
         },
         {
           title: pick(lang, 'İşletmenizi tanıtın', 'Describe your business'),

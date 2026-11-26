@@ -5,7 +5,18 @@ Aşağıdaki adımları **sırayla** uygulayın.
 
 ---
 
-## Frankfurt'a taşınma (26 Kasım 2026) – yeni proje hazır, geçiş bekliyor
+## Frankfurt'a taşınma (26 Kasım 2026) – ✅ YAPILDI
+
+**Geçiş yapıldı (26 Kasım 2026, 21:17–21:24 UTC, yaklaşık 7 dakika bakım):** Bakım modu açıldı. Eski projede istemci yazmaları durduruldu (aşağıya bakın). Veriler son kez kopyalanıp tablo tablo doğrulandı: 34 tablonun ve 2 dosyanın hepsi eşleşti. Site yeni adresle açıldı. Canlı CSP başlığı ve sitenin bütün Supabase istekleri `lvpmtvixzfhyndfnyyvn` adresine gidiyor.
+
+**Eski projede (Tokyo) yapılanlar, hepsi geri alınabilir:**
+- `ALTER ROLE authenticator SET pgrst.db_pre_request = 'public.rango_tasindi_engel'`: anon/authenticated rollerinden gelen yazma istekleri `VEYRA_BOOKING_CLOSED` hatası alır. Okumalar ve STABLE RPC'ler (arama, uygun saatler) çalışır. Geri almak için: `ALTER ROLE authenticator RESET pgrst.db_pre_request; NOTIFY pgrst, 'reload config';`
+- `auth.users` tablosunda `rango_tasindi_kayit_engel` tetikleyicisi: yeni kayıt açılmaz.
+- 3 pg_cron işi durduruldu (`cron.alter_job(..., active := false)`).
+- `paytr-token` 503 döndüren bir sürümle değiştirildi, böylece eski uygulamadan yeni ödeme başlamaz. Asıl kod depoda ve yeni projede yayında.
+- Geçici taşıma fonksiyonları (`tasima-disa` eski projede, `tasima-ici` yeni projede) 410 döndüren sürümle değiştirildi. Panelden silebilirsiniz.
+
+Aşağıdaki bölüm geçişten önceki planı ve kontrol listesini olduğu gibi tutar.
 
 **Neden:** İlk Supabase projesi (`ocgqkdhrmjesrbksnrlh`, adı "dating") Tokyo'da (ap-northeast-1). Kullanıcılar Türkiye'de olduğu için veritabanı Frankfurt'taki yeni projeye (`lvpmtvixzfhyndfnyyvn`, adı "rangociddi", eu-central-1) taşınıyor. Supabase'de bir projenin bölgesi sonradan değiştirilemez, bu yüzden her şey yeni projeye kopyalanır.
 

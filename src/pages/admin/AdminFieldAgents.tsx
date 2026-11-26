@@ -119,7 +119,7 @@ export default function AdminFieldAgents() {
       setBonus('');
       await reload();
     } catch (err) {
-      toast(friendlyError(err, 'Bu e-postayla kayıtlı bir hesap bulunamadı. Kişinin önce Rango\'ya üye olması gerekir.'), 'error');
+      toast(friendlyError(err, 'Bu e-postayla kayıtlı bir hesap bulunamadı. Kişinin önce Rango\'ya e-postayla üye olması gerekir.'), 'error');
     } finally {
       setAdding(false);
     }
@@ -162,11 +162,18 @@ export default function AdminFieldAgents() {
       />
 
       <form onSubmit={add} className="card mb-8 grid gap-3 p-5 sm:grid-cols-[1fr_180px_auto] sm:items-end">
-        <Input label="E-posta" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Rango'ya üye olduğu e-posta" />
+        <Input
+          label="E-posta"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Rango'ya üye olduğu e-posta"
+        />
         <Input label="İşletme başı prim (₺)" inputMode="decimal" value={bonus} onChange={(e) => setBonus(e.target.value)} placeholder="ör. 500" />
         <Button type="submit" loading={adding} icon={<UserPlus className="h-4 w-4" />}>
           Ekibe ekle
         </Button>
+        <p className="text-xs text-mist-2 sm:col-span-3">Kişinin e-postayla açılmış bir Rango hesabı olmalı; telefon numarasıyla kayıtlı hesaplar saha elemanı olarak eklenemez.</p>
       </form>
 
       {loading && !data ? (
@@ -193,7 +200,7 @@ export default function AdminFieldAgents() {
                           {!a.is_active && <Badge>Pasif</Badge>}
                         </p>
                         <p className="truncate text-xs text-mist-2">
-                          {[a.profiles?.email, a.profiles?.phone].filter(Boolean).join(' · ')} · {formatDate(a.created_at, { day: 'numeric', month: 'short', year: 'numeric' })}
+                          {[a.profiles?.email, a.profiles?.phone, formatDate(a.created_at, { day: 'numeric', month: 'short', year: 'numeric' })].filter(Boolean).join(' · ')}
                         </p>
                       </div>
                       <span className="rounded-lg border border-gold-500/30 bg-gold-500/5 px-2.5 py-1 font-mono text-sm tracking-[0.2em] text-gold-300">{a.code}</span>

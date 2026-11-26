@@ -168,7 +168,7 @@ function BusinessModal({ business, onClose, onSaved }: { business: Business; onC
         {cover && <img src={cover} alt="" className="aspect-[16/6] w-full rounded-xl object-cover" />}
         <dl className="grid gap-4 text-sm sm:grid-cols-2">
           <Item label="İşletme sahibi" value={business.owner_id ? owner?.full_name || '—' : 'Örnek işletme (sahibi yok, randevuya kapalı)'} />
-          <Item label="Sahip iletişim" value={owner ? [owner.email, owner.phone].filter(Boolean).join(' · ') : '—'} />
+          <Item label="Sahip iletişim" value={(owner && [owner.email, owner.phone].filter(Boolean).join(' · ')) || '—'} />
           <Item label="İşletme telefonu" value={business.phone || '—'} />
           <Item label="Adres" value={business.address} />
           <Item label="Kapora" value={business.deposit_type === 'percentage' ? `%${String(Number(business.deposit_value)).replace('.', ',')}` : formatTRY(business.deposit_value)} />

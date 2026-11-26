@@ -1,10 +1,11 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { Session } from '@supabase/supabase-js';
-import { CheckCircle2, Lock, MailCheck, ShieldAlert } from 'lucide-react';
+import { CheckCircle2, KeyRound, Lock, MailCheck, ShieldAlert } from 'lucide-react';
 import { clearRecoveryPending, isRecoveryPending, supabase } from '@/lib/supabase';
 import { friendlyError } from '@/lib/errors';
 import { homePathFor, useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 import { Input } from '@/components/ui/Field';
 import { Button } from '@/components/ui/Button';
 import { PageLoader } from '@/components/ui/Feedback';
@@ -13,10 +14,12 @@ import type { Profile } from '@/lib/types';
 import { AuthShell } from './AuthShell';
 import { publicUrl } from '@/lib/platform';
 import { tx } from '@/i18n/locale';
+import { isPhoneLoginEmail } from '@/lib/phoneLogin';
 
 // 'signed-in': an ordinary session without a recovery link. Setting a new
 // password from it would skip any proof of account ownership, so the person is
-// asked to use the e-mail link instead.
+// asked to use the e-mail link instead. Phone accounts (technical login address,
+// no mailbox) instead change it here after re-entering the current password.
 type Status = 'checking' | 'ready' | 'signed-in' | 'invalid' | 'done';
 
 const LINK_WAIT_MS = 5000;
@@ -32,16 +35,20 @@ export default function ResetPassword() {
   const t = useT();
   const navigate = useNavigate();
   const { session: authSession } = useAuth();
+  const { toast } = useToast();
   // The link itself was rejected (expired / already used). Unlike a timeout,
   // a later auth event must not reopen the form.
   const [linkError] = useState(() => /error_code=|error=/.test(window.location.hash));
   const [status, setStatus] = useState<Status>(() => (linkError ? 'invalid' : 'checking'));
   // E-mail of the session the effect saw; AuthContext publishes its session
   // only after the profile has loaded, which can be later than this view.
+  // Never holds a phone account's technical login address; phoneAccount marks those instead.
   const [linkEmail, setLinkEmail] = useState('');
+  const [phoneAccount, setPhoneAccount] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
-  const [errors, setErrors] = useState<{ password?: string; password2?: string }>({});
+  const [errors, setErrors] = useState<{ current?: string; password?: string; password2?: string }>({});
   const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
@@ -58,7 +65,8 @@ export default function ResetPassword() {
     const settle = () => {
       if (!active) return;
       if (current && isRecoveryPending(current.user.id)) return markReady();
-      if (current?.user.email) setLinkEmail(current.user.email);
+      if (isPhoneLoginEmail(current?.user.email)) setPhoneAccount(true);
+      else if (current?.user.email) setLinkEmail(current.user.email);
       setStatus((s) => (s === 'checking' ? (current ? 'signed-in' : 'invalid') : s));
     };
 
@@ -66,7 +74,10 @@ export default function ResetPassword() {
     // session (INITIAL_SESSION, SIGNED_IN on tab focus) does not.
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       current = session;
-      if (!session && active) setLinkEmail('');
+      if (!session && active) {
+        setLinkEmail('');
+        setPhoneAccount(false);
+      }
       if (session && (event === 'PASSWORD_RECOVERY' || isRecoveryPending(session.user.id))) markReady();
     });
     // getSession waits for auth-js to finish reading the link from the URL.
@@ -112,9 +123,60 @@ export default function ResetPassword() {
     setTimeout(() => navigate(homePathFor(profile as Profile | null), { replace: true }), 1600);
   };
 
+  // Phone accounts: prove the current password by signing in again (no e-mail or SMS is involved),
+  // then set the new one. The login address is read from the session and never kept in state.
+  const changeWithCurrent = async (e: FormEvent) => {
+    e.preventDefault();
+    if (loading) return;
+    const next: typeof errors = {};
+    if (!currentPassword) next.current = tx('Mevcut şifrenizi girin.', 'Enter your current password.');
+    if (password.length < 8) next.password = t.validation.password;
+    else if (currentPassword && password === currentPassword) next.password = t.errors.samePassword;
+    if (password !== password2) next.password2 = t.validation.passwordMatch;
+    setErrors(next);
+    setFormError('');
+    if (Object.keys(next).length) return;
+
+    setLoading(true);
+    const { data: sessionData } = await supabase.auth.getSession();
+    const loginId = sessionData.session?.user.email;
+    if (!sessionData.session || !isPhoneLoginEmail(loginId)) {
+      setLoading(false);
+      setFormError(tx('Oturumunuz sona ermiş. Lütfen yeniden giriş yapın.', 'Your session has ended. Please sign in again.'));
+      return;
+    }
+    const { error: authError } = await supabase.auth.signInWithPassword({ email: loginId!, password: currentPassword });
+    if (authError) {
+      setLoading(false);
+      if (authError.code === 'invalid_credentials' || /invalid login credentials/i.test(authError.message)) {
+        setErrors({ current: tx('Mevcut şifreniz hatalı.', 'Your current password is incorrect.') });
+      } else {
+        setFormError(friendlyError(authError));
+      }
+      return;
+    }
+    const { data, error } = await supabase.auth.updateUser({ password });
+    if (error || !data.user) {
+      setLoading(false);
+      setFormError(friendlyError(error));
+      return;
+    }
+    // End sessions elsewhere (e.g. whoever knew the temporary password); this device stays signed in.
+    void supabase.auth.signOut({ scope: 'others' });
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).maybeSingle();
+    setLoading(false);
+    setCurrentPassword('');
+    setPassword('');
+    setPassword2('');
+    toast(tx('Şifreniz değiştirildi.', 'Your password has been changed.'));
+    setStatus('done');
+    setTimeout(() => navigate(homePathFor(profile as Profile | null), { replace: true }), 1600);
+  };
+
   const sendLink = async () => {
     const address = authSession?.user.email || linkEmail;
-    if (!address || sending) return;
+    // A phone account's technical address has no mailbox and must never be mailed.
+    if (!address || sending || isPhoneLoginEmail(address)) return;
     setSending(true);
     setFormError('');
     const { error } = await supabase.auth.resetPasswordForEmail(address, {
@@ -129,6 +191,25 @@ export default function ResetPassword() {
   };
 
   if (status === 'checking') return <PageLoader />;
+
+  if (status === 'signed-in' && (phoneAccount || isPhoneLoginEmail(authSession?.user.email))) {
+    return (
+      <AuthShell eyebrow={tx('Hesap güvenliği', 'Account security')} title={tx('Şifre Değiştir', 'Change password')} subtitle={tx('Güvenliğiniz için önce mevcut şifrenizi girin, ardından en az 8 karakterden oluşan yeni şifrenizi belirleyin.', 'For your security, enter your current password first, then choose a new password of at least 8 characters.')}>
+        <form onSubmit={changeWithCurrent} className="space-y-5" noValidate>
+          <Input label={tx('Mevcut Şifre', 'Current password')} name="current-password" type="password" autoComplete="current-password" autoCapitalize="none" autoCorrect="off" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} error={errors.current} icon={<KeyRound className="h-4 w-4" />} placeholder="••••••••" />
+          <Input label={tx('Yeni Şifre', 'New password')} name="password" type="password" autoComplete="new-password" autoCapitalize="none" autoCorrect="off" value={password} onChange={(e) => setPassword(e.target.value)} error={errors.password} icon={<Lock className="h-4 w-4" />} placeholder="••••••••" />
+          <Input label={tx('Yeni Şifre Tekrar', 'Repeat new password')} name="password2" type="password" autoComplete="new-password" autoCapitalize="none" autoCorrect="off" value={password2} onChange={(e) => setPassword2(e.target.value)} error={errors.password2} icon={<Lock className="h-4 w-4" />} placeholder="••••••••" />
+          {formError && <p className="rounded-xl border border-error-500/30 bg-error-900/40 px-4 py-3 text-sm text-error-300">{formError}</p>}
+          <Button type="submit" size="lg" full loading={loading}>
+            {tx('Şifreyi Değiştir', 'Change password')}
+          </Button>
+        </form>
+        <p className="mt-6 text-center text-sm text-mist">
+          <Link to="/profil" className="font-semibold text-gold-400 hover:text-gold-300">{tx('Hesabıma dön', 'Back to my account')}</Link>
+        </p>
+      </AuthShell>
+    );
+  }
 
   if (status === 'signed-in') {
     const email = authSession?.user.email || linkEmail;

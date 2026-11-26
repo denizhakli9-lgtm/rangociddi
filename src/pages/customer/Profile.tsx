@@ -1,9 +1,10 @@
 import { Fragment, useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bell, Briefcase, CalendarDays, ChevronRight, Heart, LayoutDashboard, LogOut, MapPin, Phone, ShieldCheck, User } from 'lucide-react';
+import { Bell, Briefcase, CalendarDays, ChevronRight, Heart, KeyRound, LayoutDashboard, LogOut, MapPin, Phone, ShieldCheck, User } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { friendlyError } from '@/lib/errors';
 import { isPhone } from '@/lib/validation';
+import { isPhoneLoginEmail, isReservedEmail, phoneFromLoginEmail } from '@/lib/phoneLogin';
 import { formatDate } from '@/lib/format';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserLocation } from '@/contexts/LocationContext';
@@ -24,7 +25,7 @@ import { fetchFieldAgentMe } from '@/lib/fieldAgent';
 
 export default function Profile() {
   const t = useT();
-  const { profile, refreshProfile, signOut } = useAuth();
+  const { session, profile, refreshProfile, signOut } = useAuth();
   const { location } = useUserLocation();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -39,15 +40,22 @@ export default function Profile() {
 
   if (!profile) return null;
 
+  // Business owner who signed up with a mobile number: the number is the sign-in identifier and the
+  // auth address is technical (src/lib/phoneLogin.ts), so it is never shown and the number is locked.
+  const phoneAccount = isPhoneLoginEmail(session?.user.email);
+  const loginPhone = phoneAccount ? profile.phone || phoneFromLoginEmail(session?.user.email) : null;
+  const shownEmail = profile.email && !isReservedEmail(profile.email) ? profile.email : null;
+
   const save = async (e: FormEvent) => {
     e.preventDefault();
     const next: typeof errors = {};
     if (form.full_name.trim().length < 3) next.full_name = t.validation.name;
-    if (form.phone && !isPhone(form.phone)) next.phone = t.validation.phone;
+    if (!phoneAccount && form.phone && !isPhone(form.phone)) next.phone = t.validation.phone;
     setErrors(next);
     if (Object.keys(next).length) return;
     setSaving(true);
-    const { error } = await supabase.from('profiles').update({ full_name: form.full_name.trim(), phone: form.phone.trim() || null, gender: form.gender }).eq('id', profile.id);
+    const changes = { full_name: form.full_name.trim(), gender: form.gender, ...(phoneAccount ? {} : { phone: form.phone.trim() || null }) };
+    const { error } = await supabase.from('profiles').update(changes).eq('id', profile.id);
     setSaving(false);
     if (error) return toast(friendlyError(error), 'error');
     await refreshProfile();
@@ -64,6 +72,8 @@ export default function Profile() {
     ...(profile.role === 'business' ? [{ to: '/isletme', label: tx('İşletme Paneli', 'Business panel (Turkish)'), icon: LayoutDashboard }] : []),
     ...(profile.role === 'admin' ? [{ to: '/yonetim', label: tx('Yönetim Paneli', 'Admin panel (Turkish)'), icon: ShieldCheck }] : []),
     ...(fieldAgent.data ? [{ to: '/saha', label: tx('Saha Paneli', 'Field panel (Turkish)'), icon: Briefcase }] : []),
+    // A phone account gets no reset e-mail: /sifre-yenile lets it change its (possibly temporary) password in place.
+    ...(phoneAccount ? [{ to: '/sifre-yenile', label: tx('Şifre değiştir', 'Change password'), icon: KeyRound }] : []),
     { to: '/destek', label: tx('Yardım ve Destek', 'Help & support'), icon: Phone },
     { to: '/bildirimler', label: t.nav.notifications, icon: Bell },
     { to: '/konum', label: `${tx('Konum', 'Location')} · ${location.label}`, icon: MapPin },
@@ -75,7 +85,7 @@ export default function Profile() {
         <div className="card-gold flex flex-col items-center p-6 text-center">
           <Avatar name={profile.full_name || 'R'} src={profile.avatar_url} size="h-20 w-20 text-2xl" />
           <p className="mt-4 font-display text-2xl text-white">{profile.full_name}</p>
-          <p className="text-xs text-mist-2">{profile.email}</p>
+          <p className="text-xs text-mist-2">{shownEmail ?? loginPhone ?? profile.phone}</p>
           <span className="mt-3 rounded-full border border-gold-500/40 px-3 py-1 text-[11px] text-gold-300">{t.role[profile.role]}</span>
           <p className="mt-3 text-[11px] text-mist-3">{tx('Üyelik:', 'Member since')} {formatDate(profile.created_at, { month: 'long', year: 'numeric' })}</p>
         </div>
@@ -121,8 +131,25 @@ export default function Profile() {
         <h1 className="mb-6 font-display text-4xl text-white">{tx('Kişisel bilgiler', 'Personal details')}</h1>
         <form onSubmit={save} className="card space-y-5 p-6" noValidate>
           <Input label={tx('Ad Soyad', 'Full name')} name="full_name" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} error={errors.full_name} icon={<User className="h-4 w-4" />} />
-          <Input label={tx('E-posta', 'Email')} value={profile.email ?? ''} disabled hint={tx('E-posta adresi değiştirilemez.', 'The email address cannot be changed.')} />
-          <Input label={tx('Telefon', 'Phone')} name="phone" type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} error={errors.phone} icon={<Phone className="h-4 w-4" />} />
+          {phoneAccount ? (
+            <>
+              {shownEmail && <Input label={tx('E-posta', 'Email')} value={shownEmail} disabled />}
+              <Input
+                label={tx('Giriş telefonu', 'Sign-in phone')}
+                name="phone"
+                type="tel"
+                value={loginPhone ?? ''}
+                disabled
+                icon={<Phone className="h-4 w-4" />}
+                hint={tx('Hesabınıza bu numarayla giriş yaparsınız; giriş numarası buradan değiştirilemez.', 'You sign in with this number; the sign-in number cannot be changed here.')}
+              />
+            </>
+          ) : (
+            <>
+              <Input label={tx('E-posta', 'Email')} value={shownEmail ?? ''} disabled hint={tx('E-posta adresi değiştirilemez.', 'The email address cannot be changed.')} />
+              <Input label={tx('Telefon', 'Phone')} name="phone" type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} error={errors.phone} icon={<Phone className="h-4 w-4" />} />
+            </>
+          )}
           <Select label={tx('Cinsiyet', 'Gender')} value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value as Gender })} hint={tx('Keşfet sayfasındaki önerileri kişiselleştirir.', 'Personalises the suggestions on the Discover page.')}>
             {(Object.keys(t.gender) as Gender[]).map((g) => <option key={g} value={g}>{t.gender[g]}</option>)}
           </Select>

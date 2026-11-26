@@ -9,6 +9,7 @@ import { slugify } from '@/lib/format';
 import { friendlyError } from '@/lib/errors';
 import { IZMIR_DISTRICTS, distanceKm } from '@/lib/geo';
 import { formatTrPhone, isPhone } from '@/lib/validation';
+import { isReservedEmail } from '@/lib/phoneLogin';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { AuthShell } from '@/pages/auth/AuthShell';
@@ -196,7 +197,8 @@ export default function CreateBusiness({ onCreated }: { onCreated: (b: Business)
           city: 'İzmir',
           address: form.address.trim(),
           phone: form.phone.trim(),
-          email: profile?.email?.trim() || null,
+          // Never publish a phone account's technical login address as the salon's e-mail.
+          email: profile?.email && !isReservedEmail(profile.email) ? profile.email.trim() || null : null,
           description: form.description.trim(),
           gender_focus: form.gender_focus,
           cover_url: cover,

@@ -121,7 +121,7 @@ export function FieldDailyPlan({ code, bonusAmount, businesses, onShare }: { cod
           <button type="button" onClick={onShare} className="text-gold-400 underline-offset-2 hover:underline">
             (paylaş)
           </button>
-          . Bağlantısız kayıtta hesap türü “İşletme” seçilmeli ve kurulumun ilk adımındaki “Referans kodu” alanına <span className="font-mono text-white">{code}</span> yazılmalı; kod girilmezse işletme size yazılmaz.
+          . Bağlantısız kayıtta hesap türü “İşletme” seçilmeli ve kurulumun ilk adımındaki “Referans kodu” alanına <span className="font-mono text-white">{code}</span> yazılmalı; kod girilmezse işletme size yazılmaz. E-postası olmayan işletme sahibi kayıt ekranında “Telefon numarası”nı seçip kendi cep numarasıyla kaydolabilir. Şifreyi işletme sahibi kendisi belirlesin ve not etsin; şifreyi siz belirlemeyin, sormayın, hesaba kendi e-postanızı ya da telefonunuzu yazmayın. Şifre unutulursa WhatsApp destek hattı yardımcı olur.
         </>
       ),
       status: known ? { label: facts.today ? `Bugün kodunuzla ${facts.today} işletme kaydoldu` : 'Bugün henüz kayıt yok', tone: facts.today ? 'ok' : 'todo' } : undefined,

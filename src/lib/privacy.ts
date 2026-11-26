@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { COMPANY, LEGAL_VERSIONS } from '@/lib/legal';
 import type { Profile } from '@/lib/types';
+import { isPhoneLoginEmail, isReservedEmail } from '@/lib/phoneLogin';
 
 type Section = { rows: unknown[] } | { error: string };
 
@@ -52,6 +53,13 @@ export async function exportMyData(profile: Profile): Promise<Blob> {
   }
 
   const user = auth.user;
+  // A phone account's auth address is a technical login identifier (src/lib/phoneLogin.ts): it is
+  // never handed out, not even to the account holder. The number itself is in `profile.phone`.
+  const phoneLogin = isPhoneLoginEmail(user?.email);
+  // Supabase mirrors the sign-up address into the metadata (email, email_verified); drop it there too.
+  const metadata = phoneLogin && user?.user_metadata
+    ? Object.fromEntries(Object.entries(user.user_metadata).filter(([k, v]) => k !== 'email' && k !== 'email_verified' && !(typeof v === 'string' && isReservedEmail(v))))
+    : user?.user_metadata;
   const payload = {
     exported_at: new Date().toISOString(),
     controller: { name: COMPANY.legalName, brand: COMPANY.brand, kvkk_contact: COMPANY.kvkkEmail },
@@ -59,15 +67,16 @@ export async function exportMyData(profile: Profile): Promise<Blob> {
     account: user
       ? {
           id: user.id,
-          email: user.email,
+          login_method: phoneLogin ? 'phone' : 'email',
+          email: phoneLogin ? null : user.email,
           phone: user.phone || null,
           created_at: user.created_at,
           last_sign_in_at: user.last_sign_in_at,
-          email_confirmed_at: user.email_confirmed_at,
-          metadata: user.user_metadata,
+          email_confirmed_at: phoneLogin ? null : user.email_confirmed_at,
+          metadata,
         }
       : null,
-    profile,
+    profile: isReservedEmail(profile.email) ? { ...profile, email: null } : profile,
     appointments,
     payments,
     refund_requests: refunds,

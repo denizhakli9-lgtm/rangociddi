@@ -39,7 +39,7 @@ export const COMPANY = {
   verbis: '',
 } as const;
 
-export const LEGAL_UPDATED_AT = '20 Kasım 2026';
+export const LEGAL_UPDATED_AT = '26 Kasım 2026';
 
 /**
  * Sürüm biçimi `YYYY-AA-GG` (yayın tarihi; ileri bir tarih yazmayın). Aynı gün ikinci bir değişiklik için
@@ -49,8 +49,8 @@ export const LEGAL_UPDATED_AT = '20 Kasım 2026';
 type LegalVersion = `${number}-${number}-${number}`;
 
 export const LEGAL_VERSIONS = {
-  terms: '2026-11-20',
-  privacy: '2026-11-20',
+  terms: '2026-11-26',
+  privacy: '2026-11-26',
   cookies: '2026-11-20',
   /**
    * Ödeme ekranında birlikte kabul edilen metinlerin ortak sürümü: Mesafeli Hizmet Satış Sözleşmesi,

@@ -13,6 +13,21 @@ const MESSAGE_CHARS = 1500;
 const ANSWER_TARGET = 700;
 const ANSWER_CHARS = 1200;
 const MAX_COMPLETION_TOKENS = 400;
+/** Reasoning models count their hidden reasoning in max_completion_tokens, so they get more room and the lowest effort. */
+const REASONING_COMPLETION_TOKENS = 2000;
+
+/** Used when OPENAI_SUPPORT_MODEL is unset or not a model id. gpt-4o-mini shuts down on 2027-01-14 (OpenAI deprecations). */
+const DEFAULT_MODEL = 'gpt-6-luna';
+const MODEL_ID = /^[a-z0-9][a-z0-9.:-]{1,63}$/;
+const isReasoningModel = (model: string) => /^(?:o\d|gpt-5|gpt-6)/.test(model);
+
+/** OPENAI_SUPPORT_MODEL when it holds a plausible model id. Anything else (e.g. a key pasted into the wrong secret) is ignored and never logged. */
+function supportModel(): string {
+  const configured = Deno.env.get('OPENAI_SUPPORT_MODEL')?.trim();
+  if (configured && MODEL_ID.test(configured)) return configured;
+  if (configured) console.error('support-ai: OPENAI_SUPPORT_MODEL is not a model id and is ignored', { default: DEFAULT_MODEL });
+  return DEFAULT_MODEL;
+}
 
 /** Turkish-aware folding: "İADE", "ŞİKÂYET", "Ödeme" and "dolandirildim" all become plain lowercase ASCII-like text. */
 const fold = (text: string) => text.toLocaleLowerCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\u0131/g, 'i');
@@ -174,9 +189,14 @@ Deno.serve(async (req: Request) => {
         if (!mine.error && !everyone.error && (userOver || globalOver)) console.error('support-ai: quota exceeded', { scope: userOver ? 'user' : 'global' });
         const withinQuota = !mine.error && !everyone.error && !userOver && !globalOver;
         if (!config.error && knowledge.trim() && withinQuota) {
+          // Logged on failure: only ids that pass MODEL_ID reach this point, so no secret can end up in the logs.
+          const model = supportModel();
+          const limits = isReasoningModel(model)
+            ? { max_completion_tokens: REASONING_COMPLETION_TOKENS, reasoning_effort: 'low' }
+            : { max_completion_tokens: MAX_COMPLETION_TOKENS };
           const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST', headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(20000),
-            body: JSON.stringify({ model: Deno.env.get('OPENAI_SUPPORT_MODEL') || 'gpt-4o-mini', max_completion_tokens: MAX_COMPLETION_TOKENS, store: false,
+            body: JSON.stringify({ model, ...limits, store: false,
               messages: [{ role: 'system', content: systemPrompt(knowledge) }, ...messages.slice().reverse().map((m) => ({ role: m.sender === 'user' ? 'user' : 'assistant', content: scrub(m.body).slice(0, MESSAGE_CHARS) }))],
               response_format: { type: 'json_schema', json_schema: { name: 'support_answer', strict: true, schema: { type: 'object', properties: { answer: { type: 'string' }, handoff: { type: 'boolean' } }, required: ['answer','handoff'], additionalProperties: false } } },
             }),
@@ -185,12 +205,12 @@ Deno.serve(async (req: Request) => {
             // Only the status and OpenAI's error identifiers are logged; error messages can echo key fragments.
             const failure = await response.json().catch(() => null) as { error?: { type?: unknown; code?: unknown; param?: unknown } } | null;
             const detail: { type?: unknown; code?: unknown; param?: unknown } = failure?.error ?? {};
-            console.error('support-ai: openai request failed', { status: response.status, type: detail.type ?? null, code: detail.code ?? null, param: detail.param ?? null });
+            console.error('support-ai: openai request failed', { status: response.status, model, type: detail.type ?? null, code: detail.code ?? null, param: detail.param ?? null });
           } else {
             const result = await response.json();
             const choice = result.choices?.[0];
             if (choice?.finish_reason !== 'stop' || choice?.message?.refusal || typeof choice?.message?.content !== 'string') {
-              console.error('support-ai: openai answer incomplete', { finish_reason: choice?.finish_reason ?? null, refusal: !!choice?.message?.refusal });
+              console.error('support-ai: openai answer incomplete', { model, finish_reason: choice?.finish_reason ?? null, refusal: !!choice?.message?.refusal });
             } else {
               const parsed = JSON.parse(choice.message.content);
               if (typeof parsed?.handoff !== 'boolean' || typeof parsed?.answer !== 'string') {

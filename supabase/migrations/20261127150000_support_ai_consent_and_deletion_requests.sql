@@ -90,8 +90,14 @@ BEGIN
   END IF;
 
   DELETE FROM support_ai_consents WHERE user_id = v_uid;
-  UPDATE support_threads SET status = 'waiting', updated_at = now()
-  WHERE user_id = v_uid AND status = 'ai';
+  -- Only a conversation still waiting for an answer goes to a person; the rest are closed, so
+  -- agents do not read what was shared with the assistant only, and retention/erasure still apply.
+  UPDATE support_threads t
+  SET status = CASE WHEN (SELECT m.sender FROM support_messages m WHERE m.thread_id = t.id
+                          ORDER BY m.created_at DESC, m.id DESC LIMIT 1) = 'user'
+                    THEN 'waiting' ELSE 'resolved' END,
+      updated_at = now()
+  WHERE t.user_id = v_uid AND t.status = 'ai';
   RETURN NULL;
 END;
 $$;
@@ -534,7 +540,8 @@ BEGIN
      OR NOT private.is_active_member() OR NOT private.is_admin() THEN
     RAISE EXCEPTION 'VEYRA_FORBIDDEN';
   END IF;
-  IF p_action NOT IN ('complete', 'cancel', 'hide') OR char_length(coalesce(v_note, '')) > 500 THEN
+  -- NULL must never fall through to the erase path below.
+  IF p_action IS NULL OR p_action NOT IN ('complete', 'cancel', 'hide') OR char_length(coalesce(v_note, '')) > 500 THEN
     RAISE EXCEPTION 'VEYRA_INVALID_INPUT';
   END IF;
 
@@ -568,6 +575,8 @@ BEGIN
       coalesce(v_note, 'Hesabınız silinmedi. Ayrıntılar için Yardım ve Destek bölümünden bize yazabilirsiniz.'), '/destek');
     RETURN;
   END IF;
+
+  IF p_action IS DISTINCT FROM 'complete' THEN RAISE EXCEPTION 'VEYRA_INVALID_INPUT'; END IF;
 
   SELECT o.upcoming_as_customer, o.upcoming_at_business, o.open_refunds
   INTO v_customer, v_business, v_refunds

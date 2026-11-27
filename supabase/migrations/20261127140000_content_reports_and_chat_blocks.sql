@@ -56,6 +56,8 @@ CREATE TABLE IF NOT EXISTS public.content_reports (
   created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (reporter_id, target_type, target_id)
 );
+-- True when the admin removed the content; a closed report reopens only if that removal was undone.
+ALTER TABLE public.content_reports ADD COLUMN IF NOT EXISTS content_removed boolean NOT NULL DEFAULT false;
 CREATE INDEX IF NOT EXISTS content_reports_open_idx ON public.content_reports (created_at) WHERE status = 'open';
 CREATE INDEX IF NOT EXISTS content_reports_target_idx ON public.content_reports (target_type, target_id);
 CREATE INDEX IF NOT EXISTS content_reports_reporter_idx ON public.content_reports (reporter_id, created_at DESC);
@@ -181,6 +183,7 @@ DECLARE
   v_snapshot text;
   v_business uuid;
   v_reported uuid;
+  v_hidden boolean := false;
   v_existing content_reports%ROWTYPE;
   v_id uuid;
 BEGIN
@@ -196,8 +199,9 @@ BEGIN
   IF p_target_type IN ('review', 'review_reply') THEN
     SELECT CASE WHEN p_target_type = 'review' THEN r.rating || '/5 · ' || coalesce(r.comment, '') ELSE r.owner_reply END,
            r.business_id,
-           CASE WHEN p_target_type = 'review' THEN r.customer_id ELSE b.owner_id END
-    INTO v_snapshot, v_business, v_reported
+           CASE WHEN p_target_type = 'review' THEN r.customer_id ELSE b.owner_id END,
+           r.is_hidden
+    INTO v_snapshot, v_business, v_reported, v_hidden
     FROM reviews r JOIN businesses b ON b.id = r.business_id
     WHERE r.id = p_target_id
       AND (NOT r.is_hidden OR r.customer_id = v_uid OR private.owns_business(r.business_id))
@@ -232,10 +236,11 @@ BEGIN
       WHERE id = v_existing.id;
     -- Closed: reopen when the content changed, or when it was actioned and is visible again
     -- (the target resolved above, so a removal was undone, e.g. a reply posted again).
-    ELSIF v_existing.content_snapshot IS DISTINCT FROM v_snapshot OR v_existing.status = 'actioned' THEN
+    ELSIF v_existing.content_snapshot IS DISTINCT FROM v_snapshot
+       OR (v_existing.status = 'actioned' AND v_existing.content_removed AND NOT coalesce(v_hidden, false)) THEN
       IF private.content_report_rate_exceeded(v_uid) THEN RAISE EXCEPTION 'VEYRA_REPORT_RATE'; END IF;
       UPDATE content_reports
-      SET reason = p_reason, note = v_note, content_snapshot = v_snapshot, status = 'open',
+      SET reason = p_reason, note = v_note, content_snapshot = v_snapshot, status = 'open', content_removed = false,
           admin_note = NULL, resolved_by = NULL, resolved_at = NULL, created_at = now()
       WHERE id = v_existing.id;
       PERFORM private.notify_admins_of_report(p_target_type);
@@ -309,7 +314,7 @@ BEGIN
   END IF;
 
   UPDATE content_reports
-  SET status = v_status, admin_note = v_note, resolved_by = v_uid, resolved_at = now()
+  SET status = v_status, content_removed = (p_action = 'remove'), admin_note = v_note, resolved_by = v_uid, resolved_at = now()
   WHERE target_type = v_r.target_type AND target_id = v_r.target_id AND (status = 'open' OR id = v_r.id);
 END;
 $$;
@@ -529,3 +534,39 @@ $$;
 REVOKE EXECUTE ON FUNCTION private.run_retention() FROM PUBLIC, anon, authenticated;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ---------------------------------------------------------------------------
+-- A block also covers the free-text fields of a booking between the two people (the chat screen
+-- promises that neither side can write to the other): the booking note, and the reason given when
+-- cancelling or declining, are dropped while a block exists. The booking itself is unaffected.
+CREATE OR REPLACE FUNCTION private.strip_text_between_blocked_users()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = private, public
+AS $$
+DECLARE
+  v_owner uuid;
+BEGIN
+  SELECT b.owner_id INTO v_owner FROM businesses b WHERE b.id = NEW.business_id;
+  IF v_owner IS NOT NULL AND EXISTS (
+    SELECT 1 FROM user_blocks ub
+    WHERE (ub.blocker_id = v_owner AND ub.blocked_id = NEW.customer_id)
+       OR (ub.blocker_id = NEW.customer_id AND ub.blocked_id = v_owner)
+  ) THEN
+    IF TG_OP = 'INSERT' OR NEW.customer_note IS DISTINCT FROM OLD.customer_note THEN
+      NEW.customer_note := '';
+    END IF;
+    IF NEW.cancelled_by IN ('customer', 'business')
+       AND (TG_OP = 'INSERT' OR NEW.cancellation_reason IS DISTINCT FROM OLD.cancellation_reason) THEN
+      NEW.cancellation_reason := NULL;
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+REVOKE EXECUTE ON FUNCTION private.strip_text_between_blocked_users() FROM PUBLIC, anon, authenticated;
+DROP TRIGGER IF EXISTS appointments_strip_blocked_text ON public.appointments;
+CREATE TRIGGER appointments_strip_blocked_text
+  BEFORE INSERT OR UPDATE OF customer_note, cancellation_reason ON public.appointments
+  FOR EACH ROW EXECUTE FUNCTION private.strip_text_between_blocked_users();

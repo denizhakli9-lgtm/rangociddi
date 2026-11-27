@@ -521,7 +521,7 @@ export default function Payment() {
               <Lock className="h-3.5 w-3.5 shrink-0 text-gold-500" />
               {tx('Kart bilgileriniz PayTR güvenli ödeme sayfasında işlenir, Rango kart bilgilerinizi görmez ve saklamaz.', 'Your card is processed on PayTR’s secure page; Rango never sees or stores your card details.')}
             </p>
-            <div className="overflow-hidden rounded-2xl border border-line bg-white">
+            <div className="overflow-hidden rounded-2xl border border-line bg-[#fff]">
               <iframe
                 ref={frameRef}
                 src={checkoutUrl}

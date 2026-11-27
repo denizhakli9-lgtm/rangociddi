@@ -1,4 +1,5 @@
 import { intlLocale, tx } from '@/i18n/locale';
+import { ablativeSuffixTr } from '@/lib/seo/format';
 
 export const TZ = 'Europe/Istanbul';
 
@@ -18,16 +19,6 @@ function currency(digits: 0 | 2): Intl.NumberFormat {
 export function formatTRY(value: number | string | null | undefined): string {
   const kurus = toKurus(value);
   return currency(kurus % 100 === 0 ? 0 : 2).format(kurus / 100 || 0);
-}
-
-/** Turkish ablative suffix for a whole number as it is read aloud: 350 → "den", 40 → "tan", 6 → "dan". */
-function ablativeSuffixTr(n: number): string {
-  const ones = ['', 'den', 'den', 'ten', 'ten', 'ten', 'dan', 'den', 'den', 'dan'];
-  const tens = ['', 'dan', 'den', 'dan', 'tan', 'den', 'tan', 'ten', 'den', 'dan'];
-  if (n % 10) return ones[n % 10];
-  if (n % 100) return tens[(n % 100) / 10];
-  if (n === 0 || n % 1_000_000 === 0) return 'dan'; // sıfır, milyon
-  return 'den'; // yüz, bin
 }
 
 /** "Starting from" price: ₺350’den (English: from ₺350). Amounts with kuruş fall back to ₺349,90+. */

@@ -74,7 +74,7 @@ export default function Overview() {
   return (
     <div>
       <PageHeader
-        eyebrow={formatDate(new Date().toISOString(), { weekday: 'long', day: 'numeric', month: 'long' })}
+        text={formatDate(new Date().toISOString(), { weekday: 'long', day: 'numeric', month: 'long' })}
         title={`Hoş geldiniz, ${business.name}`}
         action={<BusinessStatusBadge status={business.status} />}
       />

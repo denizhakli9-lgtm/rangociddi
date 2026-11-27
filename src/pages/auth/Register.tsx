@@ -183,7 +183,7 @@ export default function Register() {
   return (
     <AuthShell
       eyebrow={tx('Ayrıcalıklı dünyaya katılın', 'Join Rango')}
-      title={tx('Hesap Oluştur', 'Create account')}
+      title={tx('Hesap oluştur', 'Create account')}
       subtitle={type === 'business' ? tx('İşletmenizi Rango’da yayınlamak için önce hesabınızı oluşturun.', 'Create your account first to publish your business on Rango.') : tx('Dakikalar içinde ilk randevunuzu alın.', 'Book your first appointment in minutes.')}
     >
       <div className="mb-6 grid grid-cols-2 gap-3">
@@ -336,7 +336,7 @@ export default function Register() {
         </p>
         {formError && <p className="rounded-xl border border-error-500/30 bg-error-500/10 px-4 py-3 text-sm text-error-300">{formError}</p>}
         <Button type="submit" size="lg" full loading={loading}>
-          {type === 'business' ? tx('İşletme Hesabı Oluştur', 'Create business account') : tx('Hesap Oluştur', 'Create account')}
+          {type === 'business' ? tx('İşletme Hesabı Oluştur', 'Create business account') : tx('Hesap oluştur', 'Create account')}
         </Button>
       </form>
       <p className="mt-8 text-center text-sm text-mist">

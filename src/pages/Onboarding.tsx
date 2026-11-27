@@ -51,7 +51,7 @@ export default function Onboarding() {
           />
         ))}
         <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-ink to-transparent lg:hidden" />
-        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/35 to-transparent" />
+        <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/60 to-transparent" />
         <div className="absolute left-6 top-6 [&_span]:text-[#fff]">
           <Logo size="sm" />
         </div>
@@ -84,15 +84,15 @@ export default function Onboarding() {
           {last ? (
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button size="lg" full onClick={() => finish('/kayit')}>
-                {tx('Hesap Oluştur', 'Create account')}
+                {tx('Hesap oluştur', 'Create account')}
               </Button>
               <Button size="lg" variant="outline" full onClick={() => finish('/giris')}>
-                {tx('Giriş Yap', 'Sign in')}
+                {tx('Giriş yap', 'Sign in')}
               </Button>
             </div>
           ) : (
             <Button size="lg" full icon={<ArrowRight className="h-4 w-4" />} className="flex-row-reverse sm:w-auto" onClick={() => setIndex(index + 1)}>
-              {tx('Devam Et', 'Continue')}
+              {tx('Devam et', 'Continue')}
             </Button>
           )}
           <p className="mt-6 text-center text-xs text-mist-2 sm:text-left">

@@ -243,7 +243,7 @@ export default function ResetPassword() {
         {formError && <p className="mt-4 rounded-xl border border-error-500/30 bg-error-500/10 px-4 py-3 text-sm text-error-300">{formError}</p>}
         {!sentTo && (
           <Button type="button" size="lg" full className="mt-6" loading={sending} onClick={email ? sendLink : () => navigate('/sifremi-unuttum')}>
-            {tx('Yenileme Bağlantısı Gönder', 'Send reset link')}
+            {tx('Yenileme bağlantısı gönder', 'Send reset link')}
           </Button>
         )}
         <p className="mt-6 text-center text-sm text-mist">

@@ -3,7 +3,7 @@ import { Logo } from '@/components/ui/Brand';
 import { WhatsAppIcon } from '@/components/WhatsAppSupport';
 import { COMPANY, LEGAL_LINKS, PAYMENT_PROVIDER, isPlaceholder, legalPath } from '@/lib/legal';
 import { locale, tx } from '@/i18n/locale';
-import { siteLinks } from '@/lib/seo/pages/common';
+import { BUSINESS_SIGNUP_PATH, siteLinks } from '@/lib/seo/pages/common';
 import { newTabClick } from '@/lib/platform';
 import { whatsAppLinkProps } from '@/lib/whatsapp';
 
@@ -82,7 +82,7 @@ export function SiteFooter() {
             <p className={columnTitle}>{tx('İşletmeler', 'Businesses')}</p>
             <ul className="mt-4 space-y-2.5">
               <li><Link to="/isletmeler-icin" className={columnLink}>{tx('Rango’ya katılın', 'Join Rango')}</Link></li>
-              <li><Link to="/kayit" className={columnLink}>{tx('İşletme hesabı oluştur', 'Create a business account')}</Link></li>
+              <li><Link to={BUSINESS_SIGNUP_PATH} className={columnLink}>{tx('İşletme hesabı oluştur', 'Create a business account')}</Link></li>
               <li><Link to="/giris" className={columnLink}>{tx('İşletme girişi', 'Business sign-in')}</Link></li>
             </ul>
           </nav>

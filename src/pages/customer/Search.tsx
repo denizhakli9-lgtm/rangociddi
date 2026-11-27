@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { LayoutGrid, List, Search as SearchIcon, SearchX, SlidersHorizontal, X } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { LayoutGrid, List, MapPin, Search as SearchIcon, SearchX, SlidersHorizontal, X } from 'lucide-react';
 import { fetchCategories, type DiscoverySort } from '@/lib/api';
 import { useAsync } from '@/lib/useAsync';
 import { useBusinessSearch } from '@/lib/useDiscovery';
 import { useFavorites } from '@/lib/useFavorites';
+import { isDemoBusiness } from '@/lib/demo';
+import { useUserLocation } from '@/contexts/LocationContext';
 import { formatTRY } from '@/lib/format';
 import { BusinessCard } from '@/components/BusinessCard';
 import { Modal } from '@/components/ui/Modal';
@@ -51,6 +53,9 @@ export default function SearchPage() {
     [q, category, today, sort, maxPrice, minRating, gender],
   );
   const { items: results, total, loading, loadingMore, hasMore, loadMore, error, reload } = useBusinessSearch(filters);
+  const { location } = useUserLocation();
+  // Businesses that can be booked come before the sample profiles; each group keeps the chosen order.
+  const ordered = useMemo(() => [...results].sort((a, z) => Number(isDemoBusiness(a.business)) - Number(isDemoBusiness(z.business))), [results]);
 
   useEffect(() => setText(q), [q]);
 
@@ -122,7 +127,14 @@ export default function SearchPage() {
       </div>
 
       <div className="mb-5 mt-6 flex items-center justify-between gap-3">
-        <p className="text-sm text-mist">{loading ? t.common.loading : tx(`${total} işletme`, total === 1 ? '1 business' : `${total} businesses`)}</p>
+        <div className="flex min-w-0 items-center gap-3">
+          <p className="shrink-0 text-sm text-mist">{loading ? t.common.loading : tx(`${total} işletme`, total === 1 ? '1 business' : `${total} businesses`)}</p>
+          {/* The header shows the location on wider screens only; distances here are measured from it. */}
+          <Link to="/konum" aria-label={tx(`Konum: ${location.label}. Değiştir`, `Location: ${location.label}. Change`)} className="inline-flex min-h-11 min-w-0 items-center gap-1 text-[13px] text-mist lg:hidden">
+            <MapPin className="h-4 w-4 shrink-0 text-mist-3" strokeWidth={1.75} />
+            <span className="truncate">{location.label}</span>
+          </Link>
+        </div>
         <div className="flex items-center gap-2">
           <select aria-label={tx('Sıralama', 'Sort by')} value={sort} onChange={(e) => update({ sirala: e.target.value })} className="h-9 rounded-full border border-line bg-coal px-3 text-xs text-white focus:border-gold-500/60 focus:outline-none">
             {SORTS.map((s) => <option key={s.value} value={s.value}>{tx(...s.label)}</option>)}
@@ -147,7 +159,7 @@ export default function SearchPage() {
         />
       ) : (
         <div className={view === 'grid' ? 'grid gap-6 sm:grid-cols-2 lg:grid-cols-3' : 'grid gap-3 lg:grid-cols-2'}>
-          {results.map((i) => (
+          {ordered.map((i) => (
             <BusinessCard key={i.business.id} variant={view} business={i.business} distance={i.distance} openNow={i.openNow} favorite={ids.has(i.business.id)} onToggleFavorite={toggle} />
           ))}
         </div>

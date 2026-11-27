@@ -117,12 +117,12 @@ export default function ForgotPassword() {
   }
 
   return (
-    <AuthShell eyebrow={tx('Hesap kurtarma', 'Account recovery')} title={tx('Şifremi Unuttum', 'Forgot password')} subtitle={tx('Hesabınıza kayıtlı e-posta adresini girin, size şifre yenileme bağlantısı gönderelim. Telefon numarasıyla kayıt olduysanız numaranızı girin, size nasıl yardımcı olacağımızı gösterelim.', 'Enter the email address of your account and we will send you a password reset link. If you signed up with a phone number, enter it and we will show you how we can help.')}>
+    <AuthShell eyebrow={tx('Hesap kurtarma', 'Account recovery')} title={tx('Şifremi unuttum', 'Forgot password')} subtitle={tx('Hesabınıza kayıtlı e-posta adresini girin, size şifre yenileme bağlantısı gönderelim. Telefon numarasıyla kayıt olduysanız numaranızı girin, size nasıl yardımcı olacağımızı gösterelim.', 'Enter the email address of your account and we will send you a password reset link. If you signed up with a phone number, enter it and we will show you how we can help.')}>
       <form onSubmit={submit} className="space-y-5" noValidate>
         <Input label={tx('E-posta veya telefon', 'Email or phone')} name="username" type="text" autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={email} onChange={(e) => setEmail(e.target.value)} error={error} icon={<UserRound className="h-4 w-4" />} placeholder={tx('ornek@eposta.com veya 05XX XXX XX XX', 'you@example.com or 05XX XXX XX XX')} />
         {formError && <p className="rounded-xl border border-error-500/30 bg-error-500/10 px-4 py-3 text-sm text-error-300">{formError}</p>}
         <Button type="submit" size="lg" full loading={loading}>
-          {tx('Yenileme Bağlantısı Gönder', 'Send reset link')}
+          {tx('Yenileme bağlantısı gönder', 'Send reset link')}
         </Button>
       </form>
       <p className="mt-8 text-center text-sm text-mist">

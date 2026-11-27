@@ -37,7 +37,7 @@ export function CookieNotice() {
       role="region"
       data-cookie-notice
       aria-label={tx('Çerez bilgilendirmesi', 'Cookie notice')}
-      className="fixed inset-x-3 bottom-[76px] z-[80] animate-fade-up rounded-xl border border-line bg-coal p-4 shadow-pop md:inset-x-auto md:bottom-5 md:left-5 md:max-w-sm"
+      className="fixed inset-x-3 bottom-[76px] z-[80] animate-fade-up rounded-xl border border-line bg-coal p-4 shadow-pop md:inset-x-auto md:bottom-5 md:left-5 md:max-w-sm [body:has([data-booking-bar])_&]:bottom-[156px] lg:[body:has([data-booking-bar])_&]:bottom-5"
     >
       <div className="flex items-end gap-4 md:flex-col md:items-start md:gap-3">
         <p className="flex-1 text-xs leading-relaxed text-mist">

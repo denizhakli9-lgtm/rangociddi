@@ -29,7 +29,7 @@ export function ProfileLoadError() {
       <p className="mt-2 max-w-sm text-sm text-mist-2">{tx('Bağlantınızı kontrol edip tekrar deneyin.', 'Check your connection and try again.')}</p>
       <div className="mt-6 flex gap-3">
         <Button loading={retrying} onClick={retry}>{tx('Tekrar Dene', 'Try again')}</Button>
-        <Button variant="dark" onClick={() => signOut()}>{tx('Çıkış Yap', 'Sign out')}</Button>
+        <Button variant="dark" onClick={() => signOut()}>{tx('Çıkış yap', 'Sign out')}</Button>
       </div>
     </div>
   );
@@ -65,7 +65,7 @@ export function RequireAuth({ roles, children }: { roles?: Role[]; children: Rea
           )}
         </p>
         <Button variant="dark" className="mt-6" onClick={() => signOut()}>
-          {tx('Çıkış Yap', 'Sign out')}
+          {tx('Çıkış yap', 'Sign out')}
         </Button>
       </div>
     );

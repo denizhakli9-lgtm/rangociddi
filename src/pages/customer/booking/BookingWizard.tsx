@@ -210,7 +210,7 @@ export default function BookingWizard() {
               </span>
             </p>
             <Button full size="lg" loading={submitting} onClick={submit}>
-              {deposit > 0 ? (testMode ? tx('Test ödemesine geç', 'Continue to test payment') : tx(`Kaporayı Öde · ${formatTRY(deposit)}`, `Pay deposit · ${formatTRY(deposit)}`)) : tx('Randevuyu Onayla', 'Confirm booking')}
+              {deposit > 0 ? (testMode ? tx('Test ödemesine geç', 'Continue to test payment') : tx(`Kaporayı Öde · ${formatTRY(deposit)}`, `Pay deposit · ${formatTRY(deposit)}`)) : tx('Randevuyu onayla', 'Confirm booking')}
             </Button>
           </div>
         )}

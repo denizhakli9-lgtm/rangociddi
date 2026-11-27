@@ -335,7 +335,7 @@ export default function BusinessDetail() {
               <li className="flex gap-2.5"><CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-mist-3" />{tx(`${b.cancellation_hours} saat öncesine kadar ücretsiz iptal`, `Free cancellation up to ${b.cancellation_hours} hours before`)}</li>
               <li className="flex gap-2.5"><BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-mist-3" />{b.auto_confirm ? tx('Anında onay (aynı gün randevuları hariç)', 'Instant confirmation (except same-day bookings)') : tx('İşletme onaylı randevu', 'Confirmed by the business')}</li>
             </ul>
-            <Button full size="lg" className="mt-6" disabled={!bookable} onClick={() => book()}>{bookable ? tx('Randevu Al', 'Book now') : tx('Randevu alınamaz', 'Not bookable')}</Button>
+            <Button full size="lg" className="mt-6" disabled={!bookable} onClick={() => book()}>{bookable ? tx('Randevu al', 'Book now') : tx('Randevu alınamaz', 'Not bookable')}</Button>
             {demo && <p className="mt-2 text-center text-xs text-mist-2">{t.demo.notBookable}</p>}
             <DirectionsButton target={b} className="mt-3 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-line text-sm font-medium text-white transition-colors hover:border-white/40">
               <Navigation className="h-4 w-4 text-mist-2" /> {tx('Yol tarifi al', 'Get directions')}
@@ -345,7 +345,7 @@ export default function BusinessDetail() {
         </aside>
       </div>
 
-      <div className="safe-bottom sticky bottom-[60px] z-30 -mx-4 mt-10 border-t border-line bg-ink/95 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6 md:bottom-0 lg:hidden">
+      <div data-booking-bar className="safe-bottom sticky bottom-[60px] z-30 -mx-4 mt-10 border-t border-line bg-ink/95 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6 md:bottom-0 lg:hidden">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
           <div className="min-w-0">
             {demo ? (
@@ -364,7 +364,7 @@ export default function BusinessDetail() {
             <DirectionsButton target={b} ariaLabel={tx('Yol tarifi al', 'Get directions')} className="grid h-[52px] w-[52px] shrink-0 place-items-center rounded-xl border border-line text-white transition-colors hover:border-white/40">
               <Navigation className="h-5 w-5" />
             </DirectionsButton>
-            <Button size="lg" disabled={!bookable} onClick={() => book()} className="flex-1 sm:flex-none">{bookable ? tx('Randevu Al', 'Book now') : tx('Randevu alınamaz', 'Not bookable')}</Button>
+            <Button size="lg" disabled={!bookable} onClick={() => book()} className="flex-1 sm:flex-none">{bookable ? tx('Randevu al', 'Book now') : tx('Randevu alınamaz', 'Not bookable')}</Button>
           </div>
         </div>
       </div>

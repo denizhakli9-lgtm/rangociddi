@@ -6,6 +6,7 @@ import { useCategories, useCityListing } from '@/lib/landingApi';
 import { checkTodayAvailability, fetchUpcomingAppointment } from '@/lib/homeData';
 import { formatDate, formatTime } from '@/lib/format';
 import { isDemoBusiness } from '@/lib/demo';
+import { isTestBusiness } from '@/lib/seo/config';
 import { useAsync } from '@/lib/useAsync';
 import { useFavorites } from '@/lib/useFavorites';
 import { useAuth } from '@/contexts/AuthContext';
@@ -37,7 +38,7 @@ export default function Home() {
   // One request feeds every list on the page: nearest first once a location is chosen, most booked otherwise.
   const discoveryQ = useBusinessSearch({ sort: hasChosen ? 'mesafe' : 'populer' }, HOME_PAGE_SIZE);
   const bookable = useMemo(
-    () => discoveryQ.items.filter((i) => !isDemoBusiness(i.business) && Number(i.business.min_price) > 0).slice(0, MAX_BOOKABLE),
+    () => discoveryQ.items.filter((i) => !isDemoBusiness(i.business) && !isTestBusiness(i.business.slug) && Number(i.business.min_price) > 0).slice(0, MAX_BOOKABLE),
     [discoveryQ.items],
   );
   const samples = useMemo(() => discoveryQ.items.filter((i) => isDemoBusiness(i.business)).slice(0, MAX_SAMPLES), [discoveryQ.items]);

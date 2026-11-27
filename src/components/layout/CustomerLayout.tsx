@@ -61,7 +61,7 @@ export function CustomerLayout() {
                 to={item.to}
                 className={({ isActive }) => {
                   const active = isActive || (item.to === homePath && isHome);
-                  return `relative flex items-center px-3 text-sm transition-colors after:absolute after:inset-x-3 after:-bottom-px after:h-0.5 after:transition-colors ${active ? 'font-medium text-white after:bg-gold-500' : 'text-mist after:bg-transparent hover:text-white'}`;
+                  return `relative flex items-center whitespace-nowrap px-3 text-sm transition-colors after:absolute after:inset-x-3 after:-bottom-px after:h-0.5 after:transition-colors ${active ? 'font-medium text-white after:bg-gold-500' : 'text-mist after:bg-transparent hover:text-white'}`;
                 }}
               >
                 {item.label}
@@ -72,7 +72,7 @@ export function CustomerLayout() {
             <Link
               to="/konum"
               aria-label={tx(`Konum: ${location.label}. Değiştir`, `Location: ${location.label}. Change`)}
-              className="hidden h-9 min-w-0 max-w-[168px] items-center gap-1.5 rounded-lg px-2.5 text-[13px] text-mist transition-colors hover:bg-white/5 hover:text-white sm:flex"
+              className="hidden h-9 min-w-0 max-w-[168px] items-center gap-1.5 rounded-lg px-2.5 text-[13px] text-mist transition-colors hover:bg-white/5 hover:text-white lg:flex"
             >
               <MapPin className="h-4 w-4 shrink-0 text-mist-3" strokeWidth={1.75} />
               <span className="truncate">{location.label}</span>

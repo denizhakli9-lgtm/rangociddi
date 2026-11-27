@@ -50,7 +50,7 @@ import {
   type SeoReview,
   type SeoService,
 } from '../src/lib/seo/meta';
-import { FAQ_PATH, FOR_BUSINESS_PATH, siteLinks } from '../src/lib/seo/pages/common';
+import { BUSINESS_SIGNUP_PATH, FAQ_PATH, FOR_BUSINESS_PATH, siteLinks } from '../src/lib/seo/pages/common';
 import { faqPage } from '../src/lib/seo/pages/faq';
 import { forBusinessPage } from '../src/lib/seo/pages/forBusiness';
 import { homeExtraBlocks, homeSchemas, type HomeExtrasInput } from '../src/lib/seo/pages/home';
@@ -169,7 +169,7 @@ const LOGO = `<span class="inline-flex items-center gap-2.5">${BRAND_MARK}<span 
 
 /** The static page frame: the app's header and footer (CustomerLayout, SiteFooter), with the page's content in between. */
 function shell(content: string): string {
-  const menuLink = 'relative flex items-center px-3 text-sm text-mist transition-colors hover:text-white';
+  const menuLink = 'relative flex items-center whitespace-nowrap px-3 text-sm text-mist transition-colors hover:text-white';
   const columnTitle = 'text-[13px] font-semibold text-white';
   const columnLink = 'text-[13px] text-mist transition-colors hover:text-white';
   const column = (label: string, title: string, links: { path: string; label: string }[]) =>
@@ -187,7 +187,7 @@ function shell(content: string): string {
             <a href="${FAQ_PATH}" class="${menuLink}">Yardım</a>
           </nav>
           <div class="ml-auto flex items-center gap-1.5">
-            <a href="/giris" class="ml-1 inline-flex h-9 items-center whitespace-nowrap rounded-xl bg-primary px-4 text-[13px] font-semibold text-primary-fg">Giriş Yap</a>
+            <a href="/giris" class="ml-1 inline-flex h-9 items-center whitespace-nowrap rounded-xl bg-primary px-4 text-[13px] font-semibold text-primary-fg">Giriş yap</a>
           </div>
         </div>
       </header>
@@ -204,7 +204,7 @@ function shell(content: string): string {
             ${column('Site bağlantıları', 'Keşfet', [...siteLinks('tr').map((l) => ({ path: l.path, label: l.label })), { path: '/ara', label: 'İşletme ara' }])}
             ${column('İşletme bağlantıları', 'İşletmeler', [
               { path: FOR_BUSINESS_PATH, label: 'Rango’ya katılın' },
-              { path: '/kayit', label: 'İşletme hesabı oluştur' },
+              { path: BUSINESS_SIGNUP_PATH, label: 'İşletme hesabı oluştur' },
               { path: '/giris', label: 'İşletme girişi' },
             ])}
             ${column('Yasal bağlantılar', 'Yasal', LEGAL_LINKS.map((l) => ({ path: `/yasal/${l.slug}`, label: l.label })))}
@@ -261,7 +261,7 @@ function homeBody(input: HomeExtrasInput): string {
           </div>
         </section>
         ${input.categories.length ? `<section aria-label="Hizmet kategorileri"><h2 class="mb-4 font-display text-[26px] text-white sm:text-3xl">Hizmete göre keşfedin</h2>${categoryChips(input.categories)}</section>` : ''}
-        ${renderBlocks(homeExtraBlocks(input))}
+        ${renderBlocks(homeExtraBlocks(input).filter((block) => block.kind !== 'links'))}
       </div>`);
 }
 
@@ -339,7 +339,7 @@ function businessBody(b: DetailRow, supabaseUrl: string): string {
               ${reviews > 0 ? `<p class="mt-3 text-sm text-mist"><span class="font-semibold text-white">★ ${Number(b.rating_avg ?? 0).toFixed(1)}</span> (${reviews} değerlendirme)</p>` : ''}
               ${address ? `<p class="mt-5 rounded-2xl border border-line bg-coal p-4 text-sm leading-relaxed text-white">${e(address)}</p>` : ''}
               ${b.description ? `<p class="mt-5 max-w-2xl text-[15px] leading-relaxed text-mist">${e(b.description)}</p>` : ''}
-              <p class="mt-6"><a href="${e(businessPath(b.slug))}/randevu" class="inline-flex min-h-11 items-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-fg">Randevu Al</a></p>
+              <p class="mt-6"><a href="${e(businessPath(b.slug))}/randevu" class="inline-flex min-h-11 items-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-fg">Randevu al</a></p>
               ${services ? `<section class="mt-8"><h2 class="${S.sectionTitle}">Hizmetler ve fiyatlar</h2><div class="mt-4 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-coal">${services}</div></section>` : ''}
               ${team ? `<section class="mt-8"><h2 class="${S.sectionTitle}">Uzmanlar</h2><ul class="mt-4 grid gap-3 sm:grid-cols-2">${team}</ul></section>` : ''}
               ${written ? `<section class="mt-8"><h2 class="${S.sectionTitle}">Değerlendirmeler</h2><ul class="mt-4 space-y-3">${written}</ul></section>` : ''}
@@ -461,8 +461,8 @@ export function seoPrerender(supabase: { url: string; key: string }): Plugin {
 
         const signIn: PageMeta = { title: 'Giriş Yap | Rango', description: home.description, path: '/giris', noindex: true };
         const signUp: PageMeta = { title: 'Ücretsiz Hesap Oluştur | Rango', description: home.description, path: '/kayit', noindex: true };
-        pages.push({ file: 'giris', meta: signIn, body: accountBody('Giriş Yap') });
-        pages.push({ file: 'kayit', meta: signUp, body: accountBody('Hesap Oluştur') });
+        pages.push({ file: 'giris', meta: signIn, body: accountBody('Giriş yap') });
+        pages.push({ file: 'kayit', meta: signUp, body: accountBody('Hesap oluştur') });
 
         pages.push(model('sss', faqPage('tr')));
         pages.push(model('isletmeler-icin', forBusinessPage('tr')));

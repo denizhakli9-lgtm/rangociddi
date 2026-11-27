@@ -70,7 +70,7 @@ export default function Login() {
   }
 
   return (
-    <AuthShell eyebrow={tx('Tekrar hoş geldiniz', 'Welcome back')} title={tx('Giriş Yap', 'Sign in')} subtitle={tx('Randevularınızı yönetmek için hesabınıza giriş yapın.', 'Sign in to your account to manage your bookings.')}>
+    <AuthShell eyebrow={tx('Tekrar hoş geldiniz', 'Welcome back')} title={tx('Giriş yap', 'Sign in')} subtitle={tx('Randevularınızı yönetmek için hesabınıza giriş yapın.', 'Sign in to your account to manage your bookings.')}>
       <form onSubmit={submit} className="space-y-5" noValidate>
         <Input
           label={tx('E-posta veya telefon', 'Email or phone')}
@@ -96,7 +96,7 @@ export default function Login() {
         </div>
         {formError && <p className="rounded-xl border border-error-500/30 bg-error-500/10 px-4 py-3 text-sm text-error-300">{formError}</p>}
         <Button type="submit" size="lg" full loading={loading}>
-          {tx('Giriş Yap', 'Sign in')}
+          {tx('Giriş yap', 'Sign in')}
         </Button>
       </form>
       <p className="mt-8 text-center text-sm text-mist">

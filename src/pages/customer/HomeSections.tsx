@@ -40,7 +40,7 @@ export function HomeBusinessSection({ title, description, href, items, loading, 
           {[0, 1, 2].map((i) => <div key={i} className={`skeleton aspect-[4/3] !rounded-2xl ${i === 2 ? 'hidden lg:block' : ''}`} />)}
         </div>
       ) : (
-        <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-x-5 sm:gap-y-8 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-3">
+        <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory scroll-pl-4 gap-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-x-5 sm:gap-y-8 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-3">
           {items.map((item) => (
             <div key={item.business.id} className="w-[78%] max-w-[320px] shrink-0 snap-start sm:w-auto sm:max-w-none">
               <BusinessCard business={item.business} distance={showDistance ? item.distance : null} openNow={item.openNow} favorite={favorites.has(item.business.id)} onToggleFavorite={toggle} availableAt={availability?.get(item.business.id)} />

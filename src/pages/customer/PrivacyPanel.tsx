@@ -30,7 +30,7 @@ export function PrivacyPanel({ profile }: { profile: Profile }) {
   return (
     <section className="mt-8">
       <p className="eyebrow mb-2">KVKK</p>
-      <h2 className="mb-4 font-display text-3xl text-white">{tx('Verilerim ve gizlilik', 'My data & privacy')}</h2>
+      <h2 className="mb-4 text-xl font-semibold tracking-tight text-white">{tx('Verilerim ve gizlilik', 'My data & privacy')}</h2>
       <div className="card space-y-5 p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>

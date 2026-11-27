@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, CalendarDays, LocateFixed, Search, Sparkles } from 'lucide-react';
+import { ArrowRight, MapPin, Search } from 'lucide-react';
 import { useBusinessSearch } from '@/lib/useDiscovery';
 import { useCategories, useCityListing } from '@/lib/landingApi';
 import { checkTodayAvailability, fetchUpcomingAppointment } from '@/lib/homeData';
 import { formatDate, formatTime } from '@/lib/format';
+import { isDemoBusiness } from '@/lib/demo';
+import { isTestBusiness } from '@/lib/seo/config';
 import { useAsync } from '@/lib/useAsync';
 import { useFavorites } from '@/lib/useFavorites';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,7 +15,6 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { ErrorState } from '@/components/ui/Feedback';
 import { AppointmentStatusBadge } from '@/components/ui/Badge';
 import { HomeBusinessSection } from './HomeSections';
-import { useT } from '@/i18n/I18nProvider';
 import { categoryName } from '@/i18n/categories';
 import { locale, tx } from '@/i18n/locale';
 import { DEFAULT_CITY, cityCategoryPath } from '@/lib/seo/places';
@@ -22,19 +23,25 @@ import { homeExtraBlocks, homeSchemas } from '@/lib/seo/pages/home';
 import { useSeo } from '@/lib/seo/useSeo';
 import { Blocks } from '@/components/seo/Blocks';
 
+/** How many businesses the home page asks for; it shows the bookable ones first and a few samples after them. */
+const HOME_PAGE_SIZE = 36;
+const MAX_BOOKABLE = 9;
+const MAX_SAMPLES = 6;
+
+const heroPhoto = (name: string) => `${import.meta.env.BASE_URL}sector-${name}.webp`;
+
 export default function Home() {
-  const t = useT();
   const { profile } = useAuth();
   const { location, hasChosen } = useUserLocation();
-  const gender = profile?.gender === 'female' || profile?.gender === 'male' ? profile.gender : null;
   const categoriesQ = useCategories();
   const listingQ = useCityListing(DEFAULT_CITY.name);
-  const featuredQ = useBusinessSearch({ featured: true, sort: 'populer' }, 6);
-  const nearbyQ = useBusinessSearch({ sort: 'mesafe' }, 6);
-  const todayQ = useBusinessSearch({ availableToday: true, sort: 'mesafe' }, 6);
-  const popularQ = useBusinessSearch({ sort: 'populer' }, 6);
-  const ratedQ = useBusinessSearch({ sort: 'puan', minRating: 4 }, 6);
-  const recommendationsQ = useBusinessSearch({ gender, sort: 'mesafe' }, 6);
+  // One request feeds every list on the page: nearest first once a location is chosen, most booked otherwise.
+  const discoveryQ = useBusinessSearch({ sort: hasChosen ? 'mesafe' : 'populer' }, HOME_PAGE_SIZE);
+  const bookable = useMemo(
+    () => discoveryQ.items.filter((i) => !isDemoBusiness(i.business) && !isTestBusiness(i.business.slug) && Number(i.business.min_price) > 0).slice(0, MAX_BOOKABLE),
+    [discoveryQ.items],
+  );
+  const samples = useMemo(() => discoveryQ.items.filter((i) => isDemoBusiness(i.business)).slice(0, MAX_SAMPLES), [discoveryQ.items]);
   const upcomingQ = useAsync(() => fetchUpcomingAppointment(profile?.role === 'customer' ? profile.id : undefined), [profile?.id, profile?.role]);
   const [availabilityVersion, setAvailabilityVersion] = useState(0);
   useEffect(() => {
@@ -44,9 +51,8 @@ export default function Home() {
     document.addEventListener('visibilitychange', refresh);
     return () => { window.clearInterval(timer); document.removeEventListener('visibilitychange', refresh); };
   }, []);
-  // Wait for the "today" list before checking slots: running on the initial empty list would
-  // resolve to an empty Map and show the empty state instead of skeletons during the real check.
-  const availabilityQ = useAsync(async () => (todayQ.loading ? null : checkTodayAvailability(todayQ.items)), [todayQ.items, todayQ.loading, availabilityVersion]);
+  // The first free time today, shown on the card of each bookable business that still has one.
+  const availabilityQ = useAsync(async () => (discoveryQ.loading ? null : checkTodayAvailability(bookable.filter((i) => i.availableToday))), [bookable, discoveryQ.loading, availabilityVersion]);
   const { ids, toggle } = useFavorites();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
@@ -54,9 +60,9 @@ export default function Home() {
     event.preventDefault();
     navigate(`/ara${query.trim() ? `?q=${encodeURIComponent(query.trim())}` : ''}`);
   };
-  const shared = { favorites: ids, toggle, showDistance: hasChosen };
+  const shared = { favorites: ids, toggle, showDistance: hasChosen, loading: discoveryQ.loading, error: discoveryQ.error, reload: discoveryQ.reload };
   const lang = locale();
-  // The real businesses, how it works, links by service and area, and the common questions:
+  // How it works, links by service and area, the common questions and the call to business owners:
   // the same blocks (and structured data) the static home page carries.
   const extrasInput = useMemo(
     () => ({
@@ -68,65 +74,77 @@ export default function Home() {
     }),
     [lang, categoriesQ.data, listingQ.data],
   );
-  const extras = useMemo(() => homeExtraBlocks(extrasInput), [extrasInput]);
+  // The bookable businesses and the categories are already listed above, with live opening and availability details.
+  const extras = useMemo(() => homeExtraBlocks(extrasInput).filter((block) => block.kind !== 'businesses' && block.kind !== 'links'), [extrasInput]);
   useSeo(useMemo(() => ({ ...homeMeta(lang), jsonLd: [...(homeMeta(lang).jsonLd ?? []), ...homeSchemas(extrasInput)] }), [lang, extrasInput]));
   const upcoming = upcomingQ.data;
+  const firstName = profile?.full_name?.trim().split(/\s+/)[0];
+  const searchLabel = tx('İşletme, hizmet veya semt ara', 'Search businesses, services or areas');
 
   return (
-    <div className="space-y-8 sm:space-y-10">
-      <section className="relative overflow-hidden rounded-3xl border border-gold-500/20 bg-gradient-to-br from-coal via-coal-2 to-gold-500/10 px-5 py-7 sm:px-10 sm:py-10">
-        <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full border border-gold-500/10" />
-        <div className="relative max-w-2xl animate-fade-up">
-          <p className="eyebrow mb-3">{profile?.full_name ? tx(`Merhaba, ${profile.full_name.split(' ')[0]}`, `Hello, ${profile.full_name.split(' ')[0]}`) : tx('Günün güzel bir anı olsun', 'Treat yourself today')}</p>
-          <h1 className="max-w-lg break-words font-display text-[36px] leading-[1.2] tracking-tight text-white sm:text-6xl">{t.brand.tagline}</h1>
-          <p className="mt-3 max-w-md text-sm leading-relaxed text-mist sm:text-base">{tx('Kuaför, berber ve güzellik randevunu online al: İzmir’deki işletmeleri keşfet, sana en uygun zamanı seç.', 'Book hair, barber and beauty appointments online: discover businesses in İzmir and pick the time that suits you.')}</p>
-          <form onSubmit={submit} role="search" className="mt-6 flex items-center gap-2 rounded-2xl border border-line bg-coal p-2 shadow-sm focus-within:border-gold-500">
-            <Search className="ml-2 h-5 w-5 shrink-0 text-gold-500" />
-            <input aria-label={tx('İşletme, hizmet veya semt ara', 'Search businesses, services or areas')} value={query} onChange={(e) => setQuery(e.target.value)} placeholder={tx('İşletme, hizmet veya semt ara', 'Search businesses, services or areas')} className="h-11 min-w-0 flex-1 bg-transparent text-sm text-white placeholder:text-mist-2 focus:outline-none" />
-            <button type="submit" className="h-11 rounded-xl bg-gold-500 px-4 text-sm font-semibold text-ink transition hover:bg-gold-400 active:scale-95">{tx('Ara', 'Search')}</button>
+    <div className="space-y-12 sm:space-y-16">
+      <section className="grid items-center gap-10 pt-4 sm:pt-8 lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-16 lg:pb-6 lg:pt-10">
+        <div>
+          {firstName && <p className="mb-3 text-sm text-mist">{tx(`Merhaba, ${firstName}`, `Hello, ${firstName}`)}</p>}
+          <h1 className="font-display text-[42px] leading-[1.04] tracking-[-0.02em] text-white sm:text-6xl lg:text-[68px]">{tx('Randevunun yeni yolu.', 'The new way to book.')}</h1>
+          <p className="mt-4 max-w-md text-[15px] leading-relaxed text-mist sm:text-base">{tx('Kuaför, berber ve güzellik randevunuzu online alın: İzmir’deki işletmeleri keşfedin, size en uygun saati seçin.', 'Book hair, barber and beauty appointments online: discover businesses in İzmir and pick the time that suits you.')}</p>
+          <form onSubmit={submit} role="search" className="mt-7 flex max-w-xl items-center gap-1 rounded-2xl border border-line bg-coal p-1.5 shadow-gold transition-colors focus-within:border-white/50">
+            <Search className="ml-2.5 h-[18px] w-[18px] shrink-0 text-mist-3" strokeWidth={1.75} />
+            <input aria-label={searchLabel} value={query} onChange={(e) => setQuery(e.target.value)} placeholder={searchLabel} enterKeyHint="search" className="h-11 min-w-0 flex-1 bg-transparent px-1.5 text-[15px] text-white placeholder:text-mist-3 focus:outline-none" />
+            <Link to="/konum" aria-label={tx(`Konum: ${location.label}. Değiştir`, `Location: ${location.label}. Change`)} className="hidden h-11 max-w-[150px] shrink-0 items-center gap-1.5 border-l border-line pl-3 pr-2 text-[13px] text-mist transition-colors hover:text-white sm:flex">
+              <MapPin className="h-4 w-4 shrink-0 text-mist-3" strokeWidth={1.75} />
+              <span className="truncate">{location.label}</span>
+            </Link>
+            <button type="submit" className="h-11 shrink-0 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-fg transition-colors hover:bg-primary/90">{tx('Ara', 'Search')}</button>
           </form>
-          {!hasChosen && <Link to="/konum" className="mt-3 inline-flex min-h-11 items-center gap-2 text-xs text-mist"><LocateFixed className="h-4 w-4 text-gold-500" /> {tx('Yakınındaki yerler için konumunu kullan veya semt seç', 'Use your location or pick an area to see places near you')} <ArrowRight className="h-4 w-4 shrink-0" /></Link>}
+          <Link to="/konum" className="mt-3 inline-flex min-h-11 items-center gap-1.5 text-[13px] text-mist sm:hidden">
+            <MapPin className="h-4 w-4 text-mist-3" strokeWidth={1.75} />
+            {hasChosen ? location.label : tx('Yakınınızdaki işletmeler için konum seçin', 'Choose a location to see businesses near you')}
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+        <div className="relative hidden lg:block" aria-hidden="true">
+          <img src={heroPhoto('barber-3')} alt="" width={840} height={1050} loading="lazy" decoding="async" className="aspect-[4/5] w-full rounded-3xl object-cover" />
+          <img src={heroPhoto('nails-7')} alt="" width={352} height={352} loading="lazy" decoding="async" className="absolute -bottom-8 -left-12 aspect-square w-44 rounded-2xl border-[5px] border-ink object-cover" />
         </div>
       </section>
 
       <section aria-label={tx('Hizmet kategorileri', 'Service categories')}>
-        <div className="mb-4 flex items-center justify-between"><h2 className="font-display text-3xl text-white">{tx('Bugün neye ihtiyacın var?', 'What do you need today?')}</h2><Link to="/kategoriler" className="flex min-h-11 items-center text-xs font-semibold text-gold-500">{t.common.all}</Link></div>
+        <div className="mb-4 flex items-end justify-between gap-4">
+          <h2 className="font-display text-[26px] text-white sm:text-3xl">{tx('Hizmete göre keşfedin', 'Browse by service')}</h2>
+          <Link to="/kategoriler" className="flex min-h-11 shrink-0 items-center gap-1 text-[13px] font-medium text-mist transition-colors hover:text-white">{tx('Tüm kategoriler', 'All categories')} <ArrowRight className="h-3.5 w-3.5" /></Link>
+        </div>
         {categoriesQ.error ? <ErrorState onRetry={categoriesQ.reload} /> : (
-          <div className="grid grid-cols-4 gap-2 sm:gap-4 lg:grid-cols-8">
-            {categoriesQ.loading ? Array.from({ length: 8 }).map((_, i) => <div key={i} className="skeleton h-24" />) : (categoriesQ.data ?? []).map((c) => (
-              <Link key={c.id} to={cityCategoryPath(DEFAULT_CITY, c.slug)} className="group flex min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border border-line bg-coal p-2 text-center transition hover:-translate-y-1 hover:border-gold-500/50 hover:shadow-sm active:scale-95">
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-gold-500/10 text-gold-500"><CategoryIcon name={c.icon} className="h-5 w-5" /></span>
-                <span className="text-[11px] font-medium leading-snug text-white sm:text-xs">{categoryName(c)}</span>
+          <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
+            {categoriesQ.loading ? Array.from({ length: 8 }).map((_, i) => <div key={i} className="skeleton h-11 w-28 shrink-0 !rounded-full" />) : (categoriesQ.data ?? []).map((c) => (
+              <Link key={c.id} to={cityCategoryPath(DEFAULT_CITY, c.slug)} className="flex h-11 shrink-0 items-center gap-2 rounded-full border border-line bg-coal pl-3.5 pr-4 text-sm text-white transition-colors hover:border-white/40">
+                <CategoryIcon name={c.icon} className="h-4 w-4 text-mist-2" />
+                {categoryName(c)}
               </Link>
             ))}
           </div>
         )}
-        {!categoriesQ.loading && !categoriesQ.error && !categoriesQ.data?.length && <p className="rounded-2xl border border-dashed border-line p-4 text-sm text-mist">{tx('Hizmet kategorileri henüz yayınlanmadı.', 'Service categories have not been published yet.')}</p>}
       </section>
 
-      <section className="rounded-2xl border border-line bg-coal p-5" aria-label={tx('Kampanyalar ve özel teklifler', 'Offers and promotions')}>
-        <p className="eyebrow">{tx('Kampanyalar ve özel teklifler', 'Offers and promotions')}</p>
-        <p className="mt-2 text-sm text-mist">{tx('Kampanya bilgileri henüz sunulmuyor. Aşağıdaki işletmelerin güncel hizmetlerini ve fiyatlarını inceleyebilirsin.', 'No offers yet. You can browse the current services and prices of the businesses below.')}</p>
-      </section>
-      <HomeBusinessSection {...shared} {...featuredQ} title={tx('Özenle seçilen adresler', 'Hand-picked places')} description={tx('Öne çıkan işletmeleri keşfet. Sana iyi gelecek bir yer bul.', 'Discover featured businesses and find a place that feels right.')} href="/ara?sirala=populer" />
-      <HomeBusinessSection {...shared} {...nearbyQ} title={tx('Yakınında keşfet', 'Near you')} description={hasChosen ? tx(`${location.label} çevresindeki adresler · Mesafeler yaklaşık olarak gösterilir.`, `Places around ${location.label} · Distances are approximate.`) : tx('Şimdilik İzmir merkezine göre sıralanıyor. Konumunu seçerek kişiselleştir.', 'Sorted from central İzmir for now. Choose your location to personalise.')} href="/ara?sirala=mesafe" />
-      <HomeBusinessSection {...shared} title={tx('Bugün kendine zaman ayır', 'Make time for yourself today')} description={tx('Kontrol edilen boş saatler · Aynı gün randevuları işletme onayı gerektirir.', 'Checked free times · Same-day bookings need the business’s approval.')} href="/ara?bugun=1" items={todayQ.items.filter((i) => availabilityQ.data?.has(i.business.id))} loading={todayQ.loading || (!availabilityQ.data && !availabilityQ.error)} error={todayQ.error || availabilityQ.error} reload={() => { todayQ.reload(); availabilityQ.reload(); }} availability={availabilityQ.data ?? undefined} />
-      <HomeBusinessSection {...shared} {...popularQ} title={tx('Çok tercih edilenler', 'Popular choices')} description={tx('Randevu sayısına göre popüler adresler. Varsa gerçek müşteri puanlarını görebilirsin.', 'Popular places by number of bookings, with real customer ratings where available.')} href="/ara?sirala=populer" />
-      <HomeBusinessSection {...shared} {...ratedQ} items={ratedQ.items.filter((i) => i.business.review_count > 0)} title={tx('Deneyimiyle öne çıkanlar', 'Top rated')} description={tx('Gerçek müşteri değerlendirmelerinde 4 ve üzeri puan alan işletmeler.', 'Businesses rated 4 or higher in real customer reviews.')} href="/ara?sirala=puan" />
-      <HomeBusinessSection {...shared} {...recommendationsQ} title={gender ? tx('Senin için seçtiklerimiz', 'Picked for you') : tx('Keşfetmeye devam et', 'Keep exploring')} description={gender ? tx('Profil tercihin ve seçilen konuma göre önerilen adresler.', 'Places suggested from your profile and chosen location.') : tx('Seçilen konumun çevresinde yeni bir bakım deneyimi keşfet.', 'Discover a new care experience around your chosen location.')} href="/ara?sirala=mesafe" />
-
-      {profile?.role === 'customer' && (upcomingQ.loading ? <div className="skeleton h-40" aria-label={tx('Yaklaşan randevu yükleniyor', 'Loading your upcoming booking')} /> : upcomingQ.error ? <ErrorState message={tx('Yaklaşan randevun şu anda yüklenemedi.', 'Your upcoming booking could not be loaded right now.')} onRetry={upcomingQ.reload} /> : upcoming && (
-        <section className="card-gold p-5 sm:p-6" aria-label={tx('Yaklaşan randevun', 'Your upcoming booking')}>
-          <div className="flex items-center gap-2"><CalendarDays className="h-5 w-5 text-gold-500" /><p className="eyebrow">{tx('Sana ayrılmış bir an', 'Your upcoming booking')}</p></div>
-          <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
-            <div><h2 className="font-display text-2xl text-white">{upcoming.businesses?.name ?? upcoming.service_name}</h2><p className="mt-1 text-sm text-mist">{upcoming.service_name} · {upcoming.employee_name}</p><p className="mt-3 text-sm font-semibold text-white">{formatDate(upcoming.starts_at, { day: 'numeric', month: 'long', weekday: 'short' })} · {formatTime(upcoming.starts_at)}</p></div>
-            <AppointmentStatusBadge status={upcoming.status} />
+      {profile?.role === 'customer' && (upcomingQ.loading ? <div className="skeleton h-32" aria-label={tx('Yaklaşan randevu yükleniyor', 'Loading your upcoming booking')} /> : upcomingQ.error ? <ErrorState message={tx('Yaklaşan randevunuz şu anda yüklenemedi.', 'Your upcoming booking could not be loaded right now.')} onRetry={upcomingQ.reload} /> : upcoming && (
+        <section className="card flex flex-wrap items-center justify-between gap-x-8 gap-y-4 p-5 sm:p-6" aria-label={tx('Yaklaşan randevunuz', 'Your upcoming booking')}>
+          <div className="min-w-0">
+            <p className="text-[13px] font-medium text-mist-2">{tx('Yaklaşan randevunuz', 'Your upcoming booking')}</p>
+            <h2 className="mt-1 truncate text-lg font-semibold text-white">{upcoming.businesses?.name ?? upcoming.service_name}</h2>
+            <p className="mt-0.5 text-sm text-mist">{upcoming.service_name} · {upcoming.employee_name}</p>
           </div>
-          <Link to="/randevularim" className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-gold-500">{tx('Randevumu görüntüle', 'View my booking')} <ArrowRight className="h-4 w-4" /></Link>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+            <p className="text-sm font-semibold text-white">{formatDate(upcoming.starts_at, { day: 'numeric', month: 'long', weekday: 'short' })} · {formatTime(upcoming.starts_at)}</p>
+            <AppointmentStatusBadge status={upcoming.status} />
+            <Link to="/randevularim" className="inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-white underline-offset-4 hover:underline">{tx('Randevuyu görüntüle', 'View booking')} <ArrowRight className="h-4 w-4" /></Link>
+          </div>
         </section>
       ))}
+
+      <HomeBusinessSection {...shared} items={bookable} availability={availabilityQ.data ?? undefined} title={tx('İzmir’de randevu alabileceğiniz işletmeler', 'Businesses you can book in İzmir')} href="/ara" />
+      <HomeBusinessSection {...shared} items={samples} quiet title={tx('Örnek profiller', 'Sample profiles')} description={tx('Bir işletme sayfasının Rango’da nasıl göründüğünü gösteren örnekler. Bu profillerden randevu alınamaz.', 'Examples of how a business page looks on Rango. These profiles cannot be booked.')} />
+
       <Blocks blocks={extras} />
-      <div className="flex items-center justify-center gap-2 border-t border-line-soft pt-6 text-xs text-mist-2"><Sparkles className="h-4 w-4 text-gold-500" /> {tx('İyi hissetmenin yeni adresi.', 'Your new place to feel good.')}</div>
     </div>
   );
 }

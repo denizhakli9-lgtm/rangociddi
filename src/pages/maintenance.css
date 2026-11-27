@@ -26,7 +26,7 @@
     max(16px, env(safe-area-inset-left));
   background: var(--deco-ink);
   color: #f3eee2;
-  font-family: Manrope, system-ui, sans-serif;
+  font-family: Figtree, system-ui, sans-serif;
   text-align: center;
   color-scheme: dark;
 }
@@ -304,7 +304,7 @@
 
 .deco-wordmark {
   /* Brand wordmark, as in WordMark (src/components/ui/Brand.tsx) */
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: 'Rango Display', Georgia, serif;
   font-size: 22px;
   font-weight: 600;
   line-height: 1;
@@ -340,7 +340,7 @@
 .deco-title {
   margin: 0;
   padding: 0 0 0 0.1em;
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: 'Rango Display', Georgia, serif;
   font-size: clamp(40px, 8.2vw, 88px);
   font-weight: 600;
   line-height: 1.02;
@@ -369,7 +369,7 @@
 .deco-lede {
   margin: 14px 0 0;
   color: var(--deco-champagne);
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: 'Rango Display', Georgia, serif;
   font-size: clamp(22px, 3vw, 28px);
   font-style: italic;
   font-weight: 500;

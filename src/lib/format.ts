@@ -1,4 +1,5 @@
 import { intlLocale, tx } from '@/i18n/locale';
+import { ablativeSuffixTr } from '@/lib/seo/format';
 
 export const TZ = 'Europe/Istanbul';
 
@@ -18,6 +19,14 @@ function currency(digits: 0 | 2): Intl.NumberFormat {
 export function formatTRY(value: number | string | null | undefined): string {
   const kurus = toKurus(value);
   return currency(kurus % 100 === 0 ? 0 : 2).format(kurus / 100 || 0);
+}
+
+/** "Starting from" price: ₺350’den (English: from ₺350). Amounts with kuruş fall back to ₺349,90+. */
+export function fromPrice(value: number | string | null | undefined): string {
+  const kurus = toKurus(value);
+  const amount = formatTRY(value);
+  if (kurus % 100 !== 0) return tx(`${amount}+`, `from ${amount}`);
+  return tx(`${amount}’${ablativeSuffixTr(Math.abs(kurus / 100))}`, `from ${amount}`);
 }
 
 /** Converts a lira amount to integer kuruş (avoids floating-point drift in money maths). */

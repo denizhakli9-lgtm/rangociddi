@@ -82,12 +82,12 @@ export function breadcrumbItems(blocks: Block[]): { name: string; path?: string 
   return block && block.kind === 'breadcrumb' ? block.items : [];
 }
 
-/** The one-line facts under a business name: "Karşıyaka · ★ 4.8 (12) · ₺250+". */
+/** The one-line facts under a business name: "Karşıyaka · ★ 4.8 (12) · ₺250’den". */
 export function businessFactsLine(item: BusinessSummary): string {
   return [
     item.district,
     item.rating ? `★ ${item.rating}${item.reviewCount ? ` (${item.reviewCount})` : ''}` : '',
-    item.priceFrom ? `${item.priceFrom}+` : '',
+    item.priceFrom ?? '',
   ]
     .filter(Boolean)
     .join(' · ');

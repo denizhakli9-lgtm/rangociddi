@@ -40,7 +40,7 @@ export default function OwnerReviews() {
       ) : (
         <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
           <aside className="card-gold h-fit p-6">
-            <p className="font-display text-5xl text-white">{Number(business.rating_avg).toFixed(1)}</p>
+            <p className="text-3xl font-semibold tracking-tight text-white">{Number(business.rating_avg).toFixed(1)}</p>
             <Stars value={Number(business.rating_avg)} size="h-4 w-4" />
             <p className="mt-1 text-xs text-mist-2">{business.review_count} değerlendirme</p>
             <div className="mt-5 space-y-2">

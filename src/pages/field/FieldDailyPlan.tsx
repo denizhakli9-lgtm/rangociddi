@@ -161,7 +161,7 @@ export function FieldDailyPlan({ code, bonusAmount, businesses, onShare }: { cod
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="eyebrow mb-1">{formatDate(new Date().toISOString(), { day: 'numeric', month: 'long', weekday: 'long' })}</p>
-          <h2 className="font-display text-2xl text-white">Bugün ne yapmalısınız?</h2>
+          <h2 className="text-lg font-semibold tracking-tight text-white">Bugün ne yapmalısınız?</h2>
         </div>
         <p className="text-xs text-mist-2" aria-live="polite">
           {done === steps.length ? 'Bugünlük hepsi tamam, elinize sağlık!' : `${done}/${steps.length} adım tamamlandı`}

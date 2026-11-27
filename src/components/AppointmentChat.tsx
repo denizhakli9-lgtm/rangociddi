@@ -147,7 +147,7 @@ export function AppointmentChat({ appointmentId, role, canSend, otherName, onRea
             type="submit"
             disabled={!text.trim() || sending}
             aria-label={tx('Gönder', 'Send')}
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gold-500 text-ink transition hover:bg-gold-400 disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-fg transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Send className="h-4 w-4" />
           </button>

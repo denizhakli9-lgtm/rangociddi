@@ -81,7 +81,7 @@ export default function Employees() {
           {data.employees.map((emp) => {
             const ids = (emp.employee_services ?? []).map((x) => x.service_id);
             return (
-              <div key={emp.id} className={`card flex flex-col gap-4 p-5 transition hover:border-gold-500/30 ${emp.is_active ? '' : 'opacity-60'}`}>
+              <div key={emp.id} className={`card flex flex-col gap-4 p-5 transition hover:border-white/30 ${emp.is_active ? '' : 'opacity-60'}`}>
                 <div className="flex items-center gap-3">
                   <Avatar name={emp.full_name} src={emp.avatar_url} size="h-14 w-14 text-base" />
                   <div className="min-w-0 flex-1">
@@ -274,10 +274,10 @@ function EmployeeModal({ draft, services, sortOrder, onClose, onSaved }: { draft
                     key={s.id}
                     type="button"
                     onClick={() => toggleService(s.id)}
-                    className={`flex items-center justify-between gap-2 rounded-xl border px-4 py-3 text-left text-sm transition ${on ? 'border-gold-500/60 bg-gold-500/10 text-white' : 'border-line text-mist hover:border-gold-500/30'}`}
+                    className={`flex items-center justify-between gap-2 rounded-xl border px-4 py-3 text-left text-sm transition ${on ? 'border-gold-500/60 bg-gold-500/10 text-white' : 'border-line text-mist hover:border-white/30'}`}
                   >
                     <span className="truncate">{s.name}</span>
-                    <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border ${on ? 'border-gold-500 bg-gold-500 text-ink' : 'border-line'}`}>{on && <Check className="h-3 w-3" />}</span>
+                    <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border ${on ? 'border-gold-500 bg-primary text-primary-fg' : 'border-line'}`}>{on && <Check className="h-3 w-3" />}</span>
                   </button>
                 );
               })}

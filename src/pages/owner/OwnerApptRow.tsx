@@ -9,7 +9,7 @@ export function OwnerApptRow({ appt, onOpen, showDate, unread = 0 }: { appt: App
     <button
       type="button"
       onClick={() => onOpen(appt)}
-      className="card group flex w-full items-center gap-4 p-4 text-left transition hover:-translate-y-0.5 hover:border-gold-500/40"
+      className="card group flex w-full items-center gap-4 p-4 text-left transition hover:-translate-y-0.5 hover:border-white/30"
     >
       <div className="flex w-16 shrink-0 flex-col items-center rounded-xl border border-line bg-ink/50 py-2">
         <span className="text-base font-semibold text-white">{formatTime(appt.starts_at)}</span>

@@ -199,7 +199,7 @@ export default function ResetPassword() {
           <Input label={tx('Mevcut Şifre', 'Current password')} name="current-password" type="password" autoComplete="current-password" autoCapitalize="none" autoCorrect="off" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} error={errors.current} icon={<KeyRound className="h-4 w-4" />} placeholder="••••••••" />
           <Input label={tx('Yeni Şifre', 'New password')} name="password" type="password" autoComplete="new-password" autoCapitalize="none" autoCorrect="off" value={password} onChange={(e) => setPassword(e.target.value)} error={errors.password} icon={<Lock className="h-4 w-4" />} placeholder="••••••••" />
           <Input label={tx('Yeni Şifre Tekrar', 'Repeat new password')} name="password2" type="password" autoComplete="new-password" autoCapitalize="none" autoCorrect="off" value={password2} onChange={(e) => setPassword2(e.target.value)} error={errors.password2} icon={<Lock className="h-4 w-4" />} placeholder="••••••••" />
-          {formError && <p className="rounded-xl border border-error-500/30 bg-error-900/40 px-4 py-3 text-sm text-error-300">{formError}</p>}
+          {formError && <p className="rounded-xl border border-error-500/30 bg-error-500/10 px-4 py-3 text-sm text-error-300">{formError}</p>}
           <Button type="submit" size="lg" full loading={loading}>
             {tx('Şifreyi Değiştir', 'Change password')}
           </Button>
@@ -240,10 +240,10 @@ export default function ResetPassword() {
             </p>
           </div>
         )}
-        {formError && <p className="mt-4 rounded-xl border border-error-500/30 bg-error-900/40 px-4 py-3 text-sm text-error-300">{formError}</p>}
+        {formError && <p className="mt-4 rounded-xl border border-error-500/30 bg-error-500/10 px-4 py-3 text-sm text-error-300">{formError}</p>}
         {!sentTo && (
           <Button type="button" size="lg" full className="mt-6" loading={sending} onClick={email ? sendLink : () => navigate('/sifremi-unuttum')}>
-            {tx('Yenileme Bağlantısı Gönder', 'Send reset link')}
+            {tx('Yenileme bağlantısı gönder', 'Send reset link')}
           </Button>
         )}
         <p className="mt-6 text-center text-sm text-mist">
@@ -275,7 +275,7 @@ export default function ResetPassword() {
   if (status === 'done') {
     return (
       <AuthShell eyebrow={tx('Hesap kurtarma', 'Account recovery')} title={tx('Şifreniz Yenilendi', 'Password updated')} subtitle={tx('Yeni şifrenizle oturumunuz açıldı, sizi yönlendiriyoruz.', 'You are signed in with your new password; redirecting you now.')}>
-        <div className="flex animate-fade-up items-center gap-4 rounded-2xl border border-success-500/30 bg-success-900/40 p-6">
+        <div className="flex animate-fade-up items-center gap-4 rounded-2xl border border-success-500/30 bg-success-500/10 p-6">
           <CheckCircle2 className="h-6 w-6 shrink-0 text-success-300" />
           <p className="text-sm text-success-300">{tx('Şifreniz başarıyla güncellendi.', 'Your password has been updated.')}</p>
         </div>
@@ -288,7 +288,7 @@ export default function ResetPassword() {
       <form onSubmit={submit} className="space-y-5" noValidate>
         <Input label={tx('Yeni Şifre', 'New password')} name="password" type="password" autoComplete="new-password" autoCapitalize="none" autoCorrect="off" value={password} onChange={(e) => setPassword(e.target.value)} error={errors.password} icon={<Lock className="h-4 w-4" />} placeholder="••••••••" />
         <Input label={tx('Yeni Şifre Tekrar', 'Repeat new password')} name="password2" type="password" autoComplete="new-password" autoCapitalize="none" autoCorrect="off" value={password2} onChange={(e) => setPassword2(e.target.value)} error={errors.password2} icon={<Lock className="h-4 w-4" />} placeholder="••••••••" />
-        {formError && <p className="rounded-xl border border-error-500/30 bg-error-900/40 px-4 py-3 text-sm text-error-300">{formError}</p>}
+        {formError && <p className="rounded-xl border border-error-500/30 bg-error-500/10 px-4 py-3 text-sm text-error-300">{formError}</p>}
         <Button type="submit" size="lg" full loading={loading}>
           {tx('Şifreyi Güncelle', 'Update password')}
         </Button>

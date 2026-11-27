@@ -87,6 +87,8 @@ export default function BusinessDetail() {
 
   const { business: b, services, employees, hours, reviews } = data;
   const demo = isDemoBusiness(b);
+  // A profile can be booked once it is a real business that lists at least one service.
+  const bookable = !demo && services.length > 0;
   const ownPhotos = [b.cover_url, ...(b.gallery ?? [])].map(safeImageUrl).filter((src): src is string => !!src);
   // No photos yet: a labelled sector photo instead of an empty header.
   const placeholderPhoto = ownPhotos.length === 0;
@@ -122,31 +124,31 @@ export default function BusinessDetail() {
   };
 
   return (
-    <div className="pb-24 md:pb-0">
+    <div>
       <div className="relative -mx-4 -mt-6 sm:mx-0 sm:mt-0">
-        <div className="relative aspect-[4/3] overflow-hidden sm:aspect-[21/9] sm:rounded-3xl sm:border sm:border-gold-500/20">
+        <div className="relative aspect-[4/3] overflow-hidden sm:aspect-[21/9] sm:rounded-3xl">
           {photos.map((src, i) => (
             <img key={src + i} src={src} alt={i === 0 ? photoAlt : `${photoAlt} (${i + 1})`} loading={i === 0 ? 'eager' : 'lazy'} fetchPriority={i === 0 ? 'high' : 'auto'} decoding="async" className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${i === photo ? 'opacity-100' : 'opacity-0'}`} />
           ))}
-          <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/20 to-ink/40" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/35 to-transparent" />
           {placeholderPhoto && <PlaceholderTag className="bottom-4 left-4" />}
           <div className="absolute inset-x-4 top-4 flex justify-between">
-            <button onClick={goBack} className="flex h-10 w-10 items-center justify-center rounded-full bg-ink/60 text-white backdrop-blur transition hover:bg-ink" aria-label={t.common.back}>
+            <button onClick={goBack} className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff]/90 text-[#0a0a0a] shadow-sm backdrop-blur-sm transition-colors hover:bg-[#fff]" aria-label={t.common.back}>
               <ArrowLeft className="h-5 w-5" />
             </button>
             <div className="flex gap-2">
-              <button onClick={share} className="flex h-10 w-10 items-center justify-center rounded-full bg-ink/60 text-white backdrop-blur transition hover:bg-ink" aria-label={tx('Paylaş', 'Share')}>
+              <button onClick={share} className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff]/90 text-[#0a0a0a] shadow-sm backdrop-blur-sm transition-colors hover:bg-[#fff]" aria-label={tx('Paylaş', 'Share')}>
                 <Share2 className="h-4 w-4" />
               </button>
-              <button onClick={() => toggle(b.id)} className="flex h-10 w-10 items-center justify-center rounded-full bg-ink/60 backdrop-blur transition hover:bg-ink" aria-label={fav ? tx('Favorilerden çıkar', 'Remove from favourites') : tx('Favorilere ekle', 'Add to favourites')} aria-pressed={fav}>
-                <Heart className={`h-4 w-4 ${fav ? 'fill-gold-500 text-gold-500' : 'text-white'}`} />
+              <button onClick={() => toggle(b.id)} className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff]/90 text-[#0a0a0a] shadow-sm backdrop-blur-sm transition-colors hover:bg-[#fff]" aria-label={fav ? tx('Favorilerden çıkar', 'Remove from favourites') : tx('Favorilere ekle', 'Add to favourites')} aria-pressed={fav}>
+                <Heart className={`h-4 w-4 ${fav ? 'fill-[#e11d48] text-[#e11d48]' : ''}`} strokeWidth={1.9} />
               </button>
             </div>
           </div>
           {photos.length > 1 && (
             <div className="absolute bottom-4 right-4 flex gap-1.5">
               {photos.map((_, i) => (
-                <button key={i} onClick={() => setPhoto(i)} aria-label={tx(`Fotoğraf ${i + 1}`, `Photo ${i + 1}`)} className={`h-1.5 rounded-full transition-all ${i === photo ? 'w-6 bg-gold-500' : 'w-1.5 bg-white/50'}`} />
+                <button key={i} onClick={() => setPhoto(i)} aria-label={tx(`Fotoğraf ${i + 1}`, `Photo ${i + 1}`)} className={`h-1.5 rounded-full transition-all ${i === photo ? 'w-6 bg-[#fff]' : 'w-1.5 bg-[#fff]/55'}`} />
               ))}
             </div>
           )}
@@ -155,41 +157,43 @@ export default function BusinessDetail() {
 
       <div className="mt-6 grid gap-10 lg:grid-cols-[1fr_340px]">
         <div className="min-w-0">
-          <div className="animate-fade-up">
+          <div>
             <div className="mb-4"><Blocks blocks={[{ kind: 'breadcrumb', items: crumbs }]} /></div>
-            <div className="flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-gold-500">
+            <div className="flex flex-wrap items-center gap-2 text-[13px] text-mist">
               {b.categories?.slug ? <Link to={categoryPath(b.categories.slug)} className="hover:underline">{categoryLabel}</Link> : categoryLabel}
               <span className="text-mist-3">·</span>
-              <span className="text-mist">{t.genderFocus[b.gender_focus]}</span>
+              <span>{t.genderFocus[b.gender_focus]}</span>
             </div>
-            <h1 className="mt-2 flex items-center gap-2 font-display text-4xl text-white sm:text-5xl">
+            <h1 className="mt-2 flex items-center gap-2.5 font-display text-4xl leading-[1.08] tracking-[-0.02em] text-white sm:text-5xl">
               {b.name}
-              {b.is_verified && !demo && <BadgeCheck className="h-6 w-6 shrink-0 text-gold-400" aria-label={t.common.verified} />}
+              {b.is_verified && !demo && <BadgeCheck className="h-6 w-6 shrink-0 text-gold-500" aria-label={t.common.verified} />}
             </h1>
             {demo && (
-              <div className="mt-3 flex max-w-2xl flex-col items-start gap-2 rounded-2xl border border-warning-500/40 bg-warning-900/40 px-4 py-3 text-sm text-warning-300 sm:flex-row sm:items-center sm:gap-3">
-                <Badge tone="warning">{t.demo.badge}</Badge>
+              <div className="mt-4 flex max-w-2xl flex-col items-start gap-2 rounded-xl border border-line bg-coal-2 px-4 py-3 text-sm leading-relaxed text-mist sm:flex-row sm:items-start sm:gap-3">
+                <Badge tone="neutral">{t.demo.badge}</Badge>
                 <span>{t.demo.explanation}</span>
               </div>
             )}
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-mist">
-              <span className="flex items-center gap-1.5">
-                <Star className="h-4 w-4 fill-gold-500 text-gold-500" />
-                <span className="font-semibold text-white">{b.review_count ? Number(b.rating_avg).toFixed(1) : t.common.new}</span>
-                {b.review_count > 0 && <span>({tx(`${b.review_count} değerlendirme`, b.review_count === 1 ? '1 review' : `${b.review_count} reviews`)})</span>}
-              </span>
+              {b.review_count > 0 ? (
+                <span className="flex items-center gap-1.5">
+                  <Star className="h-4 w-4 fill-gold-500 text-gold-500" />
+                  <span className="font-semibold text-white">{Number(b.rating_avg).toFixed(1)}</span>
+                  <span>({tx(`${b.review_count} değerlendirme`, b.review_count === 1 ? '1 review' : `${b.review_count} reviews`)})</span>
+                </span>
+              ) : !demo && <Badge tone="neutral">{tx('Rango’da yeni', 'New on Rango')}</Badge>}
               <span className={`flex items-center gap-1.5 ${open ? 'text-success-300' : 'text-mist-2'}`}><Clock className="h-4 w-4" />{open ? tx('Şu an açık', 'Open now') : tx('Şu an kapalı', 'Closed now')}</span>
             </div>
-            <div className="mt-5 flex flex-col gap-4 rounded-2xl border border-line bg-coal/70 p-4 sm:flex-row sm:items-center">
+            <div className="mt-5 flex flex-col gap-4 rounded-2xl border border-line bg-coal p-4 sm:flex-row sm:items-center">
               <div className="flex min-w-0 flex-1 items-start gap-3">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gold-500/10 text-gold-400"><MapPin className="h-5 w-5" /></span>
+                <MapPin className="mt-0.5 h-[18px] w-[18px] shrink-0 text-mist-3" strokeWidth={1.75} />
                 <div className="min-w-0">
                   <p className="text-sm leading-relaxed text-white">{address}</p>
-                  {distance && <p className="mt-0.5 text-xs text-mist-2">{hasExactPin(b) ? tx(`Sana ${distance} uzaklıkta`, `${distance} away`) : tx(`${b.district} merkezine ${distance}`, `${distance} from central ${b.district}`)}</p>}
+                  {distance && <p className="mt-0.5 text-xs text-mist-2">{hasExactPin(b) ? tx(`Size ${distance} uzaklıkta`, `${distance} away`) : tx(`${b.district} merkezine ${distance}`, `${distance} from central ${b.district}`)}</p>}
                 </div>
               </div>
               <div className="flex shrink-0 gap-2">
-                <DirectionsButton target={b} className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-gold-500 px-4 text-sm font-medium text-ink transition hover:bg-gold-400 sm:flex-none">
+                <DirectionsButton target={b} className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-line bg-coal px-4 text-sm font-semibold text-white transition-colors hover:border-white/40 sm:flex-none">
                   <Navigation className="h-4 w-4" /> {tx('Yol tarifi al', 'Get directions')}
                 </DirectionsButton>
               </div>
@@ -212,7 +216,7 @@ export default function BusinessDetail() {
 
           {/* Every panel stays in the page (the unselected ones are hidden), so services, team, reviews and opening hours are all part of the page's content. */}
           <div className="mt-6">
-            <section hidden={tab !== 'services'} className="animate-fade-in">
+            <section hidden={tab !== 'services'}>
               <h2 className="sr-only">{tx('Hizmetler ve fiyatlar', 'Services and prices')}</h2>
               {services.length ? (
                 <div className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-coal">
@@ -236,7 +240,7 @@ export default function BusinessDetail() {
               )}
             </section>
 
-            <section hidden={tab !== 'staff'} className="animate-fade-in">
+            <section hidden={tab !== 'staff'}>
               <h2 className="sr-only">{tx('Uzmanlar', 'Specialists')}</h2>
               <div className="grid gap-3 sm:grid-cols-2">
                 {employees.map((e) => (
@@ -244,7 +248,7 @@ export default function BusinessDetail() {
                     <Avatar name={e.full_name} src={safeImageUrl(e.avatar_url)} size="h-14 w-14 text-base" />
                     <div className="min-w-0">
                       <p className="font-medium text-white">{e.full_name}</p>
-                      <p className="text-xs text-gold-400">{e.title}</p>
+                      <p className="text-xs text-mist-2">{e.title}</p>
                       {e.bio && <p className="mt-1 line-clamp-2 text-xs text-mist-2">{e.bio}</p>}
                     </div>
                   </div>
@@ -253,7 +257,7 @@ export default function BusinessDetail() {
               </div>
             </section>
 
-            <section hidden={tab !== 'reviews'} className="animate-fade-in">
+            <section hidden={tab !== 'reviews'}>
               <h2 className="sr-only">{tx('Değerlendirmeler', 'Reviews')}</h2>
               {reviews.length ? (
                 <div className="space-y-3">
@@ -269,8 +273,8 @@ export default function BusinessDetail() {
                       </div>
                       {r.comment && <p className="mt-3 text-sm leading-relaxed text-mist">{r.comment}</p>}
                       {r.owner_reply && (
-                        <div className="mt-4 rounded-xl border-l-2 border-gold-500 bg-ink/50 px-4 py-3">
-                          <p className="text-[11px] font-semibold uppercase tracking-wider text-gold-400">{tx('İşletme yanıtı', 'Reply from the business')}</p>
+                        <div className="mt-4 rounded-xl bg-coal-2 px-4 py-3">
+                          <p className="text-xs font-semibold text-white">{tx('İşletme yanıtı', 'Reply from the business')}</p>
                           <p className="mt-1 text-sm text-mist">{r.owner_reply}</p>
                         </div>
                       )}
@@ -282,7 +286,7 @@ export default function BusinessDetail() {
               )}
             </section>
 
-            <section hidden={tab !== 'info'} className="animate-fade-in">
+            <section hidden={tab !== 'info'}>
               <h2 className="sr-only">{tx('Çalışma saatleri ve adres', 'Opening hours and address')}</h2>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="card p-5">
@@ -291,7 +295,7 @@ export default function BusinessDetail() {
                     {[1, 2, 3, 4, 5, 6, 7].map((wd) => {
                       const h = hours.find((x) => x.weekday === wd);
                       return (
-                        <li key={wd} className={`flex justify-between ${wd === todayWd ? 'text-gold-300' : 'text-mist'}`}>
+                        <li key={wd} className={`flex justify-between ${wd === todayWd ? 'font-semibold text-white' : 'text-mist'}`}>
                           <span>{t.weekdays[wd - 1]}</span>
                           <span>{!h || h.is_closed ? tx('Kapalı', 'Closed') : `${shortTime(h.open_time)} – ${shortTime(h.close_time)}`}</span>
                         </li>
@@ -303,7 +307,7 @@ export default function BusinessDetail() {
                   <div className="card p-5">
                     <p className="eyebrow mb-3">{tx('Adres', 'Address')}</p>
                     <p className="text-sm text-mist">{address}</p>
-                    <DirectionsButton target={b} className="mt-3 inline-flex items-center gap-1.5 text-xs text-gold-400 hover:text-gold-300" />
+                    <DirectionsButton target={b} className="mt-3 inline-flex items-center gap-1.5 text-[13px] font-medium text-white underline underline-offset-4" />
                   </div>
                   <div className="card p-5">
                     <p className="eyebrow mb-3">{tx('Randevu politikası', 'Booking policy')}</p>
@@ -317,44 +321,50 @@ export default function BusinessDetail() {
         </div>
 
         <aside className="hidden lg:block">
-          <div className="card-gold sticky top-24 p-6">
-            <p className="eyebrow mb-2">{tx('Randevu', 'Booking')}</p>
-            <p className="font-display text-3xl text-white">{tx('', 'from ')}{formatTRY(b.min_price)}<span className="text-base text-mist">{tx('’den başlayan', '')}</span></p>
+          <div className="card sticky top-24 p-6">
+            {bookable ? (
+              <>
+                <p className="text-[13px] text-mist-2">{tx('Başlangıç fiyatı', 'Prices from')}</p>
+                <p className="mt-1 text-[28px] font-semibold leading-none tracking-tight text-white">{formatTRY(b.min_price)}</p>
+              </>
+            ) : (
+              <p className="text-base font-semibold text-white">{demo ? t.demo.badge : tx('Hizmetler yakında', 'Services coming soon')}</p>
+            )}
             <ul className="mt-5 space-y-3 text-sm text-mist">
-              <li className="flex gap-2.5"><ShieldCheck className="h-4 w-4 shrink-0 text-gold-400" />{tx(`${depositLabel} kapora ile yeriniz garanti`, `Your spot is secured with a ${depositLabel} deposit`)}</li>
-              <li className="flex gap-2.5"><CalendarClock className="h-4 w-4 shrink-0 text-gold-400" />{tx(`${b.cancellation_hours} saat öncesine kadar ücretsiz iptal`, `Free cancellation up to ${b.cancellation_hours} hours before`)}</li>
-              <li className="flex gap-2.5"><BadgeCheck className="h-4 w-4 shrink-0 text-gold-400" />{b.auto_confirm ? tx('Anında onay (aynı gün randevuları hariç)', 'Instant confirmation (except same-day bookings)') : tx('İşletme onaylı randevu', 'Confirmed by the business')}</li>
+              <li className="flex gap-2.5"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-mist-3" />{tx(`${depositLabel} kapora ile yeriniz garanti`, `Your spot is secured with a ${depositLabel} deposit`)}</li>
+              <li className="flex gap-2.5"><CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-mist-3" />{tx(`${b.cancellation_hours} saat öncesine kadar ücretsiz iptal`, `Free cancellation up to ${b.cancellation_hours} hours before`)}</li>
+              <li className="flex gap-2.5"><BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-mist-3" />{b.auto_confirm ? tx('Anında onay (aynı gün randevuları hariç)', 'Instant confirmation (except same-day bookings)') : tx('İşletme onaylı randevu', 'Confirmed by the business')}</li>
             </ul>
-            <Button full size="lg" className="mt-6" disabled={demo} onClick={() => book()}>{demo ? tx('Randevu alınamaz', 'Not bookable') : tx('Randevu Al', 'Book now')}</Button>
+            <Button full size="lg" className="mt-6" disabled={!bookable} onClick={() => book()}>{bookable ? tx('Randevu al', 'Book now') : tx('Randevu alınamaz', 'Not bookable')}</Button>
             {demo && <p className="mt-2 text-center text-xs text-mist-2">{t.demo.notBookable}</p>}
-            <DirectionsButton target={b} className="mt-3 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-line text-sm text-white transition hover:border-gold-500/40">
-              <Navigation className="h-4 w-4 text-gold-400" /> {tx('Yol tarifi al', 'Get directions')}
+            <DirectionsButton target={b} className="mt-3 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-line text-sm font-medium text-white transition-colors hover:border-white/40">
+              <Navigation className="h-4 w-4 text-mist-2" /> {tx('Yol tarifi al', 'Get directions')}
             </DirectionsButton>
-            <Link to="/ara" className="mt-3 block text-center text-xs text-mist-2 hover:text-white">{tx('Benzer işletmeleri gör', 'See similar businesses')}</Link>
+            <Link to="/ara" className="mt-4 block text-center text-[13px] text-mist-2 transition-colors hover:text-white">{tx('Benzer işletmeleri gör', 'See similar businesses')}</Link>
           </div>
         </aside>
       </div>
 
-      <div className="safe-bottom fixed inset-x-0 bottom-[60px] z-30 border-t border-line bg-ink/95 px-4 py-3 backdrop-blur-xl md:bottom-0 lg:hidden">
+      <div data-booking-bar className="safe-bottom sticky bottom-[60px] z-30 -mx-4 mt-10 border-t border-line bg-ink/95 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6 md:bottom-0 lg:hidden">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
           <div className="min-w-0">
             {demo ? (
               <>
-                <p className="text-[11px] text-warning-300">{t.demo.badge}</p>
+                <p className="text-xs font-medium text-white">{t.demo.badge}</p>
                 <p className="text-xs text-mist">{t.demo.notBookable}</p>
               </>
             ) : (
               <>
-                <p className="text-[11px] text-mist-2">{tx('Başlayan fiyatlarla', 'Prices from')}</p>
-                <p className="font-semibold text-white">{formatTRY(b.min_price)}</p>
+                <p className="text-xs text-mist-2">{bookable ? tx('Başlangıç fiyatı', 'Prices from') : tx('Hizmetler yakında', 'Services coming soon')}</p>
+                {bookable && <p className="font-semibold text-white">{formatTRY(b.min_price)}</p>}
               </>
             )}
           </div>
           <div className="flex flex-1 items-center justify-end gap-2 sm:flex-none">
-            <DirectionsButton target={b} ariaLabel={tx('Yol tarifi al', 'Get directions')} className="grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-line text-gold-400 transition hover:border-gold-500/40">
+            <DirectionsButton target={b} ariaLabel={tx('Yol tarifi al', 'Get directions')} className="grid h-[52px] w-[52px] shrink-0 place-items-center rounded-xl border border-line text-white transition-colors hover:border-white/40">
               <Navigation className="h-5 w-5" />
             </DirectionsButton>
-            <Button size="lg" disabled={demo} onClick={() => book()} className="flex-1 sm:flex-none">{demo ? tx('Randevu alınamaz', 'Not bookable') : tx('Randevu Al', 'Book now')}</Button>
+            <Button size="lg" disabled={!bookable} onClick={() => book()} className="flex-1 sm:flex-none">{bookable ? tx('Randevu al', 'Book now') : tx('Randevu alınamaz', 'Not bookable')}</Button>
           </div>
         </div>
       </div>

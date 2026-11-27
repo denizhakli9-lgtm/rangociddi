@@ -73,11 +73,11 @@ export function SlotPicker({ serviceId, employeeId, hours, days = 30, excludeApp
               aria-pressed={active}
               onClick={() => setDate(d)}
               className={`flex w-16 shrink-0 flex-col items-center rounded-2xl border py-3 transition ${
-                active ? 'border-gold-500 bg-gold-500 text-ink shadow-gold' : closed ? 'cursor-not-allowed border-line-soft text-mist-3' : 'border-line bg-coal text-white hover:border-gold-500/40'
+                active ? 'border-gold-500 bg-primary text-primary-fg' : closed ? 'cursor-not-allowed border-line-soft text-mist-3' : 'border-line bg-coal text-white hover:border-white/30'
               }`}
             >
               <span className={`text-[10px] uppercase tracking-wider ${active ? 'text-ink/70' : 'text-mist-2'}`}>{d === today ? tx('Bugün', 'Today') : keyLabel(d, { weekday: 'short' })}</span>
-              <span className="mt-1 font-display text-2xl leading-none">{keyLabel(d, { day: 'numeric' })}</span>
+              <span className="mt-1 text-lg font-semibold tracking-tight leading-none">{keyLabel(d, { day: 'numeric' })}</span>
               <span className={`mt-1 text-[10px] ${active ? 'text-ink/70' : 'text-mist-2'}`}>{closed ? tx('Kapalı', 'Closed') : keyLabel(d, { month: 'short' })}</span>
             </button>
           );
@@ -88,7 +88,7 @@ export function SlotPicker({ serviceId, employeeId, hours, days = 30, excludeApp
         {loading ? (
           <div className="flex justify-center py-10"><Spinner /></div>
         ) : error ? (
-          <p className="rounded-xl border border-error-500/30 bg-error-900/30 px-4 py-3 text-sm text-error-300">{error}</p>
+          <p className="rounded-xl border border-error-500/30 bg-error-500/10 px-4 py-3 text-sm text-error-300">{error}</p>
         ) : !slots.length ? (
           <div className="flex flex-col items-center rounded-2xl border border-dashed border-line py-10 text-center">
             <CalendarX2 className="mb-3 h-7 w-7 text-mist-2" />
@@ -109,7 +109,7 @@ export function SlotPicker({ serviceId, employeeId, hours, days = 30, excludeApp
                         type="button"
                         aria-pressed={active}
                         onClick={() => onChange(s)}
-                        className={`h-11 rounded-xl border text-sm font-medium transition ${active ? 'border-gold-500 bg-gold-500 text-ink' : 'border-line bg-coal text-white hover:border-gold-500/50'}`}
+                        className={`h-11 rounded-xl border text-sm font-medium transition ${active ? 'border-gold-500 bg-primary text-primary-fg' : 'border-line bg-coal text-white hover:border-white/30'}`}
                       >
                         {formatTime(s.slot_start)}
                       </button>

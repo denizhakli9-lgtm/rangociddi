@@ -105,12 +105,12 @@ export default function Customers() {
           <div className="space-y-5">
             <div className="flex flex-wrap gap-3">
               {open.phone && (
-                <a href={`tel:${open.phone}`} className="inline-flex items-center gap-2 rounded-xl border border-line px-4 py-2 text-sm text-mist transition hover:border-gold-500/40 hover:text-white">
+                <a href={`tel:${open.phone}`} className="inline-flex items-center gap-2 rounded-xl border border-line px-4 py-2 text-sm text-mist transition hover:border-white/30 hover:text-white">
                   <Phone className="h-4 w-4" /> {open.phone}
                 </a>
               )}
               {open.email && (
-                <a href={`mailto:${open.email}`} className="inline-flex items-center gap-2 rounded-xl border border-line px-4 py-2 text-sm text-mist transition hover:border-gold-500/40 hover:text-white">
+                <a href={`mailto:${open.email}`} className="inline-flex items-center gap-2 rounded-xl border border-line px-4 py-2 text-sm text-mist transition hover:border-white/30 hover:text-white">
                   <Mail className="h-4 w-4" /> {open.email}
                 </a>
               )}
@@ -158,7 +158,7 @@ function isRealBooking(a: Appointment): boolean {
 function Mini({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl border border-line bg-ink/40 py-3">
-      <p className="font-display text-xl text-white">{value}</p>
+      <p className="text-base font-semibold text-white">{value}</p>
       <p className="text-[11px] text-mist-2">{label}</p>
     </div>
   );

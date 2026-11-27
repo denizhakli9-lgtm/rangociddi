@@ -94,7 +94,7 @@ export default function FieldBusinesses() {
                 <div className="p-4 sm:p-5">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="font-display text-xl text-white">{b.name}</p>
+                      <p className="text-base font-semibold text-white">{b.name}</p>
                       <p className="text-xs text-mist-2">
                         {b.district} · kayıt {formatDate(b.created_at, { day: 'numeric', month: 'short', year: 'numeric' })}
                       </p>
@@ -129,7 +129,7 @@ export default function FieldBusinesses() {
                       <>
                         <span className="text-mist-2">Eksik:</span>
                         {gaps.map((g) => (
-                          <span key={g} className="rounded-full border border-warning-500/30 bg-warning-900/40 px-2 py-0.5 text-warning-300">
+                          <span key={g} className="rounded-full border border-warning-500/30 bg-warning-500/10 px-2 py-0.5 text-warning-300">
                             {g}
                           </span>
                         ))}
@@ -147,7 +147,7 @@ export default function FieldBusinesses() {
                 {(canDecide || b.status === 'approved') && (
                   <div className="flex flex-wrap gap-2 border-t border-line bg-ink/30 px-4 py-3 sm:px-5">
                     {b.status === 'approved' && (
-                      <Link to={`/i/${b.slug}`} target="_blank" className="inline-flex h-9 items-center gap-1.5 rounded-full border border-line px-4 text-xs text-white transition hover:border-gold-500/40">
+                      <Link to={`/i/${b.slug}`} target="_blank" className="inline-flex h-9 items-center gap-1.5 rounded-full border border-line px-4 text-xs text-white transition hover:border-white/30">
                         <ExternalLink className="h-3.5 w-3.5 text-gold-400" /> Sayfayı gör
                       </Link>
                     )}

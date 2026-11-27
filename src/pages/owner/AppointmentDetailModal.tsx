@@ -164,7 +164,7 @@ export function AppointmentDetailModal({
           </p>
         )}
         {autoConfirmed && (
-          <p className="rounded-xl border border-info-500/30 bg-info-900/40 p-3 text-xs leading-relaxed text-info-300">
+          <p className="rounded-xl border border-info-500/30 bg-info-500/10 p-3 text-xs leading-relaxed text-info-300">
             Müşteri ödemeyi yaptı ve randevu otomatik onaylandı. Randevu saatine kadar onaylamayabilirsiniz; bu durumda
             {!testPayment && Number(appt.deposit_amount) > 0 ? ' ödenen kapora müşteriye tam olarak iade edilir.' : ' randevu iptal edilir ve müşteriye bildirilir.'}
           </p>
@@ -201,7 +201,7 @@ export function AppointmentDetailModal({
         </dl>
 
         {testPayment && (
-          <p className="rounded-xl border border-warning-500/30 bg-warning-900/40 p-3 text-xs leading-relaxed text-warning-300">
+          <p className="rounded-xl border border-warning-500/30 bg-warning-500/10 p-3 text-xs leading-relaxed text-warning-300">
             Bu kapora test modunda kaydedildi; müşterinin kartından gerçek bir tahsilat yapılmadı ve tutar hesabınıza aktarılmaz.
           </p>
         )}
@@ -213,7 +213,7 @@ export function AppointmentDetailModal({
           </div>
         )}
         {appt.cancellation_reason && (
-          <div className="rounded-xl border border-error-500/20 bg-error-900/30 p-4 text-sm text-error-300">İptal nedeni: {appt.cancellation_reason}</div>
+          <div className="rounded-xl border border-error-500/20 bg-error-500/10 p-4 text-sm text-error-300">İptal nedeni: {appt.cancellation_reason}</div>
         )}
         {appt.status === 'confirmed' && !started && (
           <p className="flex items-center gap-2 text-xs text-mist-2">

@@ -79,8 +79,7 @@ export default function Notifications() {
     <div className="mx-auto max-w-2xl">
       <div className="mb-6 flex items-end justify-between gap-4">
         <div>
-          <p className="eyebrow mb-2">{tx('Bildirimler', 'Notifications')}</p>
-          <h1 className="font-display text-4xl text-white">{tx('Gelişmelerden haberdar olun', 'Stay up to date')}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-[28px] text-white">{tx('Bildirimler', 'Notifications')}</h1>
         </div>
         {unread > 0 && <Button size="sm" variant="ghost" icon={<CheckCheck className="h-4 w-4" />} onClick={markAll}>{tx('Tümünü okundu yap', 'Mark all as read')}</Button>}
       </div>
@@ -96,7 +95,7 @@ export default function Notifications() {
           {list.map((n) => {
             const Icon = ICONS[n.type] ?? Bell;
             return (
-              <li key={n.id} className={`group flex items-start gap-4 rounded-2xl border p-4 transition ${n.is_read ? 'border-line bg-coal' : 'border-gold-500/30 bg-gold-500/[0.04]'}`}>
+              <li key={n.id} className={`group flex items-start gap-4 rounded-2xl border p-4 transition ${n.is_read ? 'border-line bg-coal' : 'border-line bg-gold-500/[0.04]'}`}>
                 <button onClick={() => open(n)} className="flex min-w-0 flex-1 items-start gap-4 text-left">
                   <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border ${n.is_read ? 'border-line text-mist' : 'border-gold-500/40 text-gold-400'}`}>
                     <Icon className="h-4 w-4" />

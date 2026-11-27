@@ -29,13 +29,13 @@ const ITEMS: DashNavItem[] = [
   { to: '/isletme/takvim', label: 'Takvim', icon: CalendarDays, primary: true },
   { to: '/isletme/hizmetler', label: 'Hizmetler', icon: Scissors },
   { to: '/isletme/calisanlar', label: 'Çalışanlar', icon: Users },
-  { to: '/isletme/saatler', label: 'Çalışma Saatleri', icon: Clock },
+  { to: '/isletme/saatler', label: 'Çalışma saatleri', icon: Clock },
   { to: '/isletme/musteriler', label: 'Müşteriler', icon: UserSquare2 },
   { to: '/isletme/yorumlar', label: 'Yorumlar', icon: MessageSquare },
   { to: '/isletme/kazanc', label: 'Kazanç & Komisyon', icon: Wallet, primary: true },
-  { to: '/destek', label: 'Yardım ve Destek', icon: MessageSquare },
-  { to: '/isletme/profil', label: 'İşletme Profili', icon: Store },
-  { to: '/profil', label: 'Hesap Ayarları', icon: UserCog },
+  { to: '/destek', label: 'Yardım ve destek', icon: MessageSquare },
+  { to: '/isletme/profil', label: 'İşletme profili', icon: Store },
+  { to: '/profil', label: 'Hesap ayarları', icon: UserCog },
 ];
 
 export default function OwnerArea() {

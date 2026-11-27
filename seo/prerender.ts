@@ -50,7 +50,7 @@ import {
   type SeoReview,
   type SeoService,
 } from '../src/lib/seo/meta';
-import { siteLinks } from '../src/lib/seo/pages/common';
+import { BUSINESS_SIGNUP_PATH, FAQ_PATH, FOR_BUSINESS_PATH, siteLinks } from '../src/lib/seo/pages/common';
 import { faqPage } from '../src/lib/seo/pages/faq';
 import { forBusinessPage } from '../src/lib/seo/pages/forBusiness';
 import { homeExtraBlocks, homeSchemas, type HomeExtrasInput } from '../src/lib/seo/pages/home';
@@ -162,70 +162,115 @@ async function loadSiteData(supabaseUrl: string, key: string): Promise<SiteData 
 // Static page bodies
 // ---------------------------------------------------------------------------
 
-/** The static page frame: the app's header and footer, with the page's content in between. */
+/** The "R" monogram, as drawn by `BrandMark` in src/components/ui/Brand.tsx. */
+const BRAND_MARK =
+  '<svg viewBox="0 0 64 64" aria-hidden="true" class="h-7 w-7 shrink-0"><rect width="64" height="64" rx="15" fill="#0a0a0a"/><rect x="4.5" y="4.5" width="55" height="55" rx="11" fill="none" stroke="#D4AF37" stroke-opacity="0.35" stroke-width="1.5"/><path d="M22 47V17h11.5a8.5 8.5 0 0 1 0 17H22m11 0l10 13" fill="none" stroke="#D4AF37" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const LOGO = `<span class="inline-flex items-center gap-2.5">${BRAND_MARK}<span class="whitespace-nowrap font-display text-[22px] font-semibold leading-none tracking-[-0.01em] text-white">Rango<span class="text-gold-500">.</span></span></span>`;
+
+/** The static page frame: the app's header and footer (CustomerLayout, SiteFooter), with the page's content in between. */
 function shell(content: string): string {
-  const site = siteLinks('tr')
-    .map((l) => `<a href="${e(l.path)}" class="transition hover:text-white">${e(l.label)}</a>`)
-    .join('');
-  const legal = LEGAL_LINKS.map((l) => `<a href="/yasal/${l.slug}" class="transition hover:text-white">${e(l.label)}</a>`).join('');
-  return `<div class="min-h-screen bg-ink">
-      <header class="sticky top-0 z-40 border-b border-line-soft bg-ink/85 backdrop-blur-xl">
-        <div class="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-          <a href="/" aria-label="Rango ana sayfa" class="font-display text-2xl font-semibold tracking-wide text-white">Rango<span class="text-gold-500">.</span></a>
-          <nav class="flex items-center gap-1" aria-label="Ana menü">
-            <a href="/kategoriler" class="rounded-full px-4 py-2 text-sm text-mist hover:text-white">Kategoriler</a>
-            <a href="/ara" class="hidden rounded-full px-4 py-2 text-sm text-mist hover:text-white md:flex">İşletmeler</a>
-            <a href="/giris" class="rounded-full bg-gold-500 px-4 py-1.5 text-xs font-semibold text-ink">Giriş Yap</a>
+  const menuLink = 'relative flex items-center whitespace-nowrap px-3 text-sm text-mist transition-colors hover:text-white';
+  const columnTitle = 'text-[13px] font-semibold text-white';
+  const columnLink = 'text-[13px] text-mist transition-colors hover:text-white';
+  const column = (label: string, title: string, links: { path: string; label: string }[]) =>
+    `<nav aria-label="${e(label)}"><p class="${columnTitle}">${e(title)}</p><ul class="mt-4 space-y-2.5">${links
+      .map((l) => `<li><a href="${e(l.path)}" class="${columnLink}">${e(l.label)}</a></li>`)
+      .join('')}</ul></nav>`;
+  return `<div class="flex min-h-screen flex-col bg-ink">
+      <header class="sticky top-0 z-40 border-b border-line-soft bg-ink/90 backdrop-blur-md">
+        <div class="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4 sm:px-6">
+          <a href="/" aria-label="Rango ana sayfa" class="shrink-0">${LOGO}</a>
+          <nav aria-label="Ana menü" class="hidden h-full items-stretch gap-1 md:flex">
+            <a href="/" class="${menuLink}">Keşfet</a>
+            <a href="/kategoriler" class="${menuLink}">Kategoriler</a>
+            <a href="${FOR_BUSINESS_PATH}" class="${menuLink}">İşletmeler için</a>
+            <a href="${FAQ_PATH}" class="${menuLink}">Yardım</a>
           </nav>
+          <div class="ml-auto flex items-center gap-1.5">
+            <a href="/giris" class="ml-1 inline-flex h-9 items-center whitespace-nowrap rounded-xl bg-primary px-4 text-[13px] font-semibold text-primary-fg">Giriş yap</a>
+          </div>
         </div>
       </header>
-      <main class="mx-auto max-w-6xl px-4 pb-28 pt-6 sm:px-6">
+      <main class="mx-auto w-full max-w-6xl flex-1 px-4 pb-16 pt-6 sm:px-6">
         ${content}
-        <footer class="mt-16 border-t border-line-soft pt-6 text-xs text-mist-2">
-          <nav aria-label="Site bağlantıları" class="flex flex-wrap gap-x-5 gap-y-2 text-mist">${site}</nav>
-          <nav aria-label="Yasal bağlantılar" class="mt-3 flex flex-wrap gap-x-5 gap-y-2">${legal}</nav>
-          <p class="mt-4 leading-relaxed">${e(PAYMENT_PROVIDER.disclosure)} <a href="${e(PAYMENT_PROVIDER.website)}" target="_blank" rel="noopener noreferrer" class="underline underline-offset-2">${e(
-            PAYMENT_PROVIDER.website.replace('https://', ''),
-          )}</a></p>
-          <p class="mt-2 text-mist-3">© ${new Date().getFullYear()} ${e(COMPANY.legalName)}. Tüm hakları saklıdır.</p>
-        </footer>
       </main>
+      <footer class="border-t border-line-soft pb-24 md:pb-0">
+        <div class="mx-auto max-w-6xl px-4 sm:px-6">
+          <div class="grid gap-x-8 gap-y-10 py-12 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1.2fr]">
+            <div>
+              ${LOGO}
+              <p class="mt-4 max-w-xs text-[13px] leading-relaxed text-mist">İzmir’de kuaför, berber ve güzellik işletmeleri için online randevu.</p>
+            </div>
+            ${column('Site bağlantıları', 'Keşfet', [...siteLinks('tr').map((l) => ({ path: l.path, label: l.label })), { path: '/ara', label: 'İşletme ara' }])}
+            ${column('İşletme bağlantıları', 'İşletmeler', [
+              { path: FOR_BUSINESS_PATH, label: 'Rango’ya katılın' },
+              { path: BUSINESS_SIGNUP_PATH, label: 'İşletme hesabı oluştur' },
+              { path: '/giris', label: 'İşletme girişi' },
+            ])}
+            ${column('Yasal bağlantılar', 'Yasal', LEGAL_LINKS.map((l) => ({ path: `/yasal/${l.slug}`, label: l.label })))}
+          </div>
+          <div class="flex flex-col gap-3 border-t border-line-soft py-6 text-xs text-mist-2 md:flex-row md:items-start md:justify-between md:gap-10">
+            <p class="shrink-0 text-mist-3">© ${new Date().getFullYear()} ${e(COMPANY.legalName)}</p>
+            <p class="leading-relaxed md:max-w-2xl md:text-right">${e(PAYMENT_PROVIDER.disclosure)} <a href="${e(PAYMENT_PROVIDER.website)}" target="_blank" rel="noopener noreferrer" class="underline underline-offset-2">${e(
+              PAYMENT_PROVIDER.website.replace('https://', ''),
+            )}</a></p>
+          </div>
+        </div>
+      </footer>
     </div>`;
 }
 
 const blockPage = (blocks: Block[]) => shell(renderBlocks(blocks));
 
+/** The category chips of the home page (pages/customer/Home.tsx). */
+function categoryChips(categories: SeoCategory[]): string {
+  const items = categories
+    .map((c) => `<a href="${e(categoryPath(c.slug))}" class="flex h-11 shrink-0 items-center gap-2 rounded-full border border-line bg-coal px-4 text-sm text-white transition-colors hover:border-white/40">${e(c.name)}</a>`)
+    .join('');
+  return `<div class="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">${items}</div>`;
+}
+
+/** The category list of /kategoriler (pages/customer/Categories.tsx). */
 function categoryLinks(categories: SeoCategory[]): string {
   if (!categories.length) return '';
   const items = categories
     .map(
-      (c) => `<li><a href="${e(categoryPath(c.slug))}" class="card block p-5 transition hover:border-gold-500/40">
-              <h3 class="font-display text-2xl text-white">${e(c.name)}</h3>
-              ${c.description ? `<p class="mt-1 text-xs text-mist-2">${e(c.description)}</p>` : ''}
+      (c) => `<li><a href="${e(categoryPath(c.slug))}" class="group flex h-full items-start justify-between gap-4 border-t border-line py-5">
+              <span><span class="block text-base font-semibold text-white">${e(c.name)}</span>${c.description ? `<span class="mt-1 block text-[13px] leading-relaxed text-mist">${e(c.description)}</span>` : ''}</span>
             </a></li>`,
     )
     .join('');
-  return `<ul class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">${items}</ul>`;
+  return `<ul class="mt-8 grid gap-x-10 sm:grid-cols-2 lg:grid-cols-3">${items}</ul>`;
 }
 
 function homeBody(input: HomeExtrasInput): string {
-  return shell(`<div class="space-y-8 sm:space-y-10">
-        <section class="rounded-3xl border border-gold-500/20 bg-gradient-to-br from-coal via-coal-2 to-gold-500/10 px-5 py-7 sm:px-10 sm:py-10">
-          <p class="eyebrow mb-3">İzmir · Online randevu</p>
-          <h1 class="max-w-lg font-display text-[36px] leading-[1.2] tracking-tight text-white sm:text-6xl">Randevunun yeni yolu.</h1>
-          <p class="mt-3 max-w-md text-sm leading-relaxed text-mist sm:text-base">Kuaför, berber ve güzellik randevunu online al: İzmir’deki işletmeleri keşfet, sana en uygun zamanı seç.</p>
-          <p class="mt-6"><a href="${e(cityPath(DEFAULT_CITY))}" class="inline-flex h-11 items-center rounded-xl bg-gold-500 px-4 text-sm font-semibold text-ink">İşletmeleri keşfet</a></p>
+  const search = 'İşletme, hizmet veya semt ara';
+  return shell(`<div class="space-y-12 sm:space-y-16">
+        <section class="grid items-center gap-10 pt-4 sm:pt-8 lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-16 lg:pb-6 lg:pt-10">
+          <div>
+            <h1 class="font-display text-[42px] leading-[1.04] tracking-[-0.02em] text-white sm:text-6xl lg:text-[68px]">Randevunun yeni yolu.</h1>
+            <p class="mt-4 max-w-md text-[15px] leading-relaxed text-mist sm:text-base">Kuaför, berber ve güzellik randevunuzu online alın: İzmir’deki işletmeleri keşfedin, size en uygun saati seçin.</p>
+            <form action="/ara" method="get" role="search" class="mt-7 flex max-w-xl items-center gap-1 rounded-2xl border border-line bg-coal p-1.5 shadow-gold">
+              <input name="q" aria-label="${search}" placeholder="${search}" class="h-11 min-w-0 flex-1 bg-transparent px-3 text-[15px] text-white placeholder:text-mist-3 focus:outline-none" />
+              <button type="submit" class="h-11 shrink-0 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-fg">Ara</button>
+            </form>
+          </div>
+          <div class="relative hidden lg:block" aria-hidden="true">
+            <img src="/sector-barber-3.webp" alt="" width="840" height="1050" loading="lazy" decoding="async" class="aspect-[4/5] w-full rounded-3xl object-cover" />
+            <img src="/sector-nails-7.webp" alt="" width="352" height="352" loading="lazy" decoding="async" class="absolute -bottom-8 -left-12 aspect-square w-44 rounded-2xl border-[5px] border-ink object-cover" />
+          </div>
         </section>
-        ${input.categories.length ? `<section aria-label="Hizmet kategorileri"><h2 class="font-display text-3xl text-white">Bugün neye ihtiyacın var?</h2>${categoryLinks(input.categories)}</section>` : ''}
-        ${renderBlocks(homeExtraBlocks(input))}
+        ${input.categories.length ? `<section aria-label="Hizmet kategorileri"><h2 class="mb-4 font-display text-[26px] text-white sm:text-3xl">Hizmete göre keşfedin</h2>${categoryChips(input.categories)}</section>` : ''}
+        ${renderBlocks(homeExtraBlocks(input).filter((block) => block.kind !== 'links'))}
       </div>`);
 }
 
 function categoriesBody(categories: SeoCategory[]): string {
-  return shell(`<p class="eyebrow mb-2">Kategoriler</p>
-        <h1 class="font-display text-4xl text-white">Size iyi gelecek her şey</h1>
-        <p class="mt-2 max-w-xl text-sm text-mist">Kadınlara ve erkeklere hizmet veren işletmeleri kategoriye göre keşfedin.</p>
-        ${categoryLinks(categories)}`);
+  return shell(`<div class="pt-2 sm:pt-6">
+        <h1 class="font-display text-4xl leading-[1.08] tracking-[-0.02em] text-white sm:text-[52px]">Hizmet kategorileri</h1>
+        <p class="mt-4 max-w-xl text-[15px] leading-relaxed text-mist">Kadınlara ve erkeklere hizmet veren işletmeleri kategoriye göre keşfedin.</p>
+        ${categoryLinks(categories)}
+      </div>`);
 }
 
 /** Mirrors the layout of pages/customer/BusinessDetail.tsx so the page does not jump when the app takes over. */
@@ -258,7 +303,7 @@ function businessBody(b: DetailRow, supabaseUrl: string): string {
     )
     .join('');
   const team = b.employees
-    .map((m) => `<li class="card p-4"><p class="font-medium text-white">${e(m.full_name)}</p>${m.title ? `<p class="text-xs text-gold-400">${e(m.title)}</p>` : ''}</li>`)
+    .map((m) => `<li class="card p-4"><p class="font-medium text-white">${e(m.full_name)}</p>${m.title ? `<p class="text-xs text-mist-2">${e(m.title)}</p>` : ''}</li>`)
     .join('');
   const written = b.reviews
     .filter((r) => r.comment?.trim())
@@ -267,7 +312,7 @@ function businessBody(b: DetailRow, supabaseUrl: string): string {
       (r) => `<li class="card p-5"><p class="text-sm font-medium text-white">${e(r.reviewer_name ?? '')} · ${'★'.repeat(Math.max(1, Math.min(5, Math.round(r.rating))))}</p>${
         r.service_name ? `<p class="text-xs text-mist-2">${e(r.service_name)}</p>` : ''
       }<p class="mt-3 text-sm leading-relaxed text-mist">${e(r.comment ?? '')}</p>${
-        r.owner_reply ? `<div class="mt-4 rounded-xl border-l-2 border-gold-500 bg-ink/50 px-4 py-3"><p class="text-[11px] font-semibold uppercase tracking-wider text-gold-400">İşletme yanıtı</p><p class="mt-1 text-sm text-mist">${e(r.owner_reply)}</p></div>` : ''
+        r.owner_reply ? `<div class="mt-4 rounded-xl bg-coal-2 px-4 py-3"><p class="text-xs font-semibold text-white">İşletme yanıtı</p><p class="mt-1 text-sm text-mist">${e(r.owner_reply)}</p></div>` : ''
       }</li>`,
     )
     .join('');
@@ -278,23 +323,23 @@ function businessBody(b: DetailRow, supabaseUrl: string): string {
     })
     .join('');
 
-  return shell(`<article class="pb-24 md:pb-0">
+  return shell(`<article>
           <div class="relative -mx-4 -mt-6 sm:mx-0 sm:mt-0">
-            <div class="relative aspect-[4/3] overflow-hidden sm:aspect-[21/9] sm:rounded-3xl sm:border sm:border-gold-500/20">
+            <div class="relative aspect-[4/3] overflow-hidden sm:aspect-[21/9] sm:rounded-3xl">
               <img src="${e(photo.placeholder ? `/${photo.src}` : photo.src)}" alt="${e(photoAlt)}" loading="eager" fetchpriority="high" decoding="async" class="absolute inset-0 h-full w-full object-cover" />
-              <div class="absolute inset-0 bg-gradient-to-t from-ink via-ink/20 to-ink/40"></div>
-              ${photo.placeholder ? '<span class="pointer-events-none absolute bottom-4 left-4 z-10 inline-flex items-center gap-1 rounded-xl bg-black/85 px-2.5 py-1 text-[10px] font-medium text-white">Temsili görsel</span>' : ''}
+              <div class="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/35 to-transparent"></div>
+              ${photo.placeholder ? '<span class="pointer-events-none absolute bottom-4 left-4 z-10 inline-flex items-center gap-1 rounded-md bg-black/70 px-2.5 py-1 text-[10px] font-medium text-[#fff]">Temsili görsel</span>' : ''}
             </div>
           </div>
           <div class="mt-6 grid gap-10 lg:grid-cols-[1fr_340px]">
             <div class="min-w-0">
               <div class="mb-4">${renderBlocks([crumbs])}</div>
-              ${category ? `<p class="text-[11px] uppercase tracking-[0.2em] text-gold-500">${b.categories?.slug ? `<a href="${e(categoryPath(b.categories.slug))}">${e(category)}</a>` : e(category)}</p>` : ''}
-              <h1 class="mt-2 font-display text-4xl text-white sm:text-5xl">${e(b.name)}</h1>
+              ${category ? `<p class="text-[13px] text-mist">${b.categories?.slug ? `<a href="${e(categoryPath(b.categories.slug))}">${e(category)}</a>` : e(category)}</p>` : ''}
+              <h1 class="mt-2 font-display text-4xl leading-[1.08] tracking-[-0.02em] text-white sm:text-5xl">${e(b.name)}</h1>
               ${reviews > 0 ? `<p class="mt-3 text-sm text-mist"><span class="font-semibold text-white">★ ${Number(b.rating_avg ?? 0).toFixed(1)}</span> (${reviews} değerlendirme)</p>` : ''}
-              ${address ? `<p class="mt-5 rounded-2xl border border-line bg-coal/70 p-4 text-sm leading-relaxed text-white">${e(address)}</p>` : ''}
+              ${address ? `<p class="mt-5 rounded-2xl border border-line bg-coal p-4 text-sm leading-relaxed text-white">${e(address)}</p>` : ''}
               ${b.description ? `<p class="mt-5 max-w-2xl text-[15px] leading-relaxed text-mist">${e(b.description)}</p>` : ''}
-              <p class="mt-6"><a href="${e(businessPath(b.slug))}/randevu" class="inline-flex h-11 items-center rounded-full bg-gold-500 px-5 text-sm font-semibold text-ink">Randevu Al</a></p>
+              <p class="mt-6"><a href="${e(businessPath(b.slug))}/randevu" class="inline-flex min-h-11 items-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-fg">Randevu al</a></p>
               ${services ? `<section class="mt-8"><h2 class="${S.sectionTitle}">Hizmetler ve fiyatlar</h2><div class="mt-4 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-coal">${services}</div></section>` : ''}
               ${team ? `<section class="mt-8"><h2 class="${S.sectionTitle}">Uzmanlar</h2><ul class="mt-4 grid gap-3 sm:grid-cols-2">${team}</ul></section>` : ''}
               ${written ? `<section class="mt-8"><h2 class="${S.sectionTitle}">Değerlendirmeler</h2><ul class="mt-4 space-y-3">${written}</ul></section>` : ''}
@@ -416,8 +461,8 @@ export function seoPrerender(supabase: { url: string; key: string }): Plugin {
 
         const signIn: PageMeta = { title: 'Giriş Yap | Rango', description: home.description, path: '/giris', noindex: true };
         const signUp: PageMeta = { title: 'Ücretsiz Hesap Oluştur | Rango', description: home.description, path: '/kayit', noindex: true };
-        pages.push({ file: 'giris', meta: signIn, body: accountBody('Giriş Yap') });
-        pages.push({ file: 'kayit', meta: signUp, body: accountBody('Hesap Oluştur') });
+        pages.push({ file: 'giris', meta: signIn, body: accountBody('Giriş yap') });
+        pages.push({ file: 'kayit', meta: signUp, body: accountBody('Hesap oluştur') });
 
         pages.push(model('sss', faqPage('tr')));
         pages.push(model('isletmeler-icin', forBusinessPage('tr')));
@@ -441,6 +486,9 @@ export function seoPrerender(supabase: { url: string; key: string }): Plugin {
           }
 
           for (const b of data.details) {
+            // A business address is one path segment (the database enforces the same format): a slug with a
+            // slash could otherwise be written over another page, such as another business's /randevu address.
+            if (!/^[a-z0-9]+(?:-+[a-z0-9]+)*$/.test(b.slug)) continue;
             const photo = leadPhoto(b, supabase.url);
             pages.push({
               file: `i/${b.slug}`,

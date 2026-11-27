@@ -68,8 +68,7 @@ export default function Appointments() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <p className="eyebrow mb-2">{tx('Randevularım', 'My bookings')}</p>
-      <h1 className="mb-6 font-display text-4xl text-white">{tx('Ayrılmış anlarınız', 'Your booked moments')}</h1>
+      <h1 className="mb-6 text-2xl font-semibold tracking-tight sm:text-[28px] text-white">{tx('Randevularım', 'My bookings')}</h1>
       <Segmented<Tab> value={tab} onChange={setTab} options={[{ value: 'upcoming', label: tx('Yaklaşan', 'Upcoming'), count: upcoming.length }, { value: 'past', label: tx('Geçmiş', 'Past'), count: past.length }]} />
 
       <div className="mt-6">
@@ -103,16 +102,16 @@ export default function Appointments() {
                 && hoursLeft >= policyHours
                 && (settings ? a.reschedule_count < settings.max_reschedules : true);
               return (
-                <article key={a.id} style={{ animationDelay: `${i * 40}ms` }} className="card animate-fade-up overflow-hidden transition hover:border-gold-500/30">
+                <article key={a.id} style={{ animationDelay: `${i * 40}ms` }} className="card animate-fade-up overflow-hidden transition hover:border-white/30">
                   <div className="flex gap-4 p-4 sm:p-5">
-                    <div className="flex w-16 shrink-0 flex-col items-center justify-center rounded-xl border border-gold-500/30 bg-gold-500/5 py-2 text-center">
+                    <div className="flex w-16 shrink-0 flex-col items-center justify-center rounded-xl border border-line bg-gold-500/5 py-2 text-center">
                       <span className="text-[10px] uppercase tracking-wider text-gold-500">{formatDate(a.starts_at, { month: 'short' })}</span>
-                      <span className="font-display text-3xl leading-none text-white">{formatDate(a.starts_at, { day: 'numeric' })}</span>
+                      <span className="text-xl font-semibold tracking-tight leading-none text-white">{formatDate(a.starts_at, { day: 'numeric' })}</span>
                       <span className="mt-0.5 text-[10px] text-mist-2">{formatDate(a.starts_at, { weekday: 'short' })}</span>
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-start justify-between gap-2">
-                        <Link to={`/i/${a.businesses?.slug ?? ''}`} className="font-display text-xl text-white hover:text-gold-300">{a.businesses?.name}</Link>
+                        <Link to={`/i/${a.businesses?.slug ?? ''}`} className="text-base font-semibold text-white hover:text-gold-300">{a.businesses?.name}</Link>
                         {expiredHold ? <Badge tone="neutral">{tx('Ödeme süresi doldu', 'Payment time ran out')}</Badge> : <AppointmentStatusBadge status={a.status} />}
                       </div>
                       <p className="mt-1 text-sm text-mist">{a.service_name} · {a.employee_name}</p>
@@ -142,7 +141,7 @@ export default function Appointments() {
                       <Button size="sm" icon={<CreditCard className="h-3.5 w-3.5" />} onClick={() => navigate(`/odeme/${a.id}`)}>{tx('Ödemeyi tamamla', 'Complete payment')}</Button>
                     )}
                     {live && a.businesses && (
-                      <DirectionsButton target={a.businesses} className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-line px-3 text-xs text-white transition hover:border-gold-500/40">
+                      <DirectionsButton target={a.businesses} className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-line px-3 text-xs text-white transition hover:border-white/30">
                         <MapPin className="h-3.5 w-3.5 text-gold-400" /> {tx('Yol tarifi', 'Directions')}
                       </DirectionsButton>
                     )}

@@ -8,14 +8,8 @@ import { LocationProvider } from '@/contexts/LocationContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 // Fonts are bundled with the app instead of loaded from Google Fonts, so
 // visitors' IP addresses are not sent to a third party abroad (KVKK md. 9).
-import '@fontsource/cormorant-garamond/500.css';
-import '@fontsource/cormorant-garamond/600.css';
-import '@fontsource/cormorant-garamond/500-italic.css';
-import '@fontsource/manrope/400.css';
-import '@fontsource/manrope/500.css';
-import '@fontsource/manrope/600.css';
+import './fonts.css';
 import './index.css';
-import { nextVisitSlogan } from '@/lib/brand';
 import { initNative } from '@/lib/native';
 import { captureReferralFromUrl } from '@/lib/fieldAgent';
 
@@ -23,7 +17,8 @@ initNative();
 // A field agent's link (?ref=CODE) is kept until the business sign-up form uses it.
 captureReferralFromUrl();
 
-const visitSlogan = nextVisitSlogan();
+// The brand line is fixed; it is the same sentence the static pages and the share image carry.
+const visitSlogan = 0;
 
 const container = document.getElementById('root')!;
 

@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { LayoutGrid, List, Search as SearchIcon, SearchX, SlidersHorizontal, X } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { LayoutGrid, List, MapPin, Search as SearchIcon, SearchX, SlidersHorizontal, X } from 'lucide-react';
 import { fetchCategories, type DiscoverySort } from '@/lib/api';
 import { useAsync } from '@/lib/useAsync';
 import { useBusinessSearch } from '@/lib/useDiscovery';
 import { useFavorites } from '@/lib/useFavorites';
+import { isDemoBusiness } from '@/lib/demo';
+import { useUserLocation } from '@/contexts/LocationContext';
 import { formatTRY } from '@/lib/format';
 import { BusinessCard } from '@/components/BusinessCard';
 import { Modal } from '@/components/ui/Modal';
@@ -51,6 +53,9 @@ export default function SearchPage() {
     [q, category, today, sort, maxPrice, minRating, gender],
   );
   const { items: results, total, loading, loadingMore, hasMore, loadMore, error, reload } = useBusinessSearch(filters);
+  const { location } = useUserLocation();
+  // Businesses that can be booked come before the sample profiles; each group keeps the chosen order.
+  const ordered = useMemo(() => [...results].sort((a, z) => Number(isDemoBusiness(a.business)) - Number(isDemoBusiness(z.business))), [results]);
 
   useEffect(() => setText(q), [q]);
 
@@ -86,8 +91,7 @@ export default function SearchPage() {
   return (
     <div>
       <div className="mb-6">
-        <p className="eyebrow mb-2">{currentCategory ? tx('Kategori', 'Category') : tx('Keşfet', 'Discover')}</p>
-        <h1 className="font-display text-4xl text-white">{currentCategory ? categoryName(currentCategory) : q ? tx(`“${q}” için sonuçlar`, `Results for “${q}”`) : tx('Tüm işletmeler', 'All businesses')}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-[28px] text-white">{currentCategory ? categoryName(currentCategory) : q ? tx(`“${q}” için sonuçlar`, `Results for “${q}”`) : tx('Tüm işletmeler', 'All businesses')}</h1>
         {currentCategory?.description && <p className="mt-2 max-w-xl text-sm text-mist">{categoryDescription(currentCategory)}</p>}
       </div>
 
@@ -108,7 +112,7 @@ export default function SearchPage() {
             </button>
           )}
         </div>
-        <button type="button" onClick={() => setFiltersOpen(true)} aria-label={activeFilters > 0 ? tx(`Filtreler (${activeFilters} etkin)`, `Filters (${activeFilters} active)`) : tx('Filtreler', 'Filters')} className="relative flex h-12 items-center gap-2 rounded-full border border-line bg-coal px-4 text-sm text-white transition hover:border-gold-500/40">
+        <button type="button" onClick={() => setFiltersOpen(true)} aria-label={activeFilters > 0 ? tx(`Filtreler (${activeFilters} etkin)`, `Filters (${activeFilters} active)`) : tx('Filtreler', 'Filters')} className="relative flex h-12 items-center gap-2 rounded-full border border-line bg-coal px-4 text-sm text-white transition hover:border-white/30">
           <SlidersHorizontal className="h-4 w-4 text-gold-400" />
           <span className="hidden sm:inline">{tx('Filtreler', 'Filters')}</span>
           {activeFilters > 0 && <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gold-500 text-[10px] font-bold text-ink">{activeFilters}</span>}
@@ -123,14 +127,21 @@ export default function SearchPage() {
       </div>
 
       <div className="mb-5 mt-6 flex items-center justify-between gap-3">
-        <p className="text-sm text-mist">{loading ? t.common.loading : tx(`${total} işletme`, total === 1 ? '1 business' : `${total} businesses`)}</p>
+        <div className="flex min-w-0 items-center gap-3">
+          <p className="shrink-0 text-sm text-mist">{loading ? t.common.loading : tx(`${total} işletme`, total === 1 ? '1 business' : `${total} businesses`)}</p>
+          {/* The header shows the location on wider screens only; distances here are measured from it. */}
+          <Link to="/konum" aria-label={tx(`Konum: ${location.label}. Değiştir`, `Location: ${location.label}. Change`)} className="inline-flex min-h-11 min-w-0 items-center gap-1 text-[13px] text-mist lg:hidden">
+            <MapPin className="h-4 w-4 shrink-0 text-mist-3" strokeWidth={1.75} />
+            <span className="truncate">{location.label}</span>
+          </Link>
+        </div>
         <div className="flex items-center gap-2">
           <select aria-label={tx('Sıralama', 'Sort by')} value={sort} onChange={(e) => update({ sirala: e.target.value })} className="h-9 rounded-full border border-line bg-coal px-3 text-xs text-white focus:border-gold-500/60 focus:outline-none">
             {SORTS.map((s) => <option key={s.value} value={s.value}>{tx(...s.label)}</option>)}
           </select>
           <div className="hidden rounded-full border border-line bg-coal p-0.5 sm:flex">
-            <button type="button" onClick={() => setView('grid')} className={`rounded-full p-1.5 ${view === 'grid' ? 'bg-gold-500 text-ink' : 'text-mist'}`} aria-label={tx('Izgara görünümü', 'Grid view')} aria-pressed={view === 'grid'}><LayoutGrid className="h-4 w-4" /></button>
-            <button type="button" onClick={() => setView('row')} className={`rounded-full p-1.5 ${view === 'row' ? 'bg-gold-500 text-ink' : 'text-mist'}`} aria-label={tx('Liste görünümü', 'List view')} aria-pressed={view === 'row'}><List className="h-4 w-4" /></button>
+            <button type="button" onClick={() => setView('grid')} className={`rounded-full p-1.5 ${view === 'grid' ? 'bg-primary text-primary-fg' : 'text-mist'}`} aria-label={tx('Izgara görünümü', 'Grid view')} aria-pressed={view === 'grid'}><LayoutGrid className="h-4 w-4" /></button>
+            <button type="button" onClick={() => setView('row')} className={`rounded-full p-1.5 ${view === 'row' ? 'bg-primary text-primary-fg' : 'text-mist'}`} aria-label={tx('Liste görünümü', 'List view')} aria-pressed={view === 'row'}><List className="h-4 w-4" /></button>
           </div>
         </div>
       </div>
@@ -148,7 +159,7 @@ export default function SearchPage() {
         />
       ) : (
         <div className={view === 'grid' ? 'grid gap-6 sm:grid-cols-2 lg:grid-cols-3' : 'grid gap-3 lg:grid-cols-2'}>
-          {results.map((i) => (
+          {ordered.map((i) => (
             <BusinessCard key={i.business.id} variant={view} business={i.business} distance={i.distance} openNow={i.openNow} favorite={ids.has(i.business.id)} onToggleFavorite={toggle} />
           ))}
         </div>
@@ -211,7 +222,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`shrink-0 rounded-full border px-4 py-2 text-xs font-medium transition ${active ? 'border-gold-500 bg-gold-500 text-ink' : 'border-line bg-coal text-mist hover:border-gold-500/40 hover:text-white'}`}
+      className={`shrink-0 rounded-full border px-4 py-2 text-xs font-medium transition ${active ? 'border-gold-500 bg-primary text-primary-fg' : 'border-line bg-coal text-mist hover:border-white/30 hover:text-white'}`}
     >
       {children}
     </button>

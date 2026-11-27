@@ -15,9 +15,9 @@ import { OwnerApptRow } from './OwnerApptRow';
 import { AppointmentDetailModal } from './AppointmentDetailModal';
 
 const STATUS_NOTE: Record<string, { tone: string; text: string }> = {
-  pending: { tone: 'border-warning-500/30 bg-warning-900/40 text-warning-300', text: 'İşletmeniz yönetim onayı bekliyor. Bu sürede hizmetlerinizi, ekibinizi ve çalışma saatlerinizi hazırlayın; onaylandığında müşteriler sizi keşfedebilir.' },
-  rejected: { tone: 'border-error-500/30 bg-error-900/40 text-error-300', text: 'Başvurunuz onaylanmadı. Bilgilerinizi güncelleyip destek ekibimizle iletişime geçebilirsiniz.' },
-  suspended: { tone: 'border-error-500/30 bg-error-900/40 text-error-300', text: 'İşletmeniz geçici olarak askıya alındı ve yeni randevu alamıyor. Detaylar için destek ekibimizle iletişime geçin.' },
+  pending: { tone: 'border-warning-500/30 bg-warning-500/10 text-warning-300', text: 'İşletmeniz yönetim onayı bekliyor. Bu sürede hizmetlerinizi, ekibinizi ve çalışma saatlerinizi hazırlayın; onaylandığında müşteriler sizi keşfedebilir.' },
+  rejected: { tone: 'border-error-500/30 bg-error-500/10 text-error-300', text: 'Başvurunuz onaylanmadı. Bilgilerinizi güncelleyip destek ekibimizle iletişime geçebilirsiniz.' },
+  suspended: { tone: 'border-error-500/30 bg-error-500/10 text-error-300', text: 'İşletmeniz geçici olarak askıya alındı ve yeni randevu alamıyor. Detaylar için destek ekibimizle iletişime geçin.' },
 };
 
 export default function Overview() {
@@ -74,7 +74,7 @@ export default function Overview() {
   return (
     <div>
       <PageHeader
-        eyebrow={formatDate(new Date().toISOString(), { weekday: 'long', day: 'numeric', month: 'long' })}
+        text={formatDate(new Date().toISOString(), { weekday: 'long', day: 'numeric', month: 'long' })}
         title={`Hoş geldiniz, ${business.name}`}
         action={<BusinessStatusBadge status={business.status} />}
       />
@@ -102,11 +102,11 @@ export default function Overview() {
           {setupLeft > 0 && (
             <section className="card-gold p-6">
               <p className="eyebrow mb-2">Kurulum</p>
-              <h2 className="mb-4 font-display text-2xl text-white">Yayına hazır olmanıza {setupLeft} adım kaldı</h2>
+              <h2 className="mb-4 text-lg font-semibold tracking-tight text-white">Yayına hazır olmanıza {setupLeft} adım kaldı</h2>
               <ul className="grid gap-2 sm:grid-cols-2">
                 {checklist.map((c) => (
                   <li key={c.label}>
-                    <Link to={c.to} className="flex items-center gap-3 rounded-xl border border-line bg-ink/40 px-4 py-3 text-sm transition hover:border-gold-500/40">
+                    <Link to={c.to} className="flex items-center gap-3 rounded-xl border border-line bg-ink/40 px-4 py-3 text-sm transition hover:border-white/30">
                       {c.done ? <CheckCircle2 className="h-4 w-4 text-success-500" /> : <Circle className="h-4 w-4 text-mist-3" />}
                       <span className={c.done ? 'text-mist-2 line-through' : 'text-white'}>{c.label}</span>
                     </Link>
@@ -158,7 +158,7 @@ function Section({ title, to, children }: { title: string; to: string; children:
   return (
     <section>
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="font-display text-xl text-white">{title}</h2>
+        <h2 className="text-base font-semibold text-white">{title}</h2>
         <Link to={to} className="inline-flex items-center gap-1 text-xs text-gold-400 transition hover:text-gold-300">
           Tümü <ArrowRight className="h-3 w-3" />
         </Link>

@@ -43,7 +43,7 @@ export function routeMeta(pathname: string, lang: SeoLang): PageMeta {
     // set its own metadata, and whenever loading fails, it stays out of the index.
     return privateMeta(lang, path);
   }
-  if (path === '/giris') return privateMeta(lang, path, pick(lang, 'Giriş Yap', 'Sign in'));
+  if (path === '/giris') return privateMeta(lang, path, pick(lang, 'Giriş yap', 'Sign in'));
   if (path === '/kayit') return privateMeta(lang, path, pick(lang, 'Ücretsiz Hesap Oluştur', 'Create a free account'));
   return privateMeta(lang, path);
 }

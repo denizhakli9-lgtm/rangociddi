@@ -159,7 +159,7 @@ function PreContractInfo({ appt, address, testMode, policyHours, needsApproval }
   const b = appt.businesses;
   return (
     <section aria-labelledby="on-bilgilendirme" className="mt-6 rounded-2xl border border-line bg-coal p-5 text-base">
-      <h2 id="on-bilgilendirme" className="font-display text-xl text-white">{tx('Ön bilgilendirme', 'Pre-contract information')}</h2>
+      <h2 id="on-bilgilendirme" className="text-base font-semibold text-white">{tx('Ön bilgilendirme', 'Pre-contract information')}</h2>
       <p className="mt-1 text-sm leading-relaxed text-mist-2">{tx('Ödeme adımına geçmeden önce randevunuza ilişkin temel bilgileri inceleyin.', 'Review the key details of your booking before the payment step.')}</p>
       <dl className="mt-4 space-y-3">
         <InfoRow label={tx('Hizmet sağlayıcı', 'Service provider')}>
@@ -468,8 +468,8 @@ export default function Payment() {
   return (
     <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[1fr_380px]">
       <div className="animate-fade-up">
-        <p className="eyebrow mb-2">{testMode ? tx('Test ödemesi', 'Test payment') : tx('Kapora', 'Deposit')}</p>
-        <h1 className="font-display text-4xl text-white">{tx('Kapora ödemesi', 'Deposit payment')}</h1>
+        {testMode && <p className="eyebrow mb-2">{tx('Test ödemesi', 'Test payment')}</p>}
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-[28px] text-white">{tx('Kapora ödemesi', 'Deposit payment')}</h1>
         <p className="mt-2 text-sm text-mist">
           {testMode
             ? tx('Randevunuzu kesinleştirmek için test ödemesini tamamlayın. Hizmet bedelinin tamamını işletmede ödersiniz.', 'Complete the test payment to confirm your booking. You pay the full price at the business.')
@@ -477,7 +477,7 @@ export default function Payment() {
         </p>
 
         {testMode && (
-          <div role="alert" className="mt-6 rounded-2xl border-2 border-warning-500/70 bg-warning-900/60 p-5 text-warning-300">
+          <div role="alert" className="mt-6 rounded-2xl border-2 border-warning-500/70 bg-warning-500/10 p-5 text-warning-300">
             <p className="flex items-center gap-2 text-xl font-bold uppercase tracking-[0.18em]">
               <AlertTriangle className="h-6 w-6 shrink-0" /> {tx('TEST MODU', 'TEST MODE')}
             </p>
@@ -490,7 +490,7 @@ export default function Payment() {
           </div>
         )}
 
-        <div className={`mt-6 flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm ${expired ? 'border-error-500/40 bg-error-900/30 text-error-300' : 'border-gold-500/30 bg-gold-500/5 text-gold-200'}`}>
+        <div className={`mt-6 flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm ${expired ? 'border-error-500/40 bg-error-500/10 text-error-300' : 'border-line bg-coal-2 text-white'}`}>
           <Timer className="h-4 w-4 shrink-0" />
           {expired ? tx('Ödeme süresi doldu. Saat başka müşterilere açıldı.', 'The payment time ran out. The slot is open to other customers again.') : <>{tx('Saatiniz ', 'Your time is held for you for ')}<span className="font-semibold">{mm}:{ss}</span>{tx(' boyunca sizin için ayrıldı.', '.')}</>}
         </div>
@@ -521,7 +521,7 @@ export default function Payment() {
               <Lock className="h-3.5 w-3.5 shrink-0 text-gold-500" />
               {tx('Kart bilgileriniz PayTR güvenli ödeme sayfasında işlenir, Rango kart bilgilerinizi görmez ve saklamaz.', 'Your card is processed on PayTR’s secure page; Rango never sees or stores your card details.')}
             </p>
-            <div className="overflow-hidden rounded-2xl border border-line bg-white">
+            <div className="overflow-hidden rounded-2xl border border-line bg-[#fff]">
               <iframe
                 ref={frameRef}
                 src={checkoutUrl}
@@ -538,7 +538,7 @@ export default function Payment() {
           </div>
         ) : phase === 'open' || phase === 'checking' ? (
           <div className="mt-8 space-y-4">
-            <p className="flex items-center gap-3 rounded-xl border border-gold-500/30 bg-gold-500/5 px-4 py-3 text-sm text-gold-200">
+            <p className="flex items-center gap-3 rounded-xl border border-line bg-coal-2 px-4 py-3 text-sm text-white">
               <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
               {phase === 'open'
                 ? tx('PayTR ödeme sayfası açık. Ödemeyi tamamlayınca bu ekrana dönün; onay otomatik gelir.', 'The PayTR payment page is open. Come back here when you have paid; the confirmation appears automatically.')
@@ -550,7 +550,7 @@ export default function Payment() {
           </div>
         ) : phase === 'unpaid' ? (
           <div className="mt-8 space-y-4">
-            <div role="status" className="rounded-xl border border-warning-500/40 bg-warning-900/40 px-4 py-3 text-sm leading-relaxed text-warning-300">
+            <div role="status" className="rounded-xl border border-warning-500/40 bg-warning-500/10 px-4 py-3 text-sm leading-relaxed text-warning-300">
               <p className="font-semibold">{tx('Ödeme tamamlanmadı', 'The payment was not completed')}</p>
               <p className="mt-1">{unpaidReason ?? tx('Ödeme onayı gelmedi. Kartınızdan çekim yapıldıysa randevunuz birkaç dakika içinde otomatik olarak onaylanır; bu sayfayı açık tutabilirsiniz.', 'No confirmation arrived. If your card was charged, the booking is confirmed automatically within a few minutes; you can keep this page open.')}</p>
             </div>
@@ -563,11 +563,11 @@ export default function Payment() {
         ) : (
           <div className="mt-8 space-y-4">
             {!paytrReady ? (
-              <p className="rounded-xl border border-info-500/30 bg-info-900/40 px-4 py-3 text-sm leading-relaxed text-info-300">
+              <p className="rounded-xl border border-info-500/30 bg-info-500/10 px-4 py-3 text-sm leading-relaxed text-info-300">
                 {tx('Online kapora ödemesi henüz aktif değil. Ödeme altyapısı devreye alındığında bu adımda lisanslı ödeme kuruluşunun güvenli ödeme sayfasına yönlendirileceksiniz. Şimdilik ayrılan saati serbest bırakıp daha sonra yeniden randevu oluşturabilirsiniz.', 'Online deposit payment is not active yet. Once it is, this step will take you to the secure page of a licensed payment provider. For now you can release the held time and book again later.')}
               </p>
             ) : paytrTest ? (
-              <p className="rounded-xl border border-warning-500/40 bg-warning-900/40 px-4 py-3 text-sm leading-relaxed text-warning-300">
+              <p className="rounded-xl border border-warning-500/40 bg-warning-500/10 px-4 py-3 text-sm leading-relaxed text-warning-300">
                 {tx('PayTR test modu: test kartı PayTR ödeme sayfasında hazır gelir. "Ödeme Yap"a, ardından 3D Secure test sayfasında "Gönder"e basın. Kartınızdan gerçek tahsilat yapılmaz.', 'PayTR test mode: the test card is prefilled on PayTR’s page. Press “Ödeme Yap”, then “Gönder” on the 3D Secure test page. Nothing is actually charged.')}
               </p>
             ) : (
@@ -595,7 +595,7 @@ export default function Payment() {
         )}
         <div className="space-y-4 p-6">
           <div>
-            <p className="font-display text-2xl text-white">{b?.name}</p>
+            <p className="text-lg font-semibold tracking-tight text-white">{b?.name}</p>
             {address && (
               <p className="mt-1 flex items-start gap-1.5 text-xs text-mist-2">
                 <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />

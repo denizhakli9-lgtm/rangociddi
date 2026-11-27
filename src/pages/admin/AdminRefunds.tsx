@@ -143,7 +143,7 @@ export default function AdminRefunds() {
                 <p className="mt-1 text-[11px] text-mist-3">{formatDateTime(r.created_at)}</p>
               </div>
               <div className="flex items-center gap-3 sm:flex-col sm:items-end">
-                <p className="font-display text-2xl text-gold-300">{formatTRY(r.amount)}</p>
+                <p className="text-lg font-semibold tracking-tight text-gold-300">{formatTRY(r.amount)}</p>
                 {r.status === 'pending' && (
                   <div className="flex gap-2">
                     <Button size="sm" variant="danger" onClick={() => setOpen({ row: r, approve: false })}>
@@ -178,12 +178,12 @@ export default function AdminRefunds() {
       >
         <div className="space-y-4">
           {open?.approve && isPaytrPayment(open.row) && !isTest(open.row) && (
-            <div className="rounded-xl border border-info-500/30 bg-info-900/40 p-3 text-xs leading-relaxed text-info-300">
+            <div className="rounded-xl border border-info-500/30 bg-info-500/10 p-3 text-xs leading-relaxed text-info-300">
               Onayladığınızda {formatTRY(open.row.amount)} PayTR üzerinden müşterinin kartına iade edilir. Bu işlem geri alınamaz.
             </div>
           )}
           {open?.approve && isTest(open.row) && (
-            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-warning-500/30 bg-warning-900/40 p-3 text-xs leading-relaxed text-warning-300">
+            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-warning-500/30 bg-warning-500/10 p-3 text-xs leading-relaxed text-warning-300">
               <TestBadge />
               <span>Bu bir test ödemesi. Müşterinin kartından tahsilat yapılmadığı için karta para gönderilmez; iade yalnızca kayıtta tamamlanır.</span>
             </div>

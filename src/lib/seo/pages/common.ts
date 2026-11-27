@@ -103,7 +103,7 @@ export function bookingFaqItems(lang: SeoLang): FaqItem[] {
       q: pick(lang, 'Online randevu nasıl alınır?', 'How do I book online?'),
       a: pick(
         lang,
-        'İşletmenin sayfasında “Randevu Al”ı seçin ve dört adımı izleyin: hizmeti seçin, uzmanı seçin (ya da “Fark etmez” deyin), tarih ve saati belirleyin, özeti kontrol edin. Randevu almak için ücretsiz bir Rango müşteri hesabı gerekir.',
+        'İşletmenin sayfasında “Randevu al”ı seçin ve dört adımı izleyin: hizmeti seçin, uzmanı seçin (ya da “Fark etmez” deyin), tarih ve saati belirleyin, özeti kontrol edin. Randevu almak için ücretsiz bir Rango müşteri hesabı gerekir.',
         'Choose “Book now” on the business page and follow four steps: pick the service, pick the specialist (or “No preference”), choose the date and time, and check the summary. You need a free Rango customer account to book.',
       ),
     },

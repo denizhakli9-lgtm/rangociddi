@@ -57,7 +57,7 @@ export function LocationField({ value, district, onChange }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className={`flex items-start gap-3 rounded-2xl border p-4 ${value ? 'border-success-500/30 bg-success-900/40' : 'border-line bg-ink/50'}`}>
+      <div className={`flex items-start gap-3 rounded-2xl border p-4 ${value ? 'border-success-500/30 bg-success-500/10' : 'border-line bg-ink/50'}`}>
         {value ? <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-success-300" /> : <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-mist-2" />}
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-white">{value ? 'Mağaza konumu işaretlendi' : 'Tam konum henüz eklenmedi'}</p>
@@ -114,7 +114,7 @@ export function LocationField({ value, district, onChange }: Props) {
       </div>
 
       {error && (
-        <p className="flex items-start gap-2 rounded-xl border border-warning-500/30 bg-warning-900/50 px-3 py-2.5 text-xs leading-relaxed text-warning-300" role="alert">
+        <p className="flex items-start gap-2 rounded-xl border border-warning-500/30 bg-warning-500/10 px-3 py-2.5 text-xs leading-relaxed text-warning-300" role="alert">
           <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" /> {error}
         </p>
       )}

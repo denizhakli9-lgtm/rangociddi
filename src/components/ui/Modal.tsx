@@ -29,16 +29,16 @@ export function Modal({ open, onClose, title, subtitle, children, footer, wide }
 
   return (
     <div className="fixed inset-0 z-[90] flex items-end justify-center sm:items-center sm:p-6" role="dialog" aria-modal="true">
-      <div className="absolute inset-0 animate-fade-in bg-black/75 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 animate-fade-in bg-black/60" onClick={onClose} />
       <div
-        className={`relative flex max-h-[92vh] w-full animate-slide-up flex-col rounded-t-3xl border border-gold-500/20 bg-coal sm:animate-scale-in sm:rounded-3xl ${wide ? 'sm:max-w-2xl' : 'sm:max-w-lg'}`}
+        className={`relative flex max-h-[92vh] w-full animate-slide-up flex-col rounded-t-2xl border border-line bg-coal shadow-pop sm:animate-scale-in sm:rounded-2xl ${wide ? 'sm:max-w-2xl' : 'sm:max-w-lg'}`}
       >
         <div className="flex items-start justify-between gap-4 border-b border-line px-6 pb-4 pt-5">
           <div>
-            <h2 className="font-display text-2xl text-white">{title}</h2>
+            <h2 className="text-lg font-semibold leading-snug text-white">{title}</h2>
             {subtitle && <p className="mt-1 text-sm text-mist-2">{subtitle}</p>}
           </div>
-          <button onClick={onClose} className="rounded-full p-2 text-mist-2 transition hover:bg-white/5 hover:text-white" aria-label={tx('Kapat', 'Close')}>
+          <button onClick={onClose} className="-mr-2 -mt-1 rounded-lg p-2 text-mist-2 transition hover:bg-white/5 hover:text-white" aria-label={tx('Kapat', 'Close')}>
             <X className="h-5 w-5" />
           </button>
         </div>

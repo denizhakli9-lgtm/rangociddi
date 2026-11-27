@@ -84,7 +84,7 @@ export default function Profile() {
       <aside className="space-y-4">
         <div className="card-gold flex flex-col items-center p-6 text-center">
           <Avatar name={profile.full_name || 'R'} src={profile.avatar_url} size="h-20 w-20 text-2xl" />
-          <p className="mt-4 font-display text-2xl text-white">{profile.full_name}</p>
+          <p className="mt-4 text-lg font-semibold tracking-tight text-white">{profile.full_name}</p>
           <p className="text-xs text-mist-2">{shownEmail ?? loginPhone ?? profile.phone}</p>
           <span className="mt-3 rounded-full border border-gold-500/40 px-3 py-1 text-[11px] text-gold-300">{t.role[profile.role]}</span>
           <p className="mt-3 text-[11px] text-mist-3">{tx('Üyelik:', 'Member since')} {formatDate(profile.created_at, { month: 'long', year: 'numeric' })}</p>
@@ -102,7 +102,7 @@ export default function Profile() {
                 <a {...whatsAppLinkProps()} className="flex items-center gap-3 px-5 py-3.5 text-sm text-mist transition hover:bg-white/[0.03] hover:text-white">
                   <WhatsAppIcon className="h-4 w-4 text-[#25D366]" />
                   <span className="flex-1">
-                    <span className="block">{tx('WhatsApp Destek Hattı · 7/24', 'WhatsApp support · 24/7')}</span>
+                    <span className="block">{tx('WhatsApp destek hattı', 'WhatsApp support')}</span>
                     <span className="block text-xs text-mist-2">{WHATSAPP_SUPPORT.display}</span>
                   </span>
                   <ChevronRight className="h-4 w-4 text-mist-3" />
@@ -127,8 +127,7 @@ export default function Profile() {
       </aside>
 
       <section>
-        <p className="eyebrow mb-2">{t.nav.profile}</p>
-        <h1 className="mb-6 font-display text-4xl text-white">{tx('Kişisel bilgiler', 'Personal details')}</h1>
+        <h1 className="mb-6 text-2xl font-semibold tracking-tight sm:text-[28px] text-white">{tx('Kişisel bilgiler', 'Personal details')}</h1>
         <form onSubmit={save} className="card space-y-5 p-6" noValidate>
           <Input label={tx('Ad Soyad', 'Full name')} name="full_name" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} error={errors.full_name} icon={<User className="h-4 w-4" />} />
           {phoneAccount ? (

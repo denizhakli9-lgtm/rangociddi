@@ -183,7 +183,7 @@ export default function AdminFieldAgents() {
       ) : (
         <div className="space-y-10">
           <section>
-            <h2 className="mb-3 font-display text-2xl text-white">Ekip</h2>
+            <h2 className="mb-3 text-lg font-semibold tracking-tight text-white">Ekip</h2>
             {!data?.agents.length ? (
               <EmptyState icon={<Briefcase className="h-6 w-6" />} title="Henüz saha elemanı yok" text="Yukarıdan e-postayla ekleyin; kişinin önce Rango'ya üye olması gerekir." />
             ) : (
@@ -203,7 +203,7 @@ export default function AdminFieldAgents() {
                           {[a.profiles?.email, a.profiles?.phone, formatDate(a.created_at, { day: 'numeric', month: 'short', year: 'numeric' })].filter(Boolean).join(' · ')}
                         </p>
                       </div>
-                      <span className="rounded-lg border border-gold-500/30 bg-gold-500/5 px-2.5 py-1 font-mono text-sm tracking-[0.2em] text-gold-300">{a.code}</span>
+                      <span className="rounded-lg border border-line bg-gold-500/5 px-2.5 py-1 font-mono text-sm tracking-[0.2em] text-gold-300">{a.code}</span>
                       <p className="text-xs text-mist">
                         {s?.total ?? 0} işletme · {s?.approved ?? 0} yayında
                         <br />
@@ -236,7 +236,7 @@ export default function AdminFieldAgents() {
           </section>
 
           <section>
-            <h2 className="mb-3 font-display text-2xl text-white">Primler</h2>
+            <h2 className="mb-3 text-lg font-semibold tracking-tight text-white">Primler</h2>
             <div className="mb-4 overflow-x-auto no-scrollbar">
               <Segmented<BonusStatus>
                 value={bonusTab}

@@ -193,7 +193,7 @@ function TempPasswordModal({ user, onClose }: { user: Profile; onClose: () => vo
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={systemLinkClick(waUrl)}
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-gradient-to-b from-gold-400 to-gold-600 px-5 text-sm font-semibold tracking-wide text-ink transition-all duration-200 hover:from-gold-300 hover:to-gold-500 active:scale-[0.98]"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold tracking-wide text-primary-fg transition-all duration-200 hover:bg-primary/90 active:scale-[0.98]"
               >
                 <MessageCircle className="h-4 w-4" />
                 WhatsApp ile gönder
@@ -217,7 +217,7 @@ function TempPasswordModal({ user, onClose }: { user: Profile; onClose: () => vo
           <p className="text-mist">
             Geçici şifre oluşturuldu. Şifreyi yalnızca kayıtlı numaraya (<span className="text-white">{formatTrPhone(result.phone)}</span>) gönderin. Bu pencere kapandıktan sonra şifre tekrar gösterilmez.
           </p>
-          <div className="flex items-center gap-2 rounded-xl border border-gold-500/30 bg-gold-500/5 px-4 py-3">
+          <div className="flex items-center gap-2 rounded-xl border border-line bg-gold-500/5 px-4 py-3">
             <span className="flex-1 select-all break-all font-mono text-lg tracking-[0.15em] text-gold-300">{result.password}</span>
             <Button size="sm" variant="ghost" icon={<Copy className="h-3.5 w-3.5" />} onClick={() => copy(result.password)}>
               {copied ? 'Kopyalandı' : 'Kopyala'}

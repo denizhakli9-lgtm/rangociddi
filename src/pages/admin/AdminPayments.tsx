@@ -54,7 +54,7 @@ export default function AdminPayments() {
       ) : (
         <>
           {testRows.length > 0 && (
-            <div className="mb-6 flex flex-wrap items-center gap-2 rounded-2xl border border-warning-500/30 bg-warning-900/40 p-4 text-sm text-warning-300">
+            <div className="mb-6 flex flex-wrap items-center gap-2 rounded-2xl border border-warning-500/30 bg-warning-500/10 p-4 text-sm text-warning-300">
               <TestBadge />
               <span>
                 {testRows.length} test ödemesi ({formatTRY(testRows.reduce((t, p) => t + Number(p.amount), 0))}) listede “Test” olarak işaretli. Bunlar için kartlardan tahsilat veya iade yapılmadı; aşağıdaki toplamlara dahil edilmez.

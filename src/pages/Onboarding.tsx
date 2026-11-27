@@ -1,33 +1,30 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, CalendarCheck, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Logo } from '@/components/ui/Brand';
 import { Button } from '@/components/ui/Button';
 import { markOnboarded } from '@/pages/Splash';
 import { LanguageToggle } from '@/components/ui/LanguageToggle';
 import { tx } from '@/i18n/locale';
 
+/** The site's own cover photographs (GORSEL-KAYNAKLARI.md); nothing is loaded from a third party. */
+const photo = (name: string) => `${import.meta.env.BASE_URL}sector-${name}.webp`;
+
 const slides = [
   {
-    image: 'https://images.pexels.com/photos/10317444/pexels-photo-10317444.jpeg?auto=compress&cs=tinysrgb&h=1200&w=940',
-    icon: Sparkles,
-    eyebrow: ['Keşfet', 'Discover'],
-    title: ['İzmir’in en seçkin salonları tek yerde', 'İzmir’s finest salons in one place'],
-    text: ['Kuaförden spaya, berberden cilt bakımına kadar özenle seçilmiş işletmeleri keşfedin.', 'From hair salons to spas, barbers to skin care: discover carefully selected businesses.'],
+    image: photo('hair-5'),
+    title: ['İzmir’deki işletmeler tek yerde', 'İzmir’s businesses in one place'],
+    text: ['Kuaförden spaya, berberden cilt bakımına: hizmetleri, fiyatları ve çalışma saatlerini karşılaştırın.', 'From hair salons to spas, barbers to skin care: compare services, prices and opening hours.'],
   },
   {
-    image: 'https://images.pexels.com/photos/2521978/pexels-photo-2521978.jpeg?auto=compress&cs=tinysrgb&h=1200&w=940',
-    icon: CalendarCheck,
-    eyebrow: ['Randevu', 'Booking'],
-    title: ['Saniyeler içinde, anlık uygunlukla', 'Book in seconds, with live availability'],
-    text: ['Hizmetinizi, uzmanınızı ve saatinizi seçin. Dolu saatler otomatik olarak gizlenir.', 'Choose your service, specialist and time. Taken times are hidden automatically.'],
+    image: photo('barber-3'),
+    title: ['Size uyan saati seçin', 'Pick the time that suits you'],
+    text: ['Hizmetinizi, uzmanınızı ve saatinizi seçin. Yalnızca gerçekten boş olan saatler gösterilir.', 'Choose your service, specialist and time. Only times that are really free are shown.'],
   },
   {
-    image: 'https://images.pexels.com/photos/6560271/pexels-photo-6560271.jpeg?auto=compress&cs=tinysrgb&h=1200&w=940',
-    icon: ShieldCheck,
-    eyebrow: ['Güven', 'Peace of mind'],
-    title: ['Kapora ile yerinizi güvenceye alın', 'Secure your spot with a deposit'],
-    text: ['Küçük bir kapora ile randevunuz kesinleşir, kalan tutarı işletmede ödersiniz.', 'A small deposit confirms your booking; you pay the rest at the business.'],
+    image: photo('beauty-3'),
+    title: ['Kapora ile yerinizi ayırın', 'Secure your spot with a deposit'],
+    text: ['İşletme kapora istiyorsa tutarı ödeme öncesinde görürsünüz; kalan tutarı işletmede ödersiniz.', 'If the business asks for a deposit you see the amount before paying; you pay the rest at the business.'],
   },
 ] as const;
 
@@ -53,13 +50,14 @@ export default function Onboarding() {
             className={`absolute inset-0 h-full w-full object-cover transition-all duration-1000 ${i === index ? 'scale-100 opacity-100' : 'scale-105 opacity-0'}`}
           />
         ))}
-        <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/30 to-ink/40 lg:bg-gradient-to-r lg:from-transparent lg:via-ink/10 lg:to-ink" />
-        <div className="absolute left-6 top-6">
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-ink to-transparent lg:hidden" />
+        <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/60 to-transparent" />
+        <div className="absolute left-6 top-6 [&_span]:text-[#fff]">
           <Logo size="sm" />
         </div>
-        <div className="absolute right-6 top-5 flex items-center gap-3">
-          <LanguageToggle className="h-9 w-9 bg-ink/60" />
-          <button onClick={() => finish('/kesfet')} className="text-xs tracking-wide text-white/80 transition hover:text-white">
+        <div className="absolute right-5 top-4 flex items-center gap-2">
+          <LanguageToggle className="!text-[#fff]" />
+          <button onClick={() => finish('/kesfet')} className="px-2 text-[13px] font-medium text-[#fff] transition-opacity hover:opacity-80">
             {tx('Atla', 'Skip')}
           </button>
         </div>
@@ -67,11 +65,8 @@ export default function Onboarding() {
 
       <div className="relative -mt-16 flex flex-col justify-between px-6 pb-10 sm:px-12 lg:mt-0 lg:justify-center lg:px-20">
         <div key={index} className="animate-fade-up">
-          <span className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl border border-gold-500/40 bg-coal text-gold-400">
-            <slide.icon className="h-5 w-5" strokeWidth={1.6} />
-          </span>
-          <p className="eyebrow mb-3">{tx(slide.eyebrow[0], slide.eyebrow[1])}</p>
-          <h1 className="max-w-md font-display text-4xl leading-tight text-white sm:text-5xl">{tx(slide.title[0], slide.title[1])}</h1>
+          <p className="mb-3 text-[13px] font-medium text-mist-2">{index + 1} / {slides.length}</p>
+          <h1 className="max-w-md font-display text-4xl leading-[1.1] tracking-[-0.02em] text-white sm:text-5xl">{tx(slide.title[0], slide.title[1])}</h1>
           <p className="mt-4 max-w-md text-[15px] leading-relaxed text-mist">{tx(slide.text[0], slide.text[1])}</p>
         </div>
 
@@ -89,15 +84,15 @@ export default function Onboarding() {
           {last ? (
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button size="lg" full onClick={() => finish('/kayit')}>
-                {tx('Hesap Oluştur', 'Create account')}
+                {tx('Hesap oluştur', 'Create account')}
               </Button>
               <Button size="lg" variant="outline" full onClick={() => finish('/giris')}>
-                {tx('Giriş Yap', 'Sign in')}
+                {tx('Giriş yap', 'Sign in')}
               </Button>
             </div>
           ) : (
             <Button size="lg" full icon={<ArrowRight className="h-4 w-4" />} className="flex-row-reverse sm:w-auto" onClick={() => setIndex(index + 1)}>
-              {tx('Devam Et', 'Continue')}
+              {tx('Devam et', 'Continue')}
             </Button>
           )}
           <p className="mt-6 text-center text-xs text-mist-2 sm:text-left">

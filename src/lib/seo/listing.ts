@@ -8,7 +8,7 @@ import { businessPath, clip, type SeoBusiness, type SeoHours, type SeoLang, type
 import { districtByName, type PlaceCity, type PlaceDistrict } from './places';
 import { coverChoice } from '../sectorCovers';
 import { isTestBusiness } from './config';
-import { formatPrice } from './format';
+import { formatPrice, fromPriceLabel } from './format';
 
 export { formatPrice };
 
@@ -140,7 +140,7 @@ export function toSummary(b: ListingBusiness, lang: SeoLang, options: SummaryOpt
     path: businessPath(b.slug),
     category,
     district: b.district ?? undefined,
-    priceFrom: prices.length ? formatPrice(Math.min(...prices), lang) : undefined,
+    priceFrom: prices.length ? fromPriceLabel(Math.min(...prices), lang) : undefined,
     rating: reviews > 0 && rating > 0 ? rating.toFixed(1) : undefined,
     reviewCount: reviews > 0 ? reviews : undefined,
     // Sample businesses carry invented marketing texts; their cards show facts only.

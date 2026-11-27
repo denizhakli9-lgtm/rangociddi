@@ -89,13 +89,13 @@ export default function Services() {
       ) : (
         <div className="grid gap-3 md:grid-cols-2">
           {data.map((s) => (
-            <div key={s.id} className={`card flex flex-col gap-4 p-5 transition hover:border-gold-500/30 ${s.is_active ? '' : 'opacity-60'}`}>
+            <div key={s.id} className={`card flex flex-col gap-4 p-5 transition hover:border-white/30 ${s.is_active ? '' : 'opacity-60'}`}>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-medium text-white">{s.name}</p>
                   {s.description && <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-mist-2">{s.description}</p>}
                 </div>
-                <p className="shrink-0 font-display text-xl text-gold-300">{formatTRY(s.price)}</p>
+                <p className="shrink-0 text-base font-semibold text-gold-300">{formatTRY(s.price)}</p>
               </div>
               <div className="flex flex-wrap items-center gap-2 text-xs text-mist-2">
                 <span className="inline-flex items-center gap-1">

@@ -18,11 +18,11 @@ import { AppointmentDetailModal } from './AppointmentDetailModal';
 const PX = 1.1;
 const HIDDEN = ['cancelled', 'rejected'];
 const BLOCK_TONE: Record<string, string> = {
-  pending_payment: 'border-warning-500/40 bg-warning-900/70 text-warning-300',
-  pending_approval: 'border-info-500/50 bg-info-900/70 text-info-300',
-  confirmed: 'border-gold-500/60 bg-gold-500/15 text-gold-200',
-  completed: 'border-success-500/40 bg-success-900/60 text-success-300',
-  no_show: 'border-error-500/40 bg-error-900/60 text-error-300',
+  pending_payment: 'border-warning-500/40 bg-warning-500/10 text-warning-300',
+  pending_approval: 'border-info-500/50 bg-info-500/10 text-info-300',
+  confirmed: 'border-gold-500/60 bg-gold-500/15 text-gold-300',
+  completed: 'border-success-500/40 bg-success-500/10 text-success-300',
+  no_show: 'border-error-500/40 bg-error-500/10 text-error-300',
 };
 
 interface CalendarColumn {
@@ -121,7 +121,7 @@ export default function OwnerCalendar() {
       />
 
       <div className="mb-6 flex items-center gap-2">
-        <button type="button" onClick={() => setDay(addDays(day, -1))} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-line text-mist transition hover:border-gold-500/40 hover:text-white" aria-label="Önceki gün">
+        <button type="button" onClick={() => setDay(addDays(day, -1))} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-line text-mist transition hover:border-white/30 hover:text-white" aria-label="Önceki gün">
           <ChevronLeft className="h-4 w-4" />
         </button>
         <div className="no-scrollbar flex flex-1 gap-2 overflow-x-auto">
@@ -130,14 +130,14 @@ export default function OwnerCalendar() {
               key={k}
               type="button"
               onClick={() => setDay(k)}
-              className={`flex min-w-[64px] flex-1 flex-col items-center rounded-xl border py-2 transition ${k === day ? 'border-gold-500 bg-gold-500/10 text-gold-300' : 'border-line text-mist hover:border-gold-500/30'}`}
+              className={`flex min-w-[64px] flex-1 flex-col items-center rounded-xl border py-2 transition ${k === day ? 'border-gold-500 bg-gold-500/10 text-gold-300' : 'border-line text-mist hover:border-white/30'}`}
             >
               <span className="text-[10px] uppercase tracking-wider">{keyLabel(k, { weekday: 'short' })}</span>
               <span className="text-lg font-semibold">{keyLabel(k, { day: 'numeric' })}</span>
             </button>
           ))}
         </div>
-        <button type="button" onClick={() => setDay(addDays(day, 1))} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-line text-mist transition hover:border-gold-500/40 hover:text-white" aria-label="Sonraki gün">
+        <button type="button" onClick={() => setDay(addDays(day, 1))} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-line text-mist transition hover:border-white/30 hover:text-white" aria-label="Sonraki gün">
           <ChevronRight className="h-4 w-4" />
         </button>
       </div>

@@ -79,7 +79,7 @@ export default function AdminOverview() {
           </div>
 
           <section className="card p-6">
-            <h2 className="mb-6 font-display text-xl text-white">Aylık randevu & komisyon</h2>
+            <h2 className="mb-6 text-base font-semibold text-white">Aylık randevu & komisyon</h2>
             {monthly.length ? (
               <div className="flex h-52 items-end gap-3 sm:gap-6">
                 {monthly.map((m) => (
@@ -90,7 +90,7 @@ export default function AdminOverview() {
                       <span className="text-gold-400">{formatTRY(m.commission)}</span>
                     </span>
                     <div className="flex w-full max-w-[56px] flex-1 items-end">
-                      <div className="w-full rounded-t-lg bg-gradient-to-t from-gold-700 to-gold-400 transition-all duration-700 group-hover:from-gold-600 group-hover:to-gold-300" style={{ height: `${(Number(m.appointments) / max) * 100}%`, minHeight: 2 }} />
+                      <div className="w-full rounded-t-lg bg-gold-500 transition-all duration-700" style={{ height: `${(Number(m.appointments) / max) * 100}%`, minHeight: 2 }} />
                     </div>
                     <span className="text-xs text-mist">{m.month}</span>
                   </div>
@@ -108,7 +108,7 @@ export default function AdminOverview() {
 
 function Alert({ to, icon, text }: { to: string; icon: ReactNode; text: string }) {
   return (
-    <Link to={to} className="group flex items-center gap-3 rounded-2xl border border-warning-500/30 bg-warning-900/40 p-4 text-sm text-warning-300 transition hover:border-warning-500/60">
+    <Link to={to} className="group flex items-center gap-3 rounded-2xl border border-warning-500/30 bg-warning-500/10 p-4 text-sm text-warning-300 transition hover:border-warning-500/60">
       {icon}
       <span className="flex-1">{text}</span>
       <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />

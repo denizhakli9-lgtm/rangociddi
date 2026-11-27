@@ -103,12 +103,12 @@ export default function Confirmation() {
     appt.status === 'confirmed'
       ? { icon: CalendarCheck, title: tx('Randevunuz onaylandı', 'Your booking is confirmed'), text: tx('Sizi görmek için sabırsızlanıyoruz. Randevunuzdan önce size hatırlatma göndereceğiz.', 'We look forward to seeing you. We will send you a reminder before your appointment.'), tone: 'text-gold-400 border-gold-500/50 bg-gold-500/10' }
       : appt.status === 'pending_approval'
-        ? { icon: Hourglass, title: tx('Onay bekleniyor', 'Awaiting approval'), text: pendingText, tone: 'text-warning-300 border-warning-500/40 bg-warning-900/40' }
+        ? { icon: Hourglass, title: tx('Onay bekleniyor', 'Awaiting approval'), text: pendingText, tone: 'text-warning-300 border-warning-500/40 bg-warning-500/10' }
         : appt.status === 'completed'
-          ? { icon: CheckCircle2, title: tx('Randevunuz tamamlandı', 'Your appointment is complete'), text: tx('Bizi tercih ettiğiniz için teşekkürler. Deneyiminizi Randevularım sayfasından değerlendirebilirsiniz.', 'Thank you for choosing us. You can review your experience on the My bookings page.'), tone: 'text-success-300 border-success-500/40 bg-success-900/40' }
+          ? { icon: CheckCircle2, title: tx('Randevunuz tamamlandı', 'Your appointment is complete'), text: tx('Bizi tercih ettiğiniz için teşekkürler. Deneyiminizi Randevularım sayfasından değerlendirebilirsiniz.', 'Thank you for choosing us. You can review your experience on the My bookings page.'), tone: 'text-success-300 border-success-500/40 bg-success-500/10' }
           : appt.status === 'rejected'
-            ? { icon: XCircle, title: tx('Randevu talebiniz onaylanmadı', 'Your booking request was declined'), text: appt.cancellation_reason ?? tx('İşletme bu saat için talebinizi onaylayamadı. Başka bir saat seçerek yeniden randevu oluşturabilirsiniz.', 'The business could not accept this time. You can book again by choosing another time.'), tone: 'text-error-300 border-error-500/40 bg-error-900/30' }
-            : { icon: XCircle, title: tx('Randevu aktif değil', 'Booking not active'), text: appt.cancellation_reason ?? tx('Bu randevu iptal edilmiş veya süresi dolmuş.', 'This booking has been cancelled or has expired.'), tone: 'text-error-300 border-error-500/40 bg-error-900/30' };
+            ? { icon: XCircle, title: tx('Randevu talebiniz onaylanmadı', 'Your booking request was declined'), text: appt.cancellation_reason ?? tx('İşletme bu saat için talebinizi onaylayamadı. Başka bir saat seçerek yeniden randevu oluşturabilirsiniz.', 'The business could not accept this time. You can book again by choosing another time.'), tone: 'text-error-300 border-error-500/40 bg-error-500/10' }
+            : { icon: XCircle, title: tx('Randevu aktif değil', 'Booking not active'), text: appt.cancellation_reason ?? tx('Bu randevu iptal edilmiş veya süresi dolmuş.', 'This booking has been cancelled or has expired.'), tone: 'text-error-300 border-error-500/40 bg-error-500/10' };
 
   const depositLabel = testPayment
     ? tx('Kapora (test, tahsil edilmedi)', 'Deposit (test, not charged)')
@@ -122,11 +122,11 @@ export default function Confirmation() {
       <div className={`mx-auto flex h-20 w-20 animate-scale-in items-center justify-center rounded-full border ${view.tone}`}>
         <view.icon className="h-9 w-9" strokeWidth={1.4} />
       </div>
-      <h1 className="mt-6 animate-fade-up font-display text-4xl text-white">{view.title}</h1>
+      <h1 className="mt-6 animate-fade-up text-2xl font-semibold tracking-tight sm:text-[28px] text-white">{view.title}</h1>
       <p className="mx-auto mt-3 max-w-sm animate-fade-up text-sm text-mist">{view.text}</p>
 
       {testPayment && active && (
-        <p className="mx-auto mt-5 flex max-w-md items-start gap-2 rounded-xl border border-warning-500/40 bg-warning-900/50 px-4 py-3 text-left text-xs leading-relaxed text-warning-300">
+        <p className="mx-auto mt-5 flex max-w-md items-start gap-2 rounded-xl border border-warning-500/40 bg-warning-500/10 px-4 py-3 text-left text-xs leading-relaxed text-warning-300">
           <Info className="mt-0.5 h-4 w-4 shrink-0" />
           <span><strong className="font-semibold">{tx('Test modu:', 'Test mode:')}</strong> {tx('kartınızdan herhangi bir tutar çekilmedi. Hizmet bedelinin tamamını işletmede ödersiniz.', 'nothing was charged to your card. You pay the full price at the business.')}</span>
         </p>
@@ -139,7 +139,7 @@ export default function Confirmation() {
         </div>
         <div className="space-y-4 px-6 py-5">
           <div>
-            <p className="font-display text-2xl text-white">{appt.businesses?.name}</p>
+            <p className="text-lg font-semibold tracking-tight text-white">{appt.businesses?.name}</p>
             <p className="mt-1 flex items-center gap-1.5 text-xs text-mist-2"><MapPin className="h-3.5 w-3.5" />{appt.businesses?.address}</p>
             {active && appt.businesses && <DirectionsButton target={appt.businesses} className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-gold-400 transition hover:text-gold-300" />}
           </div>

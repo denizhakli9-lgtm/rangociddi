@@ -149,9 +149,9 @@ export default function Hours() {
                       aria-checked={!r.is_closed}
                       aria-label={`${DAYS[i]} açık`}
                       onClick={() => update(i, { is_closed: !r.is_closed })}
-                      className={`relative h-6 w-11 shrink-0 rounded-full transition ${!r.is_closed ? 'bg-gold-500' : 'bg-coal-3'}`}
+                      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${!r.is_closed ? 'bg-primary' : 'bg-coal-3'}`}
                     >
-                      <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${!r.is_closed ? 'left-[22px]' : 'left-0.5'}`} />
+                      <span className={`absolute top-0.5 h-5 w-5 rounded-full shadow transition-all ${!r.is_closed ? 'left-[22px] bg-primary-fg' : 'left-0.5 bg-[#fff]'}`} />
                     </button>
                     <span className={`text-sm font-medium ${r.is_closed ? 'text-mist-2' : 'text-white'}`}>{DAYS[i]}</span>
                   </div>

@@ -52,10 +52,10 @@ function DeletionHelper() {
     <div className="card-gold flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-sm text-mist">{tx('Uygulamaya erişemiyorsanız silme talebinizi e-postayla veya, telefon numarasıyla üye olduysanız, bu numaradan WhatsApp destek hattımıza yazarak iletebilirsiniz. Talebiniz en geç 30 gün içinde sonuçlandırılır.', 'If you cannot access the app, you can request deletion by email or, if you signed up with a phone number, by messaging our WhatsApp support line from that number. Your request will be completed within 30 days.')}</p>
       <div className="flex shrink-0 flex-wrap gap-2">
-        <a href={href} className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-fg transition-colors hover:bg-primary/90">
+        <a href={href} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-fg transition-colors hover:bg-primary/90">
           <Mail className="h-4 w-4" /> {tx('Silme talebi gönder', 'Request deletion')}
         </a>
-        <a {...whatsAppLinkProps('Hesap silme talebi')} className="inline-flex items-center gap-2 rounded-full border border-gold-500/40 px-4 py-2 text-xs font-semibold text-gold-400 transition hover:bg-gold-500/10">
+        <a {...whatsAppLinkProps('Hesap silme talebi')} className="inline-flex items-center gap-2 rounded-lg border border-line px-4 py-2 text-xs font-semibold text-white transition-colors hover:border-white/40">
           <MessageCircle className="h-4 w-4" /> WhatsApp
         </a>
       </div>
@@ -84,7 +84,7 @@ function ApplicationHelper() {
   return (
     <div className="card-gold flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-sm text-mist">{tx('Başvuru şablonunu e-posta uygulamanızda hazır olarak açabilirsiniz. Gönderdiğiniz e-posta dışında hiçbir bilgi bu sayfa üzerinden kaydedilmez.', 'You can open a ready-made request template in your email app (in Turkish; you may write your request in English). Nothing is saved through this page apart from the email you send.')}</p>
-      <a href={href} className="inline-flex shrink-0 items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-fg transition-colors hover:bg-primary/90">
+      <a href={href} className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-fg transition-colors hover:bg-primary/90">
         <Mail className="h-4 w-4" /> {tx('Başvuru e-postası oluştur', 'Create request email')}
       </a>
     </div>

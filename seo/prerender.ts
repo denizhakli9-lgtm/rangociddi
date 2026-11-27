@@ -266,10 +266,11 @@ function homeBody(input: HomeExtrasInput): string {
 }
 
 function categoriesBody(categories: SeoCategory[]): string {
-  return shell(`<p class="eyebrow mb-2">Kategoriler</p>
-        <h1 class="font-display text-4xl text-white">Size iyi gelecek her şey</h1>
-        <p class="mt-2 max-w-xl text-sm text-mist">Kadınlara ve erkeklere hizmet veren işletmeleri kategoriye göre keşfedin.</p>
-        ${categoryLinks(categories)}`);
+  return shell(`<div class="pt-2 sm:pt-6">
+        <h1 class="font-display text-4xl leading-[1.08] tracking-[-0.02em] text-white sm:text-[52px]">Hizmet kategorileri</h1>
+        <p class="mt-4 max-w-xl text-[15px] leading-relaxed text-mist">Kadınlara ve erkeklere hizmet veren işletmeleri kategoriye göre keşfedin.</p>
+        ${categoryLinks(categories)}
+      </div>`);
 }
 
 /** Mirrors the layout of pages/customer/BusinessDetail.tsx so the page does not jump when the app takes over. */
@@ -302,7 +303,7 @@ function businessBody(b: DetailRow, supabaseUrl: string): string {
     )
     .join('');
   const team = b.employees
-    .map((m) => `<li class="card p-4"><p class="font-medium text-white">${e(m.full_name)}</p>${m.title ? `<p class="text-xs text-gold-400">${e(m.title)}</p>` : ''}</li>`)
+    .map((m) => `<li class="card p-4"><p class="font-medium text-white">${e(m.full_name)}</p>${m.title ? `<p class="text-xs text-mist-2">${e(m.title)}</p>` : ''}</li>`)
     .join('');
   const written = b.reviews
     .filter((r) => r.comment?.trim())
@@ -311,7 +312,7 @@ function businessBody(b: DetailRow, supabaseUrl: string): string {
       (r) => `<li class="card p-5"><p class="text-sm font-medium text-white">${e(r.reviewer_name ?? '')} · ${'★'.repeat(Math.max(1, Math.min(5, Math.round(r.rating))))}</p>${
         r.service_name ? `<p class="text-xs text-mist-2">${e(r.service_name)}</p>` : ''
       }<p class="mt-3 text-sm leading-relaxed text-mist">${e(r.comment ?? '')}</p>${
-        r.owner_reply ? `<div class="mt-4 rounded-xl border-l-2 border-gold-500 bg-ink/50 px-4 py-3"><p class="text-[11px] font-semibold uppercase tracking-wider text-gold-400">İşletme yanıtı</p><p class="mt-1 text-sm text-mist">${e(r.owner_reply)}</p></div>` : ''
+        r.owner_reply ? `<div class="mt-4 rounded-xl bg-coal-2 px-4 py-3"><p class="text-xs font-semibold text-white">İşletme yanıtı</p><p class="mt-1 text-sm text-mist">${e(r.owner_reply)}</p></div>` : ''
       }</li>`,
     )
     .join('');
@@ -324,21 +325,21 @@ function businessBody(b: DetailRow, supabaseUrl: string): string {
 
   return shell(`<article class="pb-24 md:pb-0">
           <div class="relative -mx-4 -mt-6 sm:mx-0 sm:mt-0">
-            <div class="relative aspect-[4/3] overflow-hidden sm:aspect-[21/9] sm:rounded-3xl sm:border sm:border-gold-500/20">
+            <div class="relative aspect-[4/3] overflow-hidden sm:aspect-[21/9] sm:rounded-3xl">
               <img src="${e(photo.placeholder ? `/${photo.src}` : photo.src)}" alt="${e(photoAlt)}" loading="eager" fetchpriority="high" decoding="async" class="absolute inset-0 h-full w-full object-cover" />
-              <div class="absolute inset-0 bg-gradient-to-t from-ink via-ink/20 to-ink/40"></div>
-              ${photo.placeholder ? '<span class="pointer-events-none absolute bottom-4 left-4 z-10 inline-flex items-center gap-1 rounded-xl bg-black/85 px-2.5 py-1 text-[10px] font-medium text-white">Temsili görsel</span>' : ''}
+              <div class="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/35 to-transparent"></div>
+              ${photo.placeholder ? '<span class="pointer-events-none absolute bottom-4 left-4 z-10 inline-flex items-center gap-1 rounded-md bg-black/70 px-2.5 py-1 text-[10px] font-medium text-[#fff]">Temsili görsel</span>' : ''}
             </div>
           </div>
           <div class="mt-6 grid gap-10 lg:grid-cols-[1fr_340px]">
             <div class="min-w-0">
               <div class="mb-4">${renderBlocks([crumbs])}</div>
-              ${category ? `<p class="text-[11px] uppercase tracking-[0.2em] text-gold-500">${b.categories?.slug ? `<a href="${e(categoryPath(b.categories.slug))}">${e(category)}</a>` : e(category)}</p>` : ''}
-              <h1 class="mt-2 font-display text-4xl text-white sm:text-5xl">${e(b.name)}</h1>
+              ${category ? `<p class="text-[13px] text-mist">${b.categories?.slug ? `<a href="${e(categoryPath(b.categories.slug))}">${e(category)}</a>` : e(category)}</p>` : ''}
+              <h1 class="mt-2 font-display text-4xl leading-[1.08] tracking-[-0.02em] text-white sm:text-5xl">${e(b.name)}</h1>
               ${reviews > 0 ? `<p class="mt-3 text-sm text-mist"><span class="font-semibold text-white">★ ${Number(b.rating_avg ?? 0).toFixed(1)}</span> (${reviews} değerlendirme)</p>` : ''}
-              ${address ? `<p class="mt-5 rounded-2xl border border-line bg-coal/70 p-4 text-sm leading-relaxed text-white">${e(address)}</p>` : ''}
+              ${address ? `<p class="mt-5 rounded-2xl border border-line bg-coal p-4 text-sm leading-relaxed text-white">${e(address)}</p>` : ''}
               ${b.description ? `<p class="mt-5 max-w-2xl text-[15px] leading-relaxed text-mist">${e(b.description)}</p>` : ''}
-              <p class="mt-6"><a href="${e(businessPath(b.slug))}/randevu" class="inline-flex h-11 items-center rounded-full bg-gold-500 px-5 text-sm font-semibold text-ink">Randevu Al</a></p>
+              <p class="mt-6"><a href="${e(businessPath(b.slug))}/randevu" class="inline-flex min-h-11 items-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-fg">Randevu Al</a></p>
               ${services ? `<section class="mt-8"><h2 class="${S.sectionTitle}">Hizmetler ve fiyatlar</h2><div class="mt-4 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-coal">${services}</div></section>` : ''}
               ${team ? `<section class="mt-8"><h2 class="${S.sectionTitle}">Uzmanlar</h2><ul class="mt-4 grid gap-3 sm:grid-cols-2">${team}</ul></section>` : ''}
               ${written ? `<section class="mt-8"><h2 class="${S.sectionTitle}">Değerlendirmeler</h2><ul class="mt-4 space-y-3">${written}</ul></section>` : ''}
@@ -485,6 +486,9 @@ export function seoPrerender(supabase: { url: string; key: string }): Plugin {
           }
 
           for (const b of data.details) {
+            // A business address is one path segment (the database enforces the same format): a slug with a
+            // slash could otherwise be written over another page, such as another business's /randevu address.
+            if (!/^[a-z0-9]+(?:-+[a-z0-9]+)*$/.test(b.slug)) continue;
             const photo = leadPhoto(b, supabase.url);
             pages.push({
               file: `i/${b.slug}`,

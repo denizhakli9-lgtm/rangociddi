@@ -102,7 +102,7 @@ export default function Profile() {
                 <a {...whatsAppLinkProps()} className="flex items-center gap-3 px-5 py-3.5 text-sm text-mist transition hover:bg-white/[0.03] hover:text-white">
                   <WhatsAppIcon className="h-4 w-4 text-[#25D366]" />
                   <span className="flex-1">
-                    <span className="block">{tx('WhatsApp Destek Hattı · 7/24', 'WhatsApp support · 24/7')}</span>
+                    <span className="block">{tx('WhatsApp destek hattı', 'WhatsApp support')}</span>
                     <span className="block text-xs text-mist-2">{WHATSAPP_SUPPORT.display}</span>
                   </span>
                   <ChevronRight className="h-4 w-4 text-mist-3" />

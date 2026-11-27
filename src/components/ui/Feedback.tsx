@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { dict } from '@/i18n/locale';
 
 export function Spinner({ className = 'h-6 w-6' }: { className?: string }) {
-  return <Loader2 className={`animate-spin text-gold-500 ${className}`} />;
+  return <Loader2 className={`animate-spin text-mist-3 ${className}`} strokeWidth={1.75} />;
 }
 
 export function PageLoader() {
@@ -18,11 +18,11 @@ export function PageLoader() {
 
 export function EmptyState({ icon, title, text, action }: { icon: ReactNode; title: string; text?: string; action?: ReactNode }) {
   return (
-    <div className="flex animate-fade-up flex-col items-center rounded-3xl border border-dashed border-line px-6 py-14 text-center">
-      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-gold-500/30 bg-gold-500/5 text-gold-500">{icon}</div>
-      <h3 className="font-display text-2xl text-white">{title}</h3>
-      {text && <p className="mt-2 max-w-sm text-sm text-mist-2">{text}</p>}
-      {action && <div className="mt-6">{action}</div>}
+    <div className="flex flex-col items-center rounded-2xl border border-line bg-coal px-6 py-12 text-center">
+      <div className="mb-4 text-mist-3 [&>svg]:h-7 [&>svg]:w-7">{icon}</div>
+      <h3 className="text-base font-semibold text-white">{title}</h3>
+      {text && <p className="mt-1.5 max-w-sm text-sm leading-relaxed text-mist-2">{text}</p>}
+      {action && <div className="mt-5">{action}</div>}
     </div>
   );
 }
@@ -37,8 +37,8 @@ export function ErrorState({ message = dict().errors.load, onRetry, error }: { m
     if (error && import.meta.env.DEV) console.error(error);
   }, [error]);
   return (
-    <div role="alert" className="flex flex-col items-center rounded-3xl border border-error-500/30 bg-error-900/30 px-6 py-10 text-center">
-      <AlertTriangle className="mb-3 h-8 w-8 text-error-300" />
+    <div role="alert" className="flex flex-col items-center rounded-2xl border border-error-500/30 bg-error-500/5 px-6 py-10 text-center">
+      <AlertTriangle className="mb-3 h-6 w-6 text-error-300" strokeWidth={1.75} />
       <p className="text-sm text-error-300">{message}</p>
       {onRetry && (
         <Button variant="dark" size="sm" className="mt-4" onClick={onRetry}>

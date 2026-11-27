@@ -1,10 +1,10 @@
 import { forwardRef, useId, type AriaAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
 
 const base =
-  'w-full rounded-xl border bg-ink/60 px-4 text-sm text-white placeholder:text-mist-3 transition focus:outline-none focus:ring-2 focus:ring-gold-500/30 disabled:opacity-60';
+  'w-full rounded-xl border bg-coal px-4 text-sm text-white placeholder:text-mist-3 transition-colors focus:outline-none focus:ring-2 focus:ring-white/10 disabled:opacity-60';
 
 function borderCls(error?: string) {
-  return error ? 'border-error-500/60 focus:border-error-500' : 'border-line focus:border-gold-500/70';
+  return error ? 'border-error-500/60 focus:border-error-500' : 'border-line focus:border-white/60';
 }
 
 /** id of the error/hint paragraph that FieldWrap renders for the control with id `fid`. */
@@ -38,7 +38,7 @@ export function FieldWrap({ label, error, hint, children, htmlFor }: WrapProps) 
   return (
     <div className="space-y-1.5">
       {label && (
-        <label htmlFor={htmlFor} className="block text-xs font-medium tracking-wide text-mist">
+        <label htmlFor={htmlFor} className="block text-[13px] font-medium text-mist">
           {label}
         </label>
       )}
@@ -112,14 +112,14 @@ export function Toggle({ checked, onChange, label, description }: { checked: boo
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className="flex w-full items-center justify-between gap-4 rounded-xl border border-line bg-ink/40 px-4 py-3 text-left transition hover:border-gold-500/30"
+      className="flex w-full items-center justify-between gap-4 rounded-xl border border-line bg-coal px-4 py-3 text-left transition-colors hover:border-white/30"
     >
       <span>
         <span className="block text-sm text-white">{label}</span>
         {description && <span className="mt-0.5 block text-xs text-mist-2">{description}</span>}
       </span>
-      <span className={`relative h-6 w-11 shrink-0 rounded-full transition ${checked ? 'bg-gold-500' : 'bg-coal-3'}`}>
-        <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${checked ? 'left-[22px]' : 'left-0.5'}`} />
+      <span className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${checked ? 'bg-primary' : 'bg-coal-3'}`}>
+        <span className={`absolute top-0.5 h-5 w-5 rounded-full shadow transition-all ${checked ? 'left-[22px] bg-primary-fg' : 'left-0.5 bg-[#fff]'}`} />
       </span>
     </button>
   );

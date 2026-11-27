@@ -34,13 +34,19 @@ function supabaseCsp(supabaseUrl: string | undefined): Plugin {
 
 /**
  * Sayfa açılışını hızlandıran <head> ipuçları (yalnızca derlemede eklenir):
- *  - İlk ekrandaki metnin iki yazı tipi dosyası önceden istenir; böylece yedek yazı tipinden
+ *  - İlk ekrandaki metnin yazı tipi dosyaları önceden istenir; böylece yedek yazı tipinden
  *    asıl yazı tipine geçiş (ve bunun yol açtığı sayfa kayması) kısalır.
  *  - Supabase'e bağlantı önceden kurulur; sayfanın ilk veri isteği beklemeden gider.
  * Dosya adları her derlemede değiştiği (içerik özeti) için bu satırlar elle yazılamaz.
  */
 function headHints(supabaseUrl: string): Plugin {
-  const PRELOAD_FONTS = [/^assets\/manrope-latin-400-normal-[\w-]+\.woff2$/, /^assets\/cormorant-garamond-latin-500-normal-[\w-]+\.woff2$/];
+  // Türkçe metin iki alt kümeyi de kullanır (ğ, ş, İ "latin-ext" dosyasındadır).
+  const PRELOAD_FONTS = [
+    /^assets\/figtree-latin-wght-normal-[\w-]+\.woff2$/,
+    /^assets\/figtree-latin-ext-wght-normal-[\w-]+\.woff2$/,
+    /^assets\/newsreader-latin-wght-normal-[\w-]+\.woff2$/,
+    /^assets\/newsreader-latin-ext-wght-normal-[\w-]+\.woff2$/,
+  ];
   return {
     name: 'rango-head-hints',
     apply: 'build',

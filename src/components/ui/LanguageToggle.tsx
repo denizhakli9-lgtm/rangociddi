@@ -20,7 +20,7 @@ export function LanguageToggle({ className = '' }: { className?: string }) {
       lang={next}
       aria-label={next === 'en' ? 'Switch to English' : 'Türkçe’ye geç'}
       title={next === 'en' ? 'Switch to English' : 'Türkçe’ye geç'}
-      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-coal/60 text-[11px] font-semibold tracking-wider text-gold-400 transition hover:border-gold-500/60 hover:bg-gold-500/10 active:scale-95 ${className}`}
+      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-xs font-semibold text-mist transition-colors hover:bg-white/5 hover:text-white md:h-9 md:w-9 ${className}`}
     >
       {target.short}
     </button>
@@ -34,7 +34,7 @@ export function LanguageSelect() {
   return (
     <fieldset className="card p-4">
       <legend className="flex items-center gap-2 px-2 text-sm font-semibold text-white">
-        <Languages className="h-4 w-4 text-gold-400" strokeWidth={1.6} />
+        <Languages className="h-4 w-4 text-mist-2" strokeWidth={1.6} />
         {tx('Dil', 'Language')}
       </legend>
       <div className="grid grid-cols-2 gap-2">
@@ -42,7 +42,7 @@ export function LanguageSelect() {
           <label
             key={value}
             lang={value}
-            className={`relative flex cursor-pointer items-center justify-center rounded-xl border p-3 text-xs transition ${locale === value ? 'border-gold-500 bg-gold-500/10 text-gold-500' : 'border-line text-mist hover:border-gold-500/50'}`}
+            className={`relative flex cursor-pointer items-center justify-center rounded-xl border p-3 text-xs transition ${locale === value ? 'border-white/70 bg-coal-2 font-semibold text-white' : 'border-line text-mist hover:border-white/30'}`}
           >
             <input className="peer sr-only" type="radio" name="language" value={value} checked={locale === value} onChange={() => setLocale(value)} />
             <span className="absolute inset-0 rounded-xl peer-focus-visible:ring-2 peer-focus-visible:ring-gold-500" />

@@ -89,6 +89,10 @@ export default function Onboarding() {
               <Button size="lg" variant="outline" full onClick={() => finish('/giris')}>
                 {tx('Giriş yap', 'Sign in')}
               </Button>
+              {/* Browsing salons needs no account (App Review 5.1.1): say so on the last slide too, not only via "Atla". */}
+              <Button size="lg" variant="ghost" full onClick={() => finish('/kesfet')}>
+                {tx('Üye olmadan göz at', 'Browse without an account')}
+              </Button>
             </div>
           ) : (
             <Button size="lg" full icon={<ArrowRight className="h-4 w-4" />} className="flex-row-reverse sm:w-auto" onClick={() => setIndex(index + 1)}>

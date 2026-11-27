@@ -140,7 +140,8 @@ export default function App() {
           </Route>
 
           <Route path="/isletme/*" element={<RequireAuth roles={['business']}><OwnerArea /></RequireAuth>} />
-          <Route path="/yonetim/kurulum" element={<RequireAuth><AdminSetup /></RequireAuth>} />
+          {/* First-admin setup is a one-time website task; the store apps do not offer it. */}
+          {!isNative && <Route path="/yonetim/kurulum" element={<RequireAuth><AdminSetup /></RequireAuth>} />}
           <Route path="/yonetim/destek-ekibi" element={<RequireAuth><div className="min-h-screen bg-ink p-4 pt-[calc(1rem+env(safe-area-inset-top))] sm:p-8 sm:pt-[calc(2rem+env(safe-area-inset-top))]"><SupportCenter workspace /></div></RequireAuth>} />
           <Route path="/yonetim/*" element={<RequireAuth roles={['admin']}><AdminArea /></RequireAuth>} />
           {/* Field agents are ordinary accounts listed in field_agents; FieldArea checks membership itself. */}

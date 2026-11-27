@@ -178,12 +178,12 @@ export default function AdminRefunds() {
       >
         <div className="space-y-4">
           {open?.approve && isPaytrPayment(open.row) && !isTest(open.row) && (
-            <div className="rounded-xl border border-info-500/30 bg-info-900/40 p-3 text-xs leading-relaxed text-info-300">
+            <div className="rounded-xl border border-info-500/30 bg-info-500/10 p-3 text-xs leading-relaxed text-info-300">
               Onayladığınızda {formatTRY(open.row.amount)} PayTR üzerinden müşterinin kartına iade edilir. Bu işlem geri alınamaz.
             </div>
           )}
           {open?.approve && isTest(open.row) && (
-            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-warning-500/30 bg-warning-900/40 p-3 text-xs leading-relaxed text-warning-300">
+            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-warning-500/30 bg-warning-500/10 p-3 text-xs leading-relaxed text-warning-300">
               <TestBadge />
               <span>Bu bir test ödemesi. Müşterinin kartından tahsilat yapılmadığı için karta para gönderilmez; iade yalnızca kayıtta tamamlanır.</span>
             </div>

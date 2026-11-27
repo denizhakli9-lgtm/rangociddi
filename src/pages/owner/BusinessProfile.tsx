@@ -125,7 +125,7 @@ export default function BusinessProfile() {
         text="Müşterilerin gördüğü bilgiler, görseller ve randevu politikanız."
         action={
           business.status === 'approved' ? (
-            <Link to={`/i/${business.slug}`} target="_blank" onClick={newTabClick(`/i/${business.slug}`)} className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-line px-4 text-xs text-mist transition hover:border-gold-500/40 hover:text-white">
+            <Link to={`/i/${business.slug}`} target="_blank" onClick={newTabClick(`/i/${business.slug}`)} className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-line px-4 text-xs text-mist transition hover:border-white/30 hover:text-white">
               Profili görüntüle <ExternalLink className="h-3.5 w-3.5" />
             </Link>
           ) : undefined
@@ -157,7 +157,7 @@ export default function BusinessProfile() {
             </label>
           </div>
           {!coverSrc && (
-            <div className="-mt-2 mb-5 rounded-xl border border-gold-500/30 bg-gold-500/5 p-4">
+            <div className="-mt-2 mb-5 rounded-xl border border-line bg-gold-500/5 p-4">
               <p className="mb-3 text-xs leading-relaxed text-mist">
                 Kendi kapak fotoğrafınızı yükleyene kadar sektörünüze özel hazır görsellerden biri gösterilir. Beğendiğinizi seçip kaydedin; “Kapak değiştir” ile dilediğiniz zaman işletmenizin kendi fotoğrafını yükleyebilirsiniz.
               </p>
@@ -182,7 +182,7 @@ export default function BusinessProfile() {
               );
             })}
             {media.gallery.length < MAX_GALLERY && (
-              <label className="grid aspect-square cursor-pointer place-items-center rounded-xl border border-dashed border-line text-mist-2 transition hover:border-gold-500/50 hover:text-gold-300">
+              <label className="grid aspect-square cursor-pointer place-items-center rounded-xl border border-dashed border-line text-mist-2 transition hover:border-white/30 hover:text-gold-300">
                 {uploading === 'gallery' ? <Spinner className="h-5 w-5" /> : <ImagePlus className="h-5 w-5" />}
                 <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={async (e) => { const url = await upload(e.target.files?.[0], 'gallery'); if (url) setMedia((m) => ({ ...m, gallery: [...m.gallery, url].slice(0, MAX_GALLERY) })); e.target.value = ''; }} />
               </label>

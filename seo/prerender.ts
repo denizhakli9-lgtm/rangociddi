@@ -50,7 +50,7 @@ import {
   type SeoReview,
   type SeoService,
 } from '../src/lib/seo/meta';
-import { siteLinks } from '../src/lib/seo/pages/common';
+import { FAQ_PATH, FOR_BUSINESS_PATH, siteLinks } from '../src/lib/seo/pages/common';
 import { faqPage } from '../src/lib/seo/pages/faq';
 import { forBusinessPage } from '../src/lib/seo/pages/forBusiness';
 import { homeExtraBlocks, homeSchemas, type HomeExtrasInput } from '../src/lib/seo/pages/home';
@@ -162,61 +162,105 @@ async function loadSiteData(supabaseUrl: string, key: string): Promise<SiteData 
 // Static page bodies
 // ---------------------------------------------------------------------------
 
-/** The static page frame: the app's header and footer, with the page's content in between. */
+/** The "R" monogram, as drawn by `BrandMark` in src/components/ui/Brand.tsx. */
+const BRAND_MARK =
+  '<svg viewBox="0 0 64 64" aria-hidden="true" class="h-7 w-7 shrink-0"><rect width="64" height="64" rx="15" fill="#0a0a0a"/><rect x="4.5" y="4.5" width="55" height="55" rx="11" fill="none" stroke="#D4AF37" stroke-opacity="0.35" stroke-width="1.5"/><path d="M22 47V17h11.5a8.5 8.5 0 0 1 0 17H22m11 0l10 13" fill="none" stroke="#D4AF37" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const LOGO = `<span class="inline-flex items-center gap-2.5">${BRAND_MARK}<span class="whitespace-nowrap font-display text-[22px] font-semibold leading-none tracking-[-0.01em] text-white">Rango<span class="text-gold-500">.</span></span></span>`;
+
+/** The static page frame: the app's header and footer (CustomerLayout, SiteFooter), with the page's content in between. */
 function shell(content: string): string {
-  const site = siteLinks('tr')
-    .map((l) => `<a href="${e(l.path)}" class="transition hover:text-white">${e(l.label)}</a>`)
-    .join('');
-  const legal = LEGAL_LINKS.map((l) => `<a href="/yasal/${l.slug}" class="transition hover:text-white">${e(l.label)}</a>`).join('');
-  return `<div class="min-h-screen bg-ink">
-      <header class="sticky top-0 z-40 border-b border-line-soft bg-ink/85 backdrop-blur-xl">
-        <div class="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-          <a href="/" aria-label="Rango ana sayfa" class="font-display text-2xl font-semibold tracking-wide text-white">Rango<span class="text-gold-500">.</span></a>
-          <nav class="flex items-center gap-1" aria-label="Ana menü">
-            <a href="/kategoriler" class="rounded-full px-4 py-2 text-sm text-mist hover:text-white">Kategoriler</a>
-            <a href="/ara" class="hidden rounded-full px-4 py-2 text-sm text-mist hover:text-white md:flex">İşletmeler</a>
-            <a href="/giris" class="rounded-full bg-gold-500 px-4 py-1.5 text-xs font-semibold text-ink">Giriş Yap</a>
+  const menuLink = 'relative flex items-center px-3 text-sm text-mist transition-colors hover:text-white';
+  const columnTitle = 'text-[13px] font-semibold text-white';
+  const columnLink = 'text-[13px] text-mist transition-colors hover:text-white';
+  const column = (label: string, title: string, links: { path: string; label: string }[]) =>
+    `<nav aria-label="${e(label)}"><p class="${columnTitle}">${e(title)}</p><ul class="mt-4 space-y-2.5">${links
+      .map((l) => `<li><a href="${e(l.path)}" class="${columnLink}">${e(l.label)}</a></li>`)
+      .join('')}</ul></nav>`;
+  return `<div class="flex min-h-screen flex-col bg-ink">
+      <header class="sticky top-0 z-40 border-b border-line-soft bg-ink/90 backdrop-blur-md">
+        <div class="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4 sm:px-6">
+          <a href="/" aria-label="Rango ana sayfa" class="shrink-0">${LOGO}</a>
+          <nav aria-label="Ana menü" class="hidden h-full items-stretch gap-1 md:flex">
+            <a href="/" class="${menuLink}">Keşfet</a>
+            <a href="/kategoriler" class="${menuLink}">Kategoriler</a>
+            <a href="${FOR_BUSINESS_PATH}" class="${menuLink}">İşletmeler için</a>
+            <a href="${FAQ_PATH}" class="${menuLink}">Yardım</a>
           </nav>
+          <div class="ml-auto flex items-center gap-1.5">
+            <a href="/giris" class="ml-1 inline-flex h-9 items-center whitespace-nowrap rounded-xl bg-primary px-4 text-[13px] font-semibold text-primary-fg">Giriş Yap</a>
+          </div>
         </div>
       </header>
-      <main class="mx-auto max-w-6xl px-4 pb-28 pt-6 sm:px-6">
+      <main class="mx-auto w-full max-w-6xl flex-1 px-4 pb-16 pt-6 sm:px-6">
         ${content}
-        <footer class="mt-16 border-t border-line-soft pt-6 text-xs text-mist-2">
-          <nav aria-label="Site bağlantıları" class="flex flex-wrap gap-x-5 gap-y-2 text-mist">${site}</nav>
-          <nav aria-label="Yasal bağlantılar" class="mt-3 flex flex-wrap gap-x-5 gap-y-2">${legal}</nav>
-          <p class="mt-4 leading-relaxed">${e(PAYMENT_PROVIDER.disclosure)} <a href="${e(PAYMENT_PROVIDER.website)}" target="_blank" rel="noopener noreferrer" class="underline underline-offset-2">${e(
-            PAYMENT_PROVIDER.website.replace('https://', ''),
-          )}</a></p>
-          <p class="mt-2 text-mist-3">© ${new Date().getFullYear()} ${e(COMPANY.legalName)}. Tüm hakları saklıdır.</p>
-        </footer>
       </main>
+      <footer class="border-t border-line-soft pb-24 md:pb-0">
+        <div class="mx-auto max-w-6xl px-4 sm:px-6">
+          <div class="grid gap-x-8 gap-y-10 py-12 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1.2fr]">
+            <div>
+              ${LOGO}
+              <p class="mt-4 max-w-xs text-[13px] leading-relaxed text-mist">İzmir’de kuaför, berber ve güzellik işletmeleri için online randevu.</p>
+            </div>
+            ${column('Site bağlantıları', 'Keşfet', [...siteLinks('tr').map((l) => ({ path: l.path, label: l.label })), { path: '/ara', label: 'İşletme ara' }])}
+            ${column('İşletme bağlantıları', 'İşletmeler', [
+              { path: FOR_BUSINESS_PATH, label: 'Rango’ya katılın' },
+              { path: '/kayit', label: 'İşletme hesabı oluştur' },
+              { path: '/giris', label: 'İşletme girişi' },
+            ])}
+            ${column('Yasal bağlantılar', 'Yasal', LEGAL_LINKS.map((l) => ({ path: `/yasal/${l.slug}`, label: l.label })))}
+          </div>
+          <div class="flex flex-col gap-3 border-t border-line-soft py-6 text-xs text-mist-2 md:flex-row md:items-start md:justify-between md:gap-10">
+            <p class="shrink-0 text-mist-3">© ${new Date().getFullYear()} ${e(COMPANY.legalName)}</p>
+            <p class="leading-relaxed md:max-w-2xl md:text-right">${e(PAYMENT_PROVIDER.disclosure)} <a href="${e(PAYMENT_PROVIDER.website)}" target="_blank" rel="noopener noreferrer" class="underline underline-offset-2">${e(
+              PAYMENT_PROVIDER.website.replace('https://', ''),
+            )}</a></p>
+          </div>
+        </div>
+      </footer>
     </div>`;
 }
 
 const blockPage = (blocks: Block[]) => shell(renderBlocks(blocks));
 
+/** The category chips of the home page (pages/customer/Home.tsx). */
+function categoryChips(categories: SeoCategory[]): string {
+  const items = categories
+    .map((c) => `<a href="${e(categoryPath(c.slug))}" class="flex h-11 shrink-0 items-center gap-2 rounded-full border border-line bg-coal px-4 text-sm text-white transition-colors hover:border-white/40">${e(c.name)}</a>`)
+    .join('');
+  return `<div class="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">${items}</div>`;
+}
+
+/** The category list of /kategoriler (pages/customer/Categories.tsx). */
 function categoryLinks(categories: SeoCategory[]): string {
   if (!categories.length) return '';
   const items = categories
     .map(
-      (c) => `<li><a href="${e(categoryPath(c.slug))}" class="card block p-5 transition hover:border-gold-500/40">
-              <h3 class="font-display text-2xl text-white">${e(c.name)}</h3>
-              ${c.description ? `<p class="mt-1 text-xs text-mist-2">${e(c.description)}</p>` : ''}
+      (c) => `<li><a href="${e(categoryPath(c.slug))}" class="group flex h-full items-start justify-between gap-4 border-t border-line py-5">
+              <span><span class="block text-base font-semibold text-white">${e(c.name)}</span>${c.description ? `<span class="mt-1 block text-[13px] leading-relaxed text-mist">${e(c.description)}</span>` : ''}</span>
             </a></li>`,
     )
     .join('');
-  return `<ul class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">${items}</ul>`;
+  return `<ul class="mt-8 grid gap-x-10 sm:grid-cols-2 lg:grid-cols-3">${items}</ul>`;
 }
 
 function homeBody(input: HomeExtrasInput): string {
-  return shell(`<div class="space-y-8 sm:space-y-10">
-        <section class="rounded-3xl border border-gold-500/20 bg-gradient-to-br from-coal via-coal-2 to-gold-500/10 px-5 py-7 sm:px-10 sm:py-10">
-          <p class="eyebrow mb-3">İzmir · Online randevu</p>
-          <h1 class="max-w-lg font-display text-[36px] leading-[1.2] tracking-tight text-white sm:text-6xl">Randevunun yeni yolu.</h1>
-          <p class="mt-3 max-w-md text-sm leading-relaxed text-mist sm:text-base">Kuaför, berber ve güzellik randevunu online al: İzmir’deki işletmeleri keşfet, sana en uygun zamanı seç.</p>
-          <p class="mt-6"><a href="${e(cityPath(DEFAULT_CITY))}" class="inline-flex h-11 items-center rounded-xl bg-gold-500 px-4 text-sm font-semibold text-ink">İşletmeleri keşfet</a></p>
+  const search = 'İşletme, hizmet veya semt ara';
+  return shell(`<div class="space-y-12 sm:space-y-16">
+        <section class="grid items-center gap-10 pt-4 sm:pt-8 lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-16 lg:pb-6 lg:pt-10">
+          <div>
+            <h1 class="font-display text-[42px] leading-[1.04] tracking-[-0.02em] text-white sm:text-6xl lg:text-[68px]">Randevunun yeni yolu.</h1>
+            <p class="mt-4 max-w-md text-[15px] leading-relaxed text-mist sm:text-base">Kuaför, berber ve güzellik randevunuzu online alın: İzmir’deki işletmeleri keşfedin, size en uygun saati seçin.</p>
+            <form action="/ara" method="get" role="search" class="mt-7 flex max-w-xl items-center gap-1 rounded-2xl border border-line bg-coal p-1.5 shadow-gold">
+              <input name="q" aria-label="${search}" placeholder="${search}" class="h-11 min-w-0 flex-1 bg-transparent px-3 text-[15px] text-white placeholder:text-mist-3 focus:outline-none" />
+              <button type="submit" class="h-11 shrink-0 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-fg">Ara</button>
+            </form>
+          </div>
+          <div class="relative hidden lg:block" aria-hidden="true">
+            <img src="/sector-barber-3.webp" alt="" width="840" height="1050" loading="lazy" decoding="async" class="aspect-[4/5] w-full rounded-3xl object-cover" />
+            <img src="/sector-nails-7.webp" alt="" width="352" height="352" loading="lazy" decoding="async" class="absolute -bottom-8 -left-12 aspect-square w-44 rounded-2xl border-[5px] border-ink object-cover" />
+          </div>
         </section>
-        ${input.categories.length ? `<section aria-label="Hizmet kategorileri"><h2 class="font-display text-3xl text-white">Bugün neye ihtiyacın var?</h2>${categoryLinks(input.categories)}</section>` : ''}
+        ${input.categories.length ? `<section aria-label="Hizmet kategorileri"><h2 class="mb-4 font-display text-[26px] text-white sm:text-3xl">Hizmete göre keşfedin</h2>${categoryChips(input.categories)}</section>` : ''}
         ${renderBlocks(homeExtraBlocks(input))}
       </div>`);
 }

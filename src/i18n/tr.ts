@@ -24,7 +24,7 @@ export const tr = {
     from: 'başlayan fiyatlarla',
     new: 'Yeni',
     verified: 'Onaylı İşletme',
-    featured: 'Öne Çıkan',
+    featured: 'Öne çıkan',
     all: 'Tümü',
   },
   nav: {

@@ -203,7 +203,7 @@ export default function AdminFieldAgents() {
                           {[a.profiles?.email, a.profiles?.phone, formatDate(a.created_at, { day: 'numeric', month: 'short', year: 'numeric' })].filter(Boolean).join(' · ')}
                         </p>
                       </div>
-                      <span className="rounded-lg border border-gold-500/30 bg-gold-500/5 px-2.5 py-1 font-mono text-sm tracking-[0.2em] text-gold-300">{a.code}</span>
+                      <span className="rounded-lg border border-line bg-gold-500/5 px-2.5 py-1 font-mono text-sm tracking-[0.2em] text-gold-300">{a.code}</span>
                       <p className="text-xs text-mist">
                         {s?.total ?? 0} işletme · {s?.approved ?? 0} yayında
                         <br />

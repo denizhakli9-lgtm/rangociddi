@@ -192,7 +192,7 @@ function PaymentModeCard({ settings, onChanged }: { settings: PlatformSettings; 
             role="radio"
             aria-checked={m.key === mode}
             onClick={() => m.key !== mode && setPending(m.key)}
-            className={`rounded-xl border p-4 text-left transition-colors ${m.key === mode ? 'border-gold-400 bg-gold-400/10' : 'border-line hover:border-gold-500/50'}`}
+            className={`rounded-xl border p-4 text-left transition-colors ${m.key === mode ? 'border-gold-400 bg-gold-400/10' : 'border-line hover:border-white/30'}`}
           >
             <p className="font-medium text-white">{m.label}</p>
             <p className="mt-1 text-xs leading-relaxed text-mist-2">{m.text}</p>
@@ -227,7 +227,7 @@ function PaymentModeCard({ settings, onChanged }: { settings: PlatformSettings; 
         <div className="space-y-3 text-sm text-mist">
           <p>{target?.text}</p>
           {pending === 'paytr_live' && (
-            <p className="rounded-xl border border-warning-500/40 bg-warning-900/40 p-3 text-xs leading-relaxed text-warning-300">
+            <p className="rounded-xl border border-warning-500/40 bg-warning-500/10 p-3 text-xs leading-relaxed text-warning-300">
               Gerçek para çekilir. PayTR'den mağazanızın canlı moda alındığına dair SMS/e-posta almadıysanız bu modu açmayın: PayTR o zamana kadar ödemeleri test işlemi olarak alır ve Rango bu ödemelerle randevu onaylamaz.
             </p>
           )}

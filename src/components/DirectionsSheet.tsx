@@ -55,7 +55,7 @@ export function DirectionsSheet({ open, onClose, target }: SheetProps) {
                 systemLinkClick(directionsUrl(app.id, target))(e);
                 onClose();
               }}
-              className="group flex items-center gap-4 rounded-2xl border border-line bg-coal-2 px-4 py-3.5 transition hover:border-gold-500/40 hover:bg-white/[0.03]"
+              className="group flex items-center gap-4 rounded-2xl border border-line bg-coal-2 px-4 py-3.5 transition hover:border-white/30 hover:bg-white/[0.03]"
             >
               <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br ${app.tone}`}>
                 <Map className="h-5 w-5" />
@@ -72,7 +72,7 @@ export function DirectionsSheet({ open, onClose, target }: SheetProps) {
       <button
         type="button"
         onClick={copy}
-        className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-line py-3 text-sm text-mist transition hover:border-gold-500/40 hover:text-white"
+        className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-line py-3 text-sm text-mist transition hover:border-white/30 hover:text-white"
       >
         {copied ? <Check className="h-4 w-4 text-success-300" /> : <Copy className="h-4 w-4" />}
         {copied ? tx('Kopyalandı', 'Copied') : tx('Adresi kopyala', 'Copy address')}

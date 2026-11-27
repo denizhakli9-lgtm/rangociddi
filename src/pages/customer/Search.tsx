@@ -108,7 +108,7 @@ export default function SearchPage() {
             </button>
           )}
         </div>
-        <button type="button" onClick={() => setFiltersOpen(true)} aria-label={activeFilters > 0 ? tx(`Filtreler (${activeFilters} etkin)`, `Filters (${activeFilters} active)`) : tx('Filtreler', 'Filters')} className="relative flex h-12 items-center gap-2 rounded-full border border-line bg-coal px-4 text-sm text-white transition hover:border-gold-500/40">
+        <button type="button" onClick={() => setFiltersOpen(true)} aria-label={activeFilters > 0 ? tx(`Filtreler (${activeFilters} etkin)`, `Filters (${activeFilters} active)`) : tx('Filtreler', 'Filters')} className="relative flex h-12 items-center gap-2 rounded-full border border-line bg-coal px-4 text-sm text-white transition hover:border-white/30">
           <SlidersHorizontal className="h-4 w-4 text-gold-400" />
           <span className="hidden sm:inline">{tx('Filtreler', 'Filters')}</span>
           {activeFilters > 0 && <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gold-500 text-[10px] font-bold text-ink">{activeFilters}</span>}
@@ -129,8 +129,8 @@ export default function SearchPage() {
             {SORTS.map((s) => <option key={s.value} value={s.value}>{tx(...s.label)}</option>)}
           </select>
           <div className="hidden rounded-full border border-line bg-coal p-0.5 sm:flex">
-            <button type="button" onClick={() => setView('grid')} className={`rounded-full p-1.5 ${view === 'grid' ? 'bg-gold-500 text-ink' : 'text-mist'}`} aria-label={tx('Izgara görünümü', 'Grid view')} aria-pressed={view === 'grid'}><LayoutGrid className="h-4 w-4" /></button>
-            <button type="button" onClick={() => setView('row')} className={`rounded-full p-1.5 ${view === 'row' ? 'bg-gold-500 text-ink' : 'text-mist'}`} aria-label={tx('Liste görünümü', 'List view')} aria-pressed={view === 'row'}><List className="h-4 w-4" /></button>
+            <button type="button" onClick={() => setView('grid')} className={`rounded-full p-1.5 ${view === 'grid' ? 'bg-primary text-primary-fg' : 'text-mist'}`} aria-label={tx('Izgara görünümü', 'Grid view')} aria-pressed={view === 'grid'}><LayoutGrid className="h-4 w-4" /></button>
+            <button type="button" onClick={() => setView('row')} className={`rounded-full p-1.5 ${view === 'row' ? 'bg-primary text-primary-fg' : 'text-mist'}`} aria-label={tx('Liste görünümü', 'List view')} aria-pressed={view === 'row'}><List className="h-4 w-4" /></button>
           </div>
         </div>
       </div>
@@ -211,7 +211,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`shrink-0 rounded-full border px-4 py-2 text-xs font-medium transition ${active ? 'border-gold-500 bg-gold-500 text-ink' : 'border-line bg-coal text-mist hover:border-gold-500/40 hover:text-white'}`}
+      className={`shrink-0 rounded-full border px-4 py-2 text-xs font-medium transition ${active ? 'border-gold-500 bg-primary text-primary-fg' : 'border-line bg-coal text-mist hover:border-white/30 hover:text-white'}`}
     >
       {children}
     </button>

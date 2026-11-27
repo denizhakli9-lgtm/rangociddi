@@ -101,7 +101,7 @@ export default function ForgotPassword() {
             {tx('E-posta adresiyle kayıt olduysanız geri dönüp e-posta adresinizi girin; size yenileme bağlantısı gönderelim.', 'If you signed up with an email address, go back and enter your email; we will send you a reset link.')}
           </p>
         </div>
-        <a {...whatsAppLinkProps(PHONE_HELP_MESSAGE)} className="mt-6 inline-flex h-14 w-full items-center justify-center gap-2.5 rounded-full bg-gradient-to-b from-gold-400 to-gold-600 px-7 text-[15px] font-semibold tracking-wide text-ink shadow-[0_8px_24px_-8px_rgba(212,175,55,0.55)] transition-all duration-200 hover:from-gold-300 hover:to-gold-500 active:scale-[0.98]">
+        <a {...whatsAppLinkProps(PHONE_HELP_MESSAGE)} className="mt-6 inline-flex h-14 w-full items-center justify-center gap-2.5 rounded-xl bg-primary px-7 text-[15px] font-semibold tracking-wide text-primary-fg transition-all duration-200 hover:bg-primary/90 active:scale-[0.98]">
           <MessageCircle className="h-5 w-5" /> {tx('WhatsApp ile Yazın', 'Message us on WhatsApp')}
         </a>
         <Button type="button" variant="ghost" full className="mt-3" onClick={() => setPhoneHelp(false)}>
@@ -120,7 +120,7 @@ export default function ForgotPassword() {
     <AuthShell eyebrow={tx('Hesap kurtarma', 'Account recovery')} title={tx('Şifremi Unuttum', 'Forgot password')} subtitle={tx('Hesabınıza kayıtlı e-posta adresini girin, size şifre yenileme bağlantısı gönderelim. Telefon numarasıyla kayıt olduysanız numaranızı girin, size nasıl yardımcı olacağımızı gösterelim.', 'Enter the email address of your account and we will send you a password reset link. If you signed up with a phone number, enter it and we will show you how we can help.')}>
       <form onSubmit={submit} className="space-y-5" noValidate>
         <Input label={tx('E-posta veya telefon', 'Email or phone')} name="username" type="text" autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={email} onChange={(e) => setEmail(e.target.value)} error={error} icon={<UserRound className="h-4 w-4" />} placeholder={tx('ornek@eposta.com veya 05XX XXX XX XX', 'you@example.com or 05XX XXX XX XX')} />
-        {formError && <p className="rounded-xl border border-error-500/30 bg-error-900/40 px-4 py-3 text-sm text-error-300">{formError}</p>}
+        {formError && <p className="rounded-xl border border-error-500/30 bg-error-500/10 px-4 py-3 text-sm text-error-300">{formError}</p>}
         <Button type="submit" size="lg" full loading={loading}>
           {tx('Yenileme Bağlantısı Gönder', 'Send reset link')}
         </Button>

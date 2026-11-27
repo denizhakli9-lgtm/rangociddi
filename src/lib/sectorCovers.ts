@@ -46,10 +46,13 @@ function hash(text: string): number {
 
 export type CategoryRef = { slug?: string | null; name?: string | null } | null | undefined;
 
-/** Ready-made cover variants shipped in /public per sector (`sector-<name><suffix>.webp`). */
-export const SECTOR_VARIANTS = ['', '-2', '-3', '-4', '-5', '-6', '-7', '-8'] as const;
-/** Only the first ones are used as the automatic cover, so existing listings keep their image. */
-const AUTO_VARIANTS = 2;
+/**
+ * Ready-made cover photographs shipped in /public per sector (`sector-<name><suffix>.webp`): what
+ * the cover picker offers and what a business without a photo gets automatically.
+ */
+export const SECTOR_VARIANTS = ['-3', '-4', '-5', '-6', '-7', '-8'] as const;
+/** Earlier ready-made covers: no longer offered, but a business that picked one keeps it. */
+const RETIRED_VARIANTS = ['', '-2'] as const;
 /** `cover_url` value for a ready-made cover the owner picked, e.g. `sector:hair-2`. */
 export const SECTOR_CHOICE_PREFIX = 'sector:';
 
@@ -68,13 +71,13 @@ export function sectorFileName(key: string): string {
 export function sectorChoiceKey(coverUrl?: string | null): string | null {
   if (!coverUrl?.startsWith(SECTOR_CHOICE_PREFIX)) return null;
   const key = coverUrl.slice(SECTOR_CHOICE_PREFIX.length);
-  const known = new Set(Object.values(SECTORS).flatMap((s) => SECTOR_VARIANTS.map((v) => `${s}${v}`)));
+  const known = new Set(Object.values(SECTORS).flatMap((s) => [...SECTOR_VARIANTS, ...RETIRED_VARIANTS].map((v) => `${s}${v}`)));
   return known.has(key) ? key : null;
 }
 
 /** The automatic cover for a business without a photo: stable per business, by category. */
 export function placeholderKey(key: string, category: CategoryRef): string {
-  const variant = SECTOR_VARIANTS[hash(key || 'rango') % AUTO_VARIANTS];
+  const variant = SECTOR_VARIANTS[hash(key || 'rango') % SECTOR_VARIANTS.length];
   return `${sectorOf(category)}${variant}`;
 }
 

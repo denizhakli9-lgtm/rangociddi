@@ -51,7 +51,7 @@ export function DashboardLayout({ title, items, notificationsPath, whatsAppMessa
           onClick={onClick}
           className={({ isActive }) =>
             `flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm transition ${
-              isActive ? 'border border-gold-500/30 bg-gold-500/10 text-gold-300' : 'border border-transparent text-mist hover:bg-white/5 hover:text-white'
+              isActive ? 'border border-line bg-gold-500/10 text-gold-300' : 'border border-transparent text-mist hover:bg-white/5 hover:text-white'
             }`
           }
         >

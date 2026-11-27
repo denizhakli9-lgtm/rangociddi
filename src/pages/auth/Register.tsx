@@ -198,10 +198,10 @@ export default function Register() {
                 setErrors((e) => ({ ...e, email: undefined, phone: undefined }));
                 setFormError('');
               }}
-              className={`relative rounded-2xl border p-4 text-left transition ${active ? 'border-gold-500/70 bg-gold-500/10 shadow-gold' : 'border-line bg-coal hover:border-gold-500/30'}`}
+              className={`relative rounded-2xl border p-4 text-left transition ${active ? 'border-gold-500/70 bg-gold-500/10 shadow-gold' : 'border-line bg-coal hover:border-white/30'}`}
             >
               {active && (
-                <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-gold-500 text-ink">
+                <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-fg">
                   <Check className="h-3 w-3" strokeWidth={3} />
                 </span>
               )}
@@ -217,7 +217,7 @@ export default function Register() {
         <ol className="mb-6 space-y-3 rounded-2xl border border-line bg-coal p-4">
           {businessSteps.map((s, i) => (
             <li key={s.title} className="flex items-start gap-3">
-              <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${i === 0 ? 'bg-gold-500 text-ink' : 'border border-line text-mist-2'}`}>{i + 1}</span>
+              <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${i === 0 ? 'bg-primary text-primary-fg' : 'border border-line text-mist-2'}`}>{i + 1}</span>
               <span>
                 <span className={`block text-sm font-medium ${i === 0 ? 'text-white' : 'text-mist'}`}>{s.title}</span>
                 <span className="block text-xs text-mist-2">{s.text}</span>
@@ -247,7 +247,7 @@ export default function Register() {
                     role="radio"
                     aria-checked={active}
                     onClick={() => chooseMethod(value)}
-                    className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition ${active ? 'border-gold-500/70 bg-gold-500/10 text-white' : 'border-line bg-coal text-mist hover:border-gold-500/30'}`}
+                    className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition ${active ? 'border-gold-500/70 bg-gold-500/10 text-white' : 'border-line bg-coal text-mist hover:border-white/30'}`}
                   >
                     <Icon className={`h-4 w-4 ${active ? 'text-gold-400' : 'text-mist-2'}`} />
                     {label}
@@ -334,7 +334,7 @@ export default function Register() {
           <Link to={legalPath('aydinlatma-metni')} target="_blank" onClick={newTabClick(legalPath('aydinlatma-metni'))} rel="noopener noreferrer" className="font-semibold text-gold-400 hover:text-gold-300">{tx('KVKK Aydınlatma Metni', 'Privacy Notice (KVKK)')}</Link>
           {tx(' kapsamında işlenir.', '.')}
         </p>
-        {formError && <p className="rounded-xl border border-error-500/30 bg-error-900/40 px-4 py-3 text-sm text-error-300">{formError}</p>}
+        {formError && <p className="rounded-xl border border-error-500/30 bg-error-500/10 px-4 py-3 text-sm text-error-300">{formError}</p>}
         <Button type="submit" size="lg" full loading={loading}>
           {type === 'business' ? tx('İşletme Hesabı Oluştur', 'Create business account') : tx('Hesap Oluştur', 'Create account')}
         </Button>

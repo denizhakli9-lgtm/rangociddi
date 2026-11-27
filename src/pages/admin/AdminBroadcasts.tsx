@@ -160,7 +160,7 @@ export default function AdminBroadcasts() {
                           setAudience(a.value);
                           setErrors((e) => ({ ...e, audience: undefined }));
                         }}
-                        className={`rounded-2xl border p-4 text-left transition ${active ? 'border-gold-500/70 bg-gold-500/10' : 'border-line bg-ink/40 hover:border-gold-500/30'}`}
+                        className={`rounded-2xl border p-4 text-left transition ${active ? 'border-gold-500/70 bg-gold-500/10' : 'border-line bg-ink/40 hover:border-white/30'}`}
                       >
                         <span className="flex items-center justify-between gap-2">
                           <span className="text-sm font-semibold text-white">{a.label}</span>
@@ -181,7 +181,7 @@ export default function AdminBroadcasts() {
                         return (
                           <li key={b.id}>
                             <button type="button" role="checkbox" aria-checked={on} onClick={() => toggle(b.id)} className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition ${on ? 'bg-gold-500/10' : 'hover:bg-white/5'}`}>
-                              <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${on ? 'border-gold-500 bg-gold-500 text-ink' : 'border-line'}`}>{on && <Check className="h-3 w-3" strokeWidth={3} />}</span>
+                              <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${on ? 'border-gold-500 bg-primary text-primary-fg' : 'border-line'}`}>{on && <Check className="h-3 w-3" strokeWidth={3} />}</span>
                               <span className="min-w-0 flex-1">
                                 <span className="block truncate text-sm text-white">{b.name}</span>
                                 <span className="block text-xs text-mist-2">{b.district}</span>
@@ -286,7 +286,7 @@ export default function AdminBroadcasts() {
 
 function Preview({ title, body }: { title: string; body: string }) {
   return (
-    <div className="flex items-start gap-4 rounded-2xl border border-gold-500/30 bg-gold-500/[0.04] p-4">
+    <div className="flex items-start gap-4 rounded-2xl border border-line bg-gold-500/[0.04] p-4">
       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gold-500/40 text-gold-400">
         <Megaphone className="h-4 w-4" />
       </span>

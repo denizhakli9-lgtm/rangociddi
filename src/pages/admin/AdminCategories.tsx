@@ -74,7 +74,7 @@ function CategoryModal({ initial, onClose, onSaved }: { initial: Category | null
                 type="button"
                 onClick={() => set('icon', ic)}
                 aria-label={ic}
-                className={`grid h-11 w-11 place-items-center rounded-xl border transition ${form.icon === ic ? 'border-gold-400 bg-gold-400/10 text-gold-300' : 'border-line text-mist hover:border-gold-400/40'}`}
+                className={`grid h-11 w-11 place-items-center rounded-xl border transition ${form.icon === ic ? 'border-gold-400 bg-gold-400/10 text-gold-300' : 'border-line text-mist hover:border-white/30'}`}
               >
                 <CategoryIcon name={ic} />
               </button>

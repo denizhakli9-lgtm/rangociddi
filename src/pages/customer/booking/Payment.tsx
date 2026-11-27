@@ -477,7 +477,7 @@ export default function Payment() {
         </p>
 
         {testMode && (
-          <div role="alert" className="mt-6 rounded-2xl border-2 border-warning-500/70 bg-warning-900/60 p-5 text-warning-300">
+          <div role="alert" className="mt-6 rounded-2xl border-2 border-warning-500/70 bg-warning-500/10 p-5 text-warning-300">
             <p className="flex items-center gap-2 text-xl font-bold uppercase tracking-[0.18em]">
               <AlertTriangle className="h-6 w-6 shrink-0" /> {tx('TEST MODU', 'TEST MODE')}
             </p>
@@ -490,7 +490,7 @@ export default function Payment() {
           </div>
         )}
 
-        <div className={`mt-6 flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm ${expired ? 'border-error-500/40 bg-error-900/30 text-error-300' : 'border-gold-500/30 bg-gold-500/5 text-gold-200'}`}>
+        <div className={`mt-6 flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm ${expired ? 'border-error-500/40 bg-error-500/10 text-error-300' : 'border-line bg-gold-500/5 text-gold-200'}`}>
           <Timer className="h-4 w-4 shrink-0" />
           {expired ? tx('Ödeme süresi doldu. Saat başka müşterilere açıldı.', 'The payment time ran out. The slot is open to other customers again.') : <>{tx('Saatiniz ', 'Your time is held for you for ')}<span className="font-semibold">{mm}:{ss}</span>{tx(' boyunca sizin için ayrıldı.', '.')}</>}
         </div>
@@ -538,7 +538,7 @@ export default function Payment() {
           </div>
         ) : phase === 'open' || phase === 'checking' ? (
           <div className="mt-8 space-y-4">
-            <p className="flex items-center gap-3 rounded-xl border border-gold-500/30 bg-gold-500/5 px-4 py-3 text-sm text-gold-200">
+            <p className="flex items-center gap-3 rounded-xl border border-line bg-gold-500/5 px-4 py-3 text-sm text-gold-200">
               <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
               {phase === 'open'
                 ? tx('PayTR ödeme sayfası açık. Ödemeyi tamamlayınca bu ekrana dönün; onay otomatik gelir.', 'The PayTR payment page is open. Come back here when you have paid; the confirmation appears automatically.')
@@ -550,7 +550,7 @@ export default function Payment() {
           </div>
         ) : phase === 'unpaid' ? (
           <div className="mt-8 space-y-4">
-            <div role="status" className="rounded-xl border border-warning-500/40 bg-warning-900/40 px-4 py-3 text-sm leading-relaxed text-warning-300">
+            <div role="status" className="rounded-xl border border-warning-500/40 bg-warning-500/10 px-4 py-3 text-sm leading-relaxed text-warning-300">
               <p className="font-semibold">{tx('Ödeme tamamlanmadı', 'The payment was not completed')}</p>
               <p className="mt-1">{unpaidReason ?? tx('Ödeme onayı gelmedi. Kartınızdan çekim yapıldıysa randevunuz birkaç dakika içinde otomatik olarak onaylanır; bu sayfayı açık tutabilirsiniz.', 'No confirmation arrived. If your card was charged, the booking is confirmed automatically within a few minutes; you can keep this page open.')}</p>
             </div>
@@ -563,11 +563,11 @@ export default function Payment() {
         ) : (
           <div className="mt-8 space-y-4">
             {!paytrReady ? (
-              <p className="rounded-xl border border-info-500/30 bg-info-900/40 px-4 py-3 text-sm leading-relaxed text-info-300">
+              <p className="rounded-xl border border-info-500/30 bg-info-500/10 px-4 py-3 text-sm leading-relaxed text-info-300">
                 {tx('Online kapora ödemesi henüz aktif değil. Ödeme altyapısı devreye alındığında bu adımda lisanslı ödeme kuruluşunun güvenli ödeme sayfasına yönlendirileceksiniz. Şimdilik ayrılan saati serbest bırakıp daha sonra yeniden randevu oluşturabilirsiniz.', 'Online deposit payment is not active yet. Once it is, this step will take you to the secure page of a licensed payment provider. For now you can release the held time and book again later.')}
               </p>
             ) : paytrTest ? (
-              <p className="rounded-xl border border-warning-500/40 bg-warning-900/40 px-4 py-3 text-sm leading-relaxed text-warning-300">
+              <p className="rounded-xl border border-warning-500/40 bg-warning-500/10 px-4 py-3 text-sm leading-relaxed text-warning-300">
                 {tx('PayTR test modu: test kartı PayTR ödeme sayfasında hazır gelir. "Ödeme Yap"a, ardından 3D Secure test sayfasında "Gönder"e basın. Kartınızdan gerçek tahsilat yapılmaz.', 'PayTR test mode: the test card is prefilled on PayTR’s page. Press “Ödeme Yap”, then “Gönder” on the 3D Secure test page. Nothing is actually charged.')}
               </p>
             ) : (

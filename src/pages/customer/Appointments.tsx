@@ -103,9 +103,9 @@ export default function Appointments() {
                 && hoursLeft >= policyHours
                 && (settings ? a.reschedule_count < settings.max_reschedules : true);
               return (
-                <article key={a.id} style={{ animationDelay: `${i * 40}ms` }} className="card animate-fade-up overflow-hidden transition hover:border-gold-500/30">
+                <article key={a.id} style={{ animationDelay: `${i * 40}ms` }} className="card animate-fade-up overflow-hidden transition hover:border-white/30">
                   <div className="flex gap-4 p-4 sm:p-5">
-                    <div className="flex w-16 shrink-0 flex-col items-center justify-center rounded-xl border border-gold-500/30 bg-gold-500/5 py-2 text-center">
+                    <div className="flex w-16 shrink-0 flex-col items-center justify-center rounded-xl border border-line bg-gold-500/5 py-2 text-center">
                       <span className="text-[10px] uppercase tracking-wider text-gold-500">{formatDate(a.starts_at, { month: 'short' })}</span>
                       <span className="font-display text-3xl leading-none text-white">{formatDate(a.starts_at, { day: 'numeric' })}</span>
                       <span className="mt-0.5 text-[10px] text-mist-2">{formatDate(a.starts_at, { weekday: 'short' })}</span>
@@ -142,7 +142,7 @@ export default function Appointments() {
                       <Button size="sm" icon={<CreditCard className="h-3.5 w-3.5" />} onClick={() => navigate(`/odeme/${a.id}`)}>{tx('Ödemeyi tamamla', 'Complete payment')}</Button>
                     )}
                     {live && a.businesses && (
-                      <DirectionsButton target={a.businesses} className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-line px-3 text-xs text-white transition hover:border-gold-500/40">
+                      <DirectionsButton target={a.businesses} className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-line px-3 text-xs text-white transition hover:border-white/30">
                         <MapPin className="h-3.5 w-3.5 text-gold-400" /> {tx('Yol tarifi', 'Directions')}
                       </DirectionsButton>
                     )}

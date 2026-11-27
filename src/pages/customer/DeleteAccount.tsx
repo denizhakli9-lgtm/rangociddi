@@ -128,7 +128,7 @@ export function DeleteAccount({ profile }: { profile: Profile }) {
             <li>{tx('Yaklaşan randevularınız varsa önce bunları iptal etmeniz gerekir.', 'If you have upcoming bookings, you need to cancel them first.')}</li>
           </ul>
           {profile.role !== 'customer' && (
-            <p className="rounded-xl border border-warning-500/30 bg-warning-900/30 px-4 py-3 text-xs text-warning-300">
+            <p className="rounded-xl border border-warning-500/30 bg-warning-500/10 px-4 py-3 text-xs text-warning-300">
               {tx('İşletme ve yönetici hesaplarında bekleyen ödeme ve hak edişler bulunabileceğinden talebiniz destek ekibimize iletilir ve en geç 30 gün içinde sonuçlandırılır.', 'Business and admin accounts may have pending payments or payouts, so your request goes to our support team and is completed within 30 days.')}
             </p>
           )}
@@ -136,7 +136,7 @@ export function DeleteAccount({ profile }: { profile: Profile }) {
             <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 accent-[#D4AF37]" />
             <span>{tx('Hesabımın silineceğini ve bu işlemin geri alınamayacağını anladım.', 'I understand that my account will be deleted and that this cannot be undone.')}</span>
           </label>
-          {error && <p className="rounded-xl border border-error-500/30 bg-error-900/40 px-4 py-3 text-sm text-error-300">{error}</p>}
+          {error && <p className="rounded-xl border border-error-500/30 bg-error-500/10 px-4 py-3 text-sm text-error-300">{error}</p>}
         </div>
       </Modal>
     </div>

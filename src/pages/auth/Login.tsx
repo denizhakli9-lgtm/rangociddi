@@ -94,7 +94,7 @@ export default function Login() {
             </Link>
           </div>
         </div>
-        {formError && <p className="rounded-xl border border-error-500/30 bg-error-900/40 px-4 py-3 text-sm text-error-300">{formError}</p>}
+        {formError && <p className="rounded-xl border border-error-500/30 bg-error-500/10 px-4 py-3 text-sm text-error-300">{formError}</p>}
         <Button type="submit" size="lg" full loading={loading}>
           {tx('Giriş Yap', 'Sign in')}
         </Button>

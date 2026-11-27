@@ -50,11 +50,11 @@ export default function Categories() {
                     key={c.id}
                     to={cityCategoryPath(DEFAULT_CITY, c.slug)}
                     style={{ animationDelay: `${idx * 40}ms` }}
-                    className="card group relative animate-fade-up overflow-hidden p-6 transition hover:-translate-y-0.5 hover:border-gold-500/40"
+                    className="card group relative animate-fade-up overflow-hidden p-6 transition hover:-translate-y-0.5 hover:border-white/30"
                   >
                     <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gold-500/5 transition group-hover:bg-gold-500/15" />
                     <div className="relative flex items-start justify-between">
-                      <span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-gold-500/30 bg-gold-500/10 text-gold-400">
+                      <span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-line bg-gold-500/10 text-gold-400">
                         <CategoryIcon name={c.icon} className="h-5 w-5" />
                       </span>
                       <ArrowUpRight className="h-5 w-5 text-mist-3 transition group-hover:text-gold-400" />

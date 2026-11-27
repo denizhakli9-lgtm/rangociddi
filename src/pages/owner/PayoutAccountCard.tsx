@@ -76,7 +76,7 @@ export function PayoutAccountCard({ businessId }: { businessId: string }) {
   return (
     <section className="card p-6">
       <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-display text-xl text-white">Ödeme hesabı</h2>
+        <h2 className="text-base font-semibold text-white">Ödeme hesabı</h2>
         {!loading && !error && <PayoutStatusBadge status={account?.status ?? null} />}
       </div>
       <p className="mb-5 flex items-start gap-2 text-xs text-mist-2">

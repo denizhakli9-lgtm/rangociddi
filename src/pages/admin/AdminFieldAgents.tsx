@@ -183,7 +183,7 @@ export default function AdminFieldAgents() {
       ) : (
         <div className="space-y-10">
           <section>
-            <h2 className="mb-3 font-display text-2xl text-white">Ekip</h2>
+            <h2 className="mb-3 text-lg font-semibold tracking-tight text-white">Ekip</h2>
             {!data?.agents.length ? (
               <EmptyState icon={<Briefcase className="h-6 w-6" />} title="Henüz saha elemanı yok" text="Yukarıdan e-postayla ekleyin; kişinin önce Rango'ya üye olması gerekir." />
             ) : (
@@ -236,7 +236,7 @@ export default function AdminFieldAgents() {
           </section>
 
           <section>
-            <h2 className="mb-3 font-display text-2xl text-white">Primler</h2>
+            <h2 className="mb-3 text-lg font-semibold tracking-tight text-white">Primler</h2>
             <div className="mb-4 overflow-x-auto no-scrollbar">
               <Segmented<BonusStatus>
                 value={bonusTab}

@@ -5,6 +5,26 @@ Aşağıdaki adımları **sırayla** uygulayın.
 
 ---
 
+## Güvenlik denetimi ve arayüz yenilemesi (27 Kasım 2026)
+
+**Veritabanı (uygulandı):** `supabase/migrations/20261127013938_harden_public_grants.sql`. Sitenin gösterdiği hiçbir şeyi değiştirmez; yalnızca veritabanının kendisinin esirgemesi gereken yetkileri kaldırır:
+- İşletmelerin `phone` ve `email` sütunları giriş yapmadan okunamaz (önceden yalnızca istemcinin sütun listesi gizliyordu). **`businesses` tablosuna eklenen yeni bir sütun, bu dosyadaki gibi `anon` rolüne ayrıca verilmedikçe ziyaretçilere görünmez.**
+- `search_businesses` `private` şemasına taşındı (genel sarmalayıcı aynı); sonuç eskisiyle birebir aynıdır.
+- Yorumlarda `customer_id` giriş yapmadan okunamaz. Yalnızca giriş yapanların okuduğu tablolarda (`profiles`, `appointments`, `payments` vb.) `anon` rolünün hiçbir yetkisi kalmadı. `TRUNCATE` / `REFERENCES` / `TRIGGER` yetkileri kaldırıldı.
+- İşletme adresi (slug) biçimi veritabanında zorunlu; işletme sahibi sonradan değiştiremez.
+
+**Açık kalan, karar bekleyen konular** (ayrıntı için denetim notlarına bakın):
+1. **GitHub deposu herkese açık.** Kaynak kod, migration'lar, bu rehberler ve imzalı uygulama dosyaları (Actions → Artifacts) herkes tarafından görülebiliyor. Depoyu gizli yapın (Settings → General → Danger Zone → Change visibility), ardından Hostinger'ın Git bağlantısını yeniden yetkilendirin ve bir deneme yayını yapın.
+2. Giriş yapmış bir müşteri hesabı işletme `phone` / `email` sütunlarını API'den hâlâ okuyabilir. Kalıcı çözüm: sütunları `authenticated` rolünden de kaldırıp işletme paneli ve yönetim için bir `business_contact` fonksiyonu eklemek (panel kodunda dört yer değişir).
+3. `supabase/bekleyen/require_sale_consent_for_payment.sql` hâlâ uygulanmadı (bölüm 6). Canlı ödemeye geçmeden önce uygulanmalı.
+4. Canlı ödemeye geçişte: `paytr_apply_callback` test siparişlerini canlı modda reddetmeli; kartsız test yolu (`pay_deposit`) kapatılmalı; `paytr-refund` PayTR'den okunamayan yanıt gelirse iadeyi "başarısız" değil "belirsiz" saymalı.
+5. Telefonla kayıtta numara doğrulanmıyor (SMS yok); e-posta onayı kapalı. Bir işletme başvurusunu onaylamadan önce numarayı arayarak / WhatsApp'tan doğrulayın.
+6. Supabase'de `tasima-ici` adlı Edge Function (410 döndüren boş sürüm) panelden silinebilir. Android iş akışında imza sırlarını yalnızca `main` dalına açık bir "environment"a taşıyın.
+
+**Arayüz:** yazı tipleri (Figtree + Newsreader, `src/fonts.css`), renk ve köşe ölçeği (`tailwind.config.js`, `src/index.css`), ortak bileşenler, ana sayfa, işletme sayfası, kategoriler, giriş kabuğu, paneller. Statik sayfalar (`seo/prerender.ts`, `src/lib/seo/blockStyles.ts`) aynı görünümle üretilir. Hazır kapak görsellerinde artık yalnızca fotoğraflar (`sector-*-3` … `-8`) sunulur; daha önce seçilmiş eski kapaklar çalışmaya devam eder. Ana sayfadaki slogan sabittir ("Randevunun yeni yolu.").
+
+---
+
 ## Frankfurt'a taşınma (26 Kasım 2026) – ✅ YAPILDI
 
 **Geçiş yapıldı (26 Kasım 2026, 21:17–21:24 UTC, yaklaşık 7 dakika bakım):** Bakım modu açıldı. Eski projede istemci yazmaları durduruldu (aşağıya bakın). Veriler son kez kopyalanıp tablo tablo doğrulandı: 34 tablonun ve 2 dosyanın hepsi eşleşti. Site yeni adresle açıldı. Canlı CSP başlığı ve sitenin bütün Supabase istekleri `lvpmtvixzfhyndfnyyvn` adresine gidiyor.

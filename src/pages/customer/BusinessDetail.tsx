@@ -124,7 +124,7 @@ export default function BusinessDetail() {
   };
 
   return (
-    <div className="pb-24 md:pb-0">
+    <div>
       <div className="relative -mx-4 -mt-6 sm:mx-0 sm:mt-0">
         <div className="relative aspect-[4/3] overflow-hidden sm:aspect-[21/9] sm:rounded-3xl">
           {photos.map((src, i) => (
@@ -345,7 +345,7 @@ export default function BusinessDetail() {
         </aside>
       </div>
 
-      <div className="safe-bottom fixed inset-x-0 bottom-[60px] z-30 border-t border-line bg-ink/95 px-4 py-3 backdrop-blur-md md:bottom-0 lg:hidden">
+      <div className="safe-bottom sticky bottom-[60px] z-30 -mx-4 mt-10 border-t border-line bg-ink/95 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6 md:bottom-0 lg:hidden">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
           <div className="min-w-0">
             {demo ? (

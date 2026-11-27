@@ -134,7 +134,7 @@ export default function BusinessProfile() {
 
       <div className="space-y-6">
         <section className="card p-6">
-          <h2 className="mb-1 font-display text-xl text-white">Görseller</h2>
+          <h2 className="mb-1 text-base font-semibold text-white">Görseller</h2>
           <p className="mb-5 text-xs text-mist-2">JPG, PNG veya WebP · en fazla 5 MB</p>
           <div className="relative mb-6 overflow-hidden rounded-2xl border border-line bg-ink/60">
             <div className="relative aspect-[16/6] w-full">
@@ -191,18 +191,18 @@ export default function BusinessProfile() {
         </section>
 
         <section className="card p-6">
-          <h2 className="mb-5 font-display text-xl text-white">Temel bilgiler</h2>
+          <h2 className="mb-5 text-base font-semibold text-white">Temel bilgiler</h2>
           <BasicsFields form={basics} errors={errors} categories={categories ?? []} onChange={setBasic} />
         </section>
 
         <section className="card p-6">
-          <h2 className="mb-1 font-display text-xl text-white">Mağaza konumu</h2>
+          <h2 className="mb-1 text-base font-semibold text-white">Mağaza konumu</h2>
           <p className="mb-5 text-xs text-mist-2">Müşteriler profilinizdeki “Yol tarifi al” butonuyla doğrudan bu noktaya yönlendirilir.</p>
           <LocationField value={pin} district={basics.district} onChange={setPin} />
         </section>
 
         <section className="card p-6">
-          <h2 className="mb-1 font-display text-xl text-white">Randevu politikası</h2>
+          <h2 className="mb-1 text-base font-semibold text-white">Randevu politikası</h2>
           <p className="mb-5 text-xs text-mist-2">Kapora randevu sırasında online alınır, kalan tutar işletmede ödenir.</p>
           <div className="space-y-5">
             <div>

@@ -323,7 +323,7 @@ function businessBody(b: DetailRow, supabaseUrl: string): string {
     })
     .join('');
 
-  return shell(`<article class="pb-24 md:pb-0">
+  return shell(`<article>
           <div class="relative -mx-4 -mt-6 sm:mx-0 sm:mt-0">
             <div class="relative aspect-[4/3] overflow-hidden sm:aspect-[21/9] sm:rounded-3xl">
               <img src="${e(photo.placeholder ? `/${photo.src}` : photo.src)}" alt="${e(photoAlt)}" loading="eager" fetchpriority="high" decoding="async" class="absolute inset-0 h-full w-full object-cover" />

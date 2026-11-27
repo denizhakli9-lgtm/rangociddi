@@ -101,8 +101,7 @@ export default function BookingWizard() {
         <ArrowLeft className="h-4 w-4" /> {activeStep === 0 ? b.name : t.common.back}
       </button>
 
-      <p className="eyebrow mb-2">{b.name}</p>
-      <h1 className="font-display text-4xl text-white">{tx('Randevu oluştur', 'Make a booking')}</h1>
+      <h1 className="text-2xl font-semibold tracking-tight sm:text-[28px] text-white">{tx('Randevu oluştur', 'Make a booking')}</h1>
 
       <ol className="mb-8 mt-6 grid grid-cols-4 gap-2">
         {STEPS.map(([trLabel, enLabel], i) => (

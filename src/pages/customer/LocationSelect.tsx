@@ -53,8 +53,7 @@ export default function LocationSelect() {
 
   return (
     <div className="mx-auto max-w-xl animate-fade-up">
-      <p className="eyebrow mb-2">{tx('Konum', 'Location')}</p>
-      <h1 className="font-display text-4xl text-white">{tx('Neredesiniz?', 'Where are you?')}</h1>
+      <h1 className="text-2xl font-semibold tracking-tight sm:text-[28px] text-white">{tx('Konumunuzu seçin', 'Choose your location')}</h1>
       <p className="mt-2 text-sm text-mist">{tx('Size en yakın işletmeleri göstermek için konumunuzu seçin. Rango şu an İzmir’de hizmet veriyor.', 'Choose your location to see the businesses nearest to you. Rango currently serves İzmir.')}</p>
 
       <Button variant="outline" full size="lg" className="mt-8" loading={locating} icon={<LocateFixed className="h-4 w-4" />} onClick={useDevice}>

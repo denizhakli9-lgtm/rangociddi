@@ -86,8 +86,7 @@ export default function SearchPage() {
   return (
     <div>
       <div className="mb-6">
-        <p className="eyebrow mb-2">{currentCategory ? tx('Kategori', 'Category') : tx('Keşfet', 'Discover')}</p>
-        <h1 className="font-display text-4xl text-white">{currentCategory ? categoryName(currentCategory) : q ? tx(`“${q}” için sonuçlar`, `Results for “${q}”`) : tx('Tüm işletmeler', 'All businesses')}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-[28px] text-white">{currentCategory ? categoryName(currentCategory) : q ? tx(`“${q}” için sonuçlar`, `Results for “${q}”`) : tx('Tüm işletmeler', 'All businesses')}</h1>
         {currentCategory?.description && <p className="mt-2 max-w-xl text-sm text-mist">{categoryDescription(currentCategory)}</p>}
       </div>
 

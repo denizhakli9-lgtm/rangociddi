@@ -77,7 +77,7 @@ export function SlotPicker({ serviceId, employeeId, hours, days = 30, excludeApp
               }`}
             >
               <span className={`text-[10px] uppercase tracking-wider ${active ? 'text-ink/70' : 'text-mist-2'}`}>{d === today ? tx('Bugün', 'Today') : keyLabel(d, { weekday: 'short' })}</span>
-              <span className="mt-1 font-display text-2xl leading-none">{keyLabel(d, { day: 'numeric' })}</span>
+              <span className="mt-1 text-lg font-semibold tracking-tight leading-none">{keyLabel(d, { day: 'numeric' })}</span>
               <span className={`mt-1 text-[10px] ${active ? 'text-ink/70' : 'text-mist-2'}`}>{closed ? tx('Kapalı', 'Closed') : keyLabel(d, { month: 'short' })}</span>
             </button>
           );

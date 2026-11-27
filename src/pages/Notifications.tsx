@@ -79,8 +79,7 @@ export default function Notifications() {
     <div className="mx-auto max-w-2xl">
       <div className="mb-6 flex items-end justify-between gap-4">
         <div>
-          <p className="eyebrow mb-2">{tx('Bildirimler', 'Notifications')}</p>
-          <h1 className="font-display text-4xl text-white">{tx('Gelişmelerden haberdar olun', 'Stay up to date')}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-[28px] text-white">{tx('Bildirimler', 'Notifications')}</h1>
         </div>
         {unread > 0 && <Button size="sm" variant="ghost" icon={<CheckCheck className="h-4 w-4" />} onClick={markAll}>{tx('Tümünü okundu yap', 'Mark all as read')}</Button>}
       </div>

@@ -26,8 +26,7 @@ export default function Favorites() {
 
   return (
     <div>
-      <p className="eyebrow mb-2">{tx('Favoriler', 'Favourites')}</p>
-      <h1 className="mb-8 font-display text-4xl text-white">{tx('Sevdiğiniz yerler', 'Places you love')}</h1>
+      <h1 className="mb-8 text-2xl font-semibold tracking-tight sm:text-[28px] text-white">{tx('Favorilerim', 'Favourites')}</h1>
       {loading ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="skeleton aspect-[4/3]" />)}</div>
       ) : error ? (

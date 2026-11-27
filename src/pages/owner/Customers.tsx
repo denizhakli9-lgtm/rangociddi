@@ -158,7 +158,7 @@ function isRealBooking(a: Appointment): boolean {
 function Mini({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl border border-line bg-ink/40 py-3">
-      <p className="font-display text-xl text-white">{value}</p>
+      <p className="text-base font-semibold text-white">{value}</p>
       <p className="text-[11px] text-mist-2">{label}</p>
     </div>
   );

@@ -159,7 +159,7 @@ function PreContractInfo({ appt, address, testMode, policyHours, needsApproval }
   const b = appt.businesses;
   return (
     <section aria-labelledby="on-bilgilendirme" className="mt-6 rounded-2xl border border-line bg-coal p-5 text-base">
-      <h2 id="on-bilgilendirme" className="font-display text-xl text-white">{tx('Ön bilgilendirme', 'Pre-contract information')}</h2>
+      <h2 id="on-bilgilendirme" className="text-base font-semibold text-white">{tx('Ön bilgilendirme', 'Pre-contract information')}</h2>
       <p className="mt-1 text-sm leading-relaxed text-mist-2">{tx('Ödeme adımına geçmeden önce randevunuza ilişkin temel bilgileri inceleyin.', 'Review the key details of your booking before the payment step.')}</p>
       <dl className="mt-4 space-y-3">
         <InfoRow label={tx('Hizmet sağlayıcı', 'Service provider')}>
@@ -468,8 +468,8 @@ export default function Payment() {
   return (
     <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[1fr_380px]">
       <div className="animate-fade-up">
-        <p className="eyebrow mb-2">{testMode ? tx('Test ödemesi', 'Test payment') : tx('Kapora', 'Deposit')}</p>
-        <h1 className="font-display text-4xl text-white">{tx('Kapora ödemesi', 'Deposit payment')}</h1>
+        {testMode && <p className="eyebrow mb-2">{tx('Test ödemesi', 'Test payment')}</p>}
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-[28px] text-white">{tx('Kapora ödemesi', 'Deposit payment')}</h1>
         <p className="mt-2 text-sm text-mist">
           {testMode
             ? tx('Randevunuzu kesinleştirmek için test ödemesini tamamlayın. Hizmet bedelinin tamamını işletmede ödersiniz.', 'Complete the test payment to confirm your booking. You pay the full price at the business.')
@@ -490,7 +490,7 @@ export default function Payment() {
           </div>
         )}
 
-        <div className={`mt-6 flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm ${expired ? 'border-error-500/40 bg-error-500/10 text-error-300' : 'border-line bg-gold-500/5 text-gold-200'}`}>
+        <div className={`mt-6 flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm ${expired ? 'border-error-500/40 bg-error-500/10 text-error-300' : 'border-line bg-coal-2 text-white'}`}>
           <Timer className="h-4 w-4 shrink-0" />
           {expired ? tx('Ödeme süresi doldu. Saat başka müşterilere açıldı.', 'The payment time ran out. The slot is open to other customers again.') : <>{tx('Saatiniz ', 'Your time is held for you for ')}<span className="font-semibold">{mm}:{ss}</span>{tx(' boyunca sizin için ayrıldı.', '.')}</>}
         </div>
@@ -538,7 +538,7 @@ export default function Payment() {
           </div>
         ) : phase === 'open' || phase === 'checking' ? (
           <div className="mt-8 space-y-4">
-            <p className="flex items-center gap-3 rounded-xl border border-line bg-gold-500/5 px-4 py-3 text-sm text-gold-200">
+            <p className="flex items-center gap-3 rounded-xl border border-line bg-coal-2 px-4 py-3 text-sm text-white">
               <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
               {phase === 'open'
                 ? tx('PayTR ödeme sayfası açık. Ödemeyi tamamlayınca bu ekrana dönün; onay otomatik gelir.', 'The PayTR payment page is open. Come back here when you have paid; the confirmation appears automatically.')
@@ -595,7 +595,7 @@ export default function Payment() {
         )}
         <div className="space-y-4 p-6">
           <div>
-            <p className="font-display text-2xl text-white">{b?.name}</p>
+            <p className="text-lg font-semibold tracking-tight text-white">{b?.name}</p>
             {address && (
               <p className="mt-1 flex items-start gap-1.5 text-xs text-mist-2">
                 <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />

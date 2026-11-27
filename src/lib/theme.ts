@@ -28,7 +28,7 @@ export function setTheme(theme: Theme) {
     window.setTimeout(() => root.classList.remove('theme-transition'), 450);
   }
   root.dataset.theme = theme;
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#080808' : '#f8f7f3');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#0a0a0a' : '#f9f8f5');
   try {
     localStorage.setItem(STORAGE_KEY, theme);
   } catch {

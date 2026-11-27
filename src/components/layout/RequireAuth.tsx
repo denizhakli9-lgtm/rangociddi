@@ -25,7 +25,7 @@ export function ProfileLoadError() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-ink px-6 text-center">
       <ShieldAlert className="mb-4 h-12 w-12 text-warning-300" />
-      <h1 className="font-display text-3xl text-white">{tx('Hesap bilgileri yüklenemedi', 'Could not load your account')}</h1>
+      <h1 className="text-xl font-semibold tracking-tight text-white">{tx('Hesap bilgileri yüklenemedi', 'Could not load your account')}</h1>
       <p className="mt-2 max-w-sm text-sm text-mist-2">{tx('Bağlantınızı kontrol edip tekrar deneyin.', 'Check your connection and try again.')}</p>
       <div className="mt-6 flex gap-3">
         <Button loading={retrying} onClick={retry}>{tx('Tekrar Dene', 'Try again')}</Button>
@@ -48,7 +48,7 @@ export function RequireAuth({ roles, children }: { roles?: Role[]; children: Rea
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-ink px-6 text-center">
         <ShieldAlert className="mb-4 h-12 w-12 text-error-300" />
-        <h1 className="font-display text-3xl text-white">{tx('Hesabınız askıya alındı', 'Your account has been suspended')}</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-white">{tx('Hesabınız askıya alındı', 'Your account has been suspended')}</h1>
         <p className="mt-2 max-w-sm text-sm text-mist-2">
           {supportEmail ? (
             <>

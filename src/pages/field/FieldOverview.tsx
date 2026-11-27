@@ -98,7 +98,7 @@ export default function FieldOverview() {
           {stats.pending.length > 0 && (
             <section>
               <div className="mb-3 flex items-center justify-between">
-                <h2 className="font-display text-2xl text-white">Onayınızı bekleyenler</h2>
+                <h2 className="text-lg font-semibold tracking-tight text-white">Onayınızı bekleyenler</h2>
                 <Link to="/saha/isletmeler" className="inline-flex items-center gap-1 text-xs text-gold-400 hover:text-gold-300">
                   Tümü <ArrowRight className="h-3.5 w-3.5" />
                 </Link>

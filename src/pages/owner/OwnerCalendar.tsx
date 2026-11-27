@@ -20,7 +20,7 @@ const HIDDEN = ['cancelled', 'rejected'];
 const BLOCK_TONE: Record<string, string> = {
   pending_payment: 'border-warning-500/40 bg-warning-500/10 text-warning-300',
   pending_approval: 'border-info-500/50 bg-info-500/10 text-info-300',
-  confirmed: 'border-gold-500/60 bg-gold-500/15 text-gold-200',
+  confirmed: 'border-gold-500/60 bg-gold-500/15 text-gold-300',
   completed: 'border-success-500/40 bg-success-500/10 text-success-300',
   no_show: 'border-error-500/40 bg-error-500/10 text-error-300',
 };

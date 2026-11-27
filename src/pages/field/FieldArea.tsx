@@ -35,7 +35,7 @@ export default function FieldArea() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-ink px-6 text-center">
         <ShieldAlert className="mb-4 h-12 w-12 text-warning-300" />
-        <h1 className="font-display text-3xl text-white">Saha paneline erişiminiz yok</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-white">Saha paneline erişiminiz yok</h1>
         <p className="mt-2 max-w-sm text-sm text-mist-2">
           Bu panel Rango saha tanıtım ekibi içindir. Ekibe eklendiyseniz, sizi ekleyen yöneticiye kayıtlı e-posta adresinizi doğrulatın.
         </p>

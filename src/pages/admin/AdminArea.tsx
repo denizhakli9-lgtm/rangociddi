@@ -28,7 +28,7 @@ const ITEMS: DashNavItem[] = [
   { to: '/yonetim/kategoriler', label: 'Kategoriler', icon: Shapes },
   { to: '/yonetim/komisyon', label: 'Komisyon', icon: Percent },
   { to: '/yonetim/duyurular', label: 'Bildirim gönder', icon: Megaphone },
-  { to: '/yonetim/destek', label: 'Destek Merkezi', icon: MessageSquareWarning },
+  { to: '/yonetim/destek', label: 'Destek merkezi', icon: MessageSquareWarning },
   { to: '/yonetim/ayarlar', label: 'Platform ayarları', icon: Settings },
 ];
 

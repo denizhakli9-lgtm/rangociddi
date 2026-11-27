@@ -143,7 +143,7 @@ export default function AdminRefunds() {
                 <p className="mt-1 text-[11px] text-mist-3">{formatDateTime(r.created_at)}</p>
               </div>
               <div className="flex items-center gap-3 sm:flex-col sm:items-end">
-                <p className="font-display text-2xl text-gold-300">{formatTRY(r.amount)}</p>
+                <p className="text-lg font-semibold tracking-tight text-gold-300">{formatTRY(r.amount)}</p>
                 {r.status === 'pending' && (
                   <div className="flex gap-2">
                     <Button size="sm" variant="danger" onClick={() => setOpen({ row: r, approve: false })}>

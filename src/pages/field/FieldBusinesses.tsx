@@ -94,7 +94,7 @@ export default function FieldBusinesses() {
                 <div className="p-4 sm:p-5">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="font-display text-xl text-white">{b.name}</p>
+                      <p className="text-base font-semibold text-white">{b.name}</p>
                       <p className="text-xs text-mist-2">
                         {b.district} · kayıt {formatDate(b.created_at, { day: 'numeric', month: 'short', year: 'numeric' })}
                       </p>

@@ -102,7 +102,7 @@ export default function Overview() {
           {setupLeft > 0 && (
             <section className="card-gold p-6">
               <p className="eyebrow mb-2">Kurulum</p>
-              <h2 className="mb-4 font-display text-2xl text-white">Yayına hazır olmanıza {setupLeft} adım kaldı</h2>
+              <h2 className="mb-4 text-lg font-semibold tracking-tight text-white">Yayına hazır olmanıza {setupLeft} adım kaldı</h2>
               <ul className="grid gap-2 sm:grid-cols-2">
                 {checklist.map((c) => (
                   <li key={c.label}>
@@ -158,7 +158,7 @@ function Section({ title, to, children }: { title: string; to: string; children:
   return (
     <section>
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="font-display text-xl text-white">{title}</h2>
+        <h2 className="text-base font-semibold text-white">{title}</h2>
         <Link to={to} className="inline-flex items-center gap-1 text-xs text-gold-400 transition hover:text-gold-300">
           Tümü <ArrowRight className="h-3 w-3" />
         </Link>

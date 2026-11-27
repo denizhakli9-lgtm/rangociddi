@@ -122,7 +122,7 @@ export default function Confirmation() {
       <div className={`mx-auto flex h-20 w-20 animate-scale-in items-center justify-center rounded-full border ${view.tone}`}>
         <view.icon className="h-9 w-9" strokeWidth={1.4} />
       </div>
-      <h1 className="mt-6 animate-fade-up font-display text-4xl text-white">{view.title}</h1>
+      <h1 className="mt-6 animate-fade-up text-2xl font-semibold tracking-tight sm:text-[28px] text-white">{view.title}</h1>
       <p className="mx-auto mt-3 max-w-sm animate-fade-up text-sm text-mist">{view.text}</p>
 
       {testPayment && active && (
@@ -139,7 +139,7 @@ export default function Confirmation() {
         </div>
         <div className="space-y-4 px-6 py-5">
           <div>
-            <p className="font-display text-2xl text-white">{appt.businesses?.name}</p>
+            <p className="text-lg font-semibold tracking-tight text-white">{appt.businesses?.name}</p>
             <p className="mt-1 flex items-center gap-1.5 text-xs text-mist-2"><MapPin className="h-3.5 w-3.5" />{appt.businesses?.address}</p>
             {active && appt.businesses && <DirectionsButton target={appt.businesses} className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-gold-400 transition hover:text-gold-300" />}
           </div>

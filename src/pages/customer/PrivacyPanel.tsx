@@ -5,6 +5,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { Button } from '@/components/ui/Button';
 import { downloadBlob, exportMyData } from '@/lib/privacy';
 import { legalPath } from '@/lib/legal';
+import { isNative, shareGeneratedFile } from '@/lib/platform';
 import type { Profile } from '@/lib/types';
 import { DeleteAccount } from './DeleteAccount';
 import { tx } from '@/i18n/locale';
@@ -18,8 +19,15 @@ export function PrivacyPanel({ profile }: { profile: Profile }) {
     setExporting(true);
     try {
       const blob = await exportMyData(profile);
-      downloadBlob(blob, `${tx('rango-verilerim', 'rango-my-data')}-${new Date().toISOString().slice(0, 10)}.json`);
-      toast(tx('Verilerinizin kopyası indirildi.', 'A copy of your data has been downloaded.'), 'success');
+      const filename = `${tx('rango-verilerim', 'rango-my-data')}-${new Date().toISOString().slice(0, 10)}.json`;
+      if (isNative) {
+        // The app's WebView cannot download files: the share sheet offers "Dosyalara Kaydet", Mail etc.
+        const result = await shareGeneratedFile(filename, await blob.text(), tx('Verilerimin kopyası', 'A copy of my data'));
+        if (result === 'shared') toast(tx('Verilerinizin kopyası kaydedildi veya paylaşıldı.', 'A copy of your data has been saved or shared.'), 'success');
+      } else {
+        downloadBlob(blob, filename);
+        toast(tx('Verilerinizin kopyası indirildi.', 'A copy of your data has been downloaded.'), 'success');
+      }
     } catch {
       toast(tx('Veriler hazırlanamadı. Lütfen tekrar deneyin.', 'Your data could not be prepared. Please try again.'), 'error');
     } finally {
@@ -34,11 +42,15 @@ export function PrivacyPanel({ profile }: { profile: Profile }) {
       <div className="card space-y-5 p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-semibold text-white">{tx('Verilerimin kopyasını indir', 'Download a copy of my data')}</p>
-            <p className="mt-0.5 text-xs text-mist-2">{tx('Profil, randevu, ödeme, satış onayı, yorum, favori, bildirim ve destek kayıtlarınızı JSON dosyası olarak indirin.', 'Download your profile, bookings, payments, purchase confirmations, reviews, favourites, notifications and support records as a JSON file.')}</p>
+            <p className="text-sm font-semibold text-white">{isNative ? tx('Verilerimin kopyasını al', 'Get a copy of my data') : tx('Verilerimin kopyasını indir', 'Download a copy of my data')}</p>
+            <p className="mt-0.5 text-xs text-mist-2">
+              {isNative
+                ? tx('Profil, randevu, ödeme, satış onayı, yorum, favori, bildirim ve destek kayıtlarınızı JSON dosyası olarak telefonunuza kaydedin veya paylaşın.', 'Save or share your profile, bookings, payments, purchase confirmations, reviews, favourites, notifications and support records as a JSON file.')
+                : tx('Profil, randevu, ödeme, satış onayı, yorum, favori, bildirim ve destek kayıtlarınızı JSON dosyası olarak indirin.', 'Download your profile, bookings, payments, purchase confirmations, reviews, favourites, notifications and support records as a JSON file.')}
+            </p>
           </div>
           <Button variant="outline" onClick={exportData} loading={exporting} icon={<Download className="h-4 w-4" />} className="shrink-0">
-            {tx('İndir', 'Download')}
+            {isNative ? tx('Dışa aktar', 'Export') : tx('İndir', 'Download')}
           </Button>
         </div>
         <div className="grid gap-2 border-t border-line pt-5 sm:grid-cols-2">

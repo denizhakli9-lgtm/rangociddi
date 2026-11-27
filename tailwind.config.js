@@ -2,8 +2,14 @@
 export default {
   // seo/: derleme sırasında üretilen statik sayfalar da aynı sınıfları kullanır.
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}', './seo/**/*.ts'],
+  // hover: stilleri yalnızca fareli cihazlarda uygulanır; iPhone'da dokunduktan sonra öğe
+  // vurgulu kalmaz. Masaüstündeki görünüm değişmez.
+  future: { hoverOnlyWhenSupported: true },
   theme: {
     extend: {
+      // min-h-screen: tarayıcı çubukları açıkken de taşmayan küçük görünüm yüksekliği (svh);
+      // desteklemeyen eski tarayıcılar 100vh kullanır.
+      minHeight: { screen: ['100vh', '100svh'] },
       colors: {
         // "white" metin rengidir ve temayla birlikte döner: açık temada koyu, koyu temada açık.
         white: 'rgb(var(--foreground) / <alpha-value>)',
@@ -66,5 +72,9 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    // can-hover: yalnızca fareli cihazlar. Üzerine gelince beliren bir öğeyi yalnızca bu cihazlarda gizlemek için:
+    // `opacity-100 can-hover:opacity-0 group-hover:opacity-100`. Dokunmatik ekranda öğe hep görünür kalır.
+    ({ addVariant }) => addVariant('can-hover', '@media (hover: hover) and (pointer: fine)'),
+  ],
 };

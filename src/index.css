@@ -64,6 +64,26 @@
   input[type='time']::-webkit-calendar-picker-indicator {
     filter: none;
   }
+  /*
+   * iOS app only (html.ios is set in main.tsx). iOS zooms into any focused text control whose
+   * font is smaller than 16px and does not zoom back out, so form controls are 16px there.
+   * The website keeps its design; user zoom is not disabled.
+   */
+  .ios input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']):not([type='file']),
+  .ios select,
+  .ios textarea {
+    font-size: 16px;
+  }
+  /* iOS app only: long-pressing a link or a photo shows no browser menu, preview or text selection. */
+  .ios a,
+  .ios img {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .ios img {
+    -webkit-user-drag: none;
+  }
 }
 
 @layer components {
@@ -101,16 +121,39 @@
     background-size: 200% 100%;
     animation: shimmer 1.6s linear infinite;
   }
-  .safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
 }
 
 @layer utilities {
+  /*
+   * Bottom padding for the home indicator on notched iPhones (0 on the website), for bars that
+   * have no bottom padding of their own. It replaces padding-bottom entirely, so an element
+   * that also needs vertical padding uses pb-[calc(<its padding>+env(safe-area-inset-bottom))] instead.
+   */
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  /*
+   * While the on-screen keyboard is open in the iOS app (html.kb-open, src/lib/keyboard.ts),
+   * bars fixed to the bottom of the screen would float over the keyboard and cover the field.
+   */
+  .kb-open [data-tabbar],
+  .kb-open [data-save-bar],
+  .kb-open [data-cookie-notice] {
+    display: none;
+  }
+  /* The booking bar is sticky, so it is in the page flow: hide it without giving up its height,
+     or the page would jump when a field gets focus. */
+  .kb-open [data-booking-bar] {
+    visibility: hidden;
+    pointer-events: none;
+  }
   /* Altın zemin üzerindeki metin her temada koyu kalır. */
   .text-ink { color: #0a0a0a; }
   .text-ink\/70 { color: rgb(10 10 10 / 0.7); }
-  .group:hover .group-hover\:text-ink { color: #0a0a0a; }
+  /* Same media query as Tailwind's hover variants (future.hoverOnlyWhenSupported). */
+  @media (hover: hover) and (pointer: fine) {
+    .group:hover .group-hover\:text-ink { color: #0a0a0a; }
+  }
   /* Açık temada altın ve durum renkleri, okunabilir koyu tonlarıyla yazılır. */
   :root[data-theme='light'] .text-gold-300,
   :root[data-theme='light'] .text-gold-400,

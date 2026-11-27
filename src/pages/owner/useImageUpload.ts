@@ -7,19 +7,25 @@ import { useToast } from '@/contexts/ToastContext';
 
 type Kind = Parameters<typeof uploadBusinessImage>[2];
 
+/** Largest original picture accepted for compression (memory guard; the uploaded file is at most 5 MB). */
+const MAX_SOURCE_BYTES = 40 * 1024 * 1024;
+
 export function useImageUpload(businessId: string) {
   const { toast } = useToast();
   const [uploading, setUploading] = useState<Kind | null>(null);
 
   const upload = async (file: File | undefined, kind: Kind): Promise<string | null> => {
     if (!file) return null;
-    const check = checkImage(file);
-    if (check === 'type') {
+    // Only the type is checked up front: phone camera photos (24/48 MP iPhones) are often larger than the
+    // 5 MB upload limit before compression, which compressImage enforces on its output. The original size
+    // is only capped as a memory guard.
+    if (checkImage(file) === 'type') {
       toast(tr.errors.uploadType, 'error');
       return null;
     }
-    if (check === 'size') {
-      toast(tr.errors.uploadSize, 'error');
+    if (file.size > MAX_SOURCE_BYTES) {
+      // Owner panel is Turkish-only; the 5 MB message would be wrong here (smaller originals are compressed).
+      toast('Görsel çok büyük (en fazla 40 MB). Daha küçük bir fotoğraf seçin.', 'error');
       return null;
     }
     setUploading(kind);

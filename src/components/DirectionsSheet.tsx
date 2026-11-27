@@ -7,7 +7,7 @@ import { systemLinkClick } from '@/lib/platform';
 import { tx } from '@/i18n/locale';
 
 const APPS: { id: MapApp; label: [string, string]; hint: [string, string]; tone: string }[] = [
-  { id: 'google', label: ['Google Haritalar', 'Google Maps'], hint: ['Android ve web', 'Android and web'], tone: 'from-sky-400/25 to-sky-600/10 text-sky-300' },
+  { id: 'google', label: ['Google Haritalar', 'Google Maps'], hint: ['Telefon ve web', 'Phone and web'], tone: 'from-sky-400/25 to-sky-600/10 text-sky-300' },
   { id: 'apple', label: ['Apple Haritalar', 'Apple Maps'], hint: ['iPhone ve Mac', 'iPhone and Mac'], tone: 'from-slate-200/20 to-slate-400/5 text-slate-100' },
   { id: 'yandex', label: ['Yandex Haritalar', 'Yandex Maps'], hint: ['Trafik ve toplu taşıma', 'Traffic and public transport'], tone: 'from-amber-400/25 to-red-500/10 text-amber-300' },
 ];

@@ -22,7 +22,7 @@ export function WhatsAppFab({ message, from = 'md' }: { message?: string; from?:
     <a
       {...whatsAppLinkProps(message)}
       aria-label={tx(`WhatsApp destek hattı: ${WHATSAPP_SUPPORT.display}`, `WhatsApp support line: ${WHATSAPP_SUPPORT.display}`)}
-      className={`group fixed bottom-5 right-5 z-40 hidden h-12 items-center rounded-full bg-[#25D366] text-sm font-semibold text-[#fff] shadow-[0_6px_20px_-8px_rgba(0,0,0,0.45)] transition-colors hover:bg-[#1EBE5B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-500 ${from === 'lg' ? 'lg:flex' : 'md:flex'} [body:has([data-cookie-notice])_&]:bottom-28`}
+      className={`group fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-5 z-40 hidden h-12 items-center rounded-full bg-[#25D366] text-sm font-semibold text-[#fff] shadow-[0_6px_20px_-8px_rgba(0,0,0,0.45)] transition-colors hover:bg-[#1EBE5B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-500 ${from === 'lg' ? 'lg:flex' : 'md:flex'} [body:has([data-cookie-notice])_&]:bottom-[calc(7rem+env(safe-area-inset-bottom))]`}
     >
       <span className="flex h-12 w-12 shrink-0 items-center justify-center">
         <WhatsAppIcon className="h-6 w-6" />

@@ -109,7 +109,7 @@ export default function Notifications() {
                     <span className="mt-1 block text-xs text-mist-3">{formatRelative(n.created_at)}</span>
                   </span>
                 </button>
-                <button onClick={() => remove(n.id)} className="rounded-full p-2 text-mist-3 opacity-100 transition hover:bg-white/5 hover:text-error-300 sm:opacity-0 sm:group-hover:opacity-100" aria-label={tx('Sil', 'Delete')}>
+                <button onClick={() => remove(n.id)} className="rounded-full p-2 text-mist-3 opacity-100 transition hover:bg-white/5 hover:text-error-300 focus-visible:opacity-100 sm:can-hover:opacity-0 sm:group-hover:opacity-100" aria-label={tx('Sil', 'Delete')}>
                   <Trash2 className="h-4 w-4" />
                 </button>
               </li>

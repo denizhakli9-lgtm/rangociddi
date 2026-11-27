@@ -152,6 +152,15 @@ Deno.serve(async (req: Request) => {
     if (threadError || !thread || profile.error || !profile.data || profile.data.is_suspended) return reply({ error: 'Not authorized' }, 403);
     if (thread.status !== 'ai') return reply({ handoff: true });
     const admin = createClient(Deno.env.get('SUPABASE_URL')!, supabaseKey('SUPABASE_SECRET_KEYS'));
+    // Explicit opt-in (App Review 5.1.2(i), KVKK md. 9): nothing reaches OpenAI unless the user agreed in the app.
+    // support_claim_ai checks the same, so an older deployment of this function cannot bypass it either.
+    const consent = await admin.from('support_ai_consents').select('user_id').eq('user_id', auth.user.id).maybeSingle();
+    if (consent.error) throw consent.error;
+    if (!consent.data) {
+      const moved = await admin.from('support_threads').update({ status: 'waiting', updated_at: new Date().toISOString() }).eq('id', thread.id).eq('status', 'ai');
+      if (moved.error) throw moved.error;
+      return reply({ handoff: true });
+    }
     const { data: messages, error } = await admin.from('support_messages').select('id,sender,body,created_at').eq('thread_id', thread.id).order('created_at', { ascending: false }).order('id', { ascending: false }).limit(HISTORY_LIMIT);
     if (error || !messages?.length) return reply({ error: 'Invalid request' }, 400);
     const latest = messages[0];

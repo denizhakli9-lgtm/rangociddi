@@ -24,7 +24,7 @@ export function AuthShell({ title, subtitle, children }: { eyebrow?: string; tit
           <p className="mt-3 max-w-sm text-sm leading-relaxed text-[#fff]/80">{tx('İzmir’de kuaför, berber ve güzellik işletmeleri için online randevu.', 'Online booking for hair, barber and beauty businesses in İzmir.')}</p>
         </div>
       </div>
-      <div className="flex flex-col px-5 py-6 sm:px-12 lg:px-20">
+      <div className="flex flex-col px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-[calc(1.5rem+env(safe-area-inset-top))] sm:px-12 lg:px-20">
         <div className="mb-10 flex items-center justify-between gap-4 sm:mb-14">
           <Link to={homePath} aria-label={tx('Rango ana sayfa', 'Rango home')}>
             <Logo size="sm" />

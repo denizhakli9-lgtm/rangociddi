@@ -12,6 +12,7 @@
  * 2. Generates the app icon and launch screen from assets/ (icon.png, splash.png, splash-dark.png).
  * 3. Writes the Info.plist keys App Review checks: permission texts (location, camera, photos),
  *    export compliance (HTTPS only), Turkish as the development language, portrait-only iPhone.
+ *    Also turns on the iOS edge swipe for going back (SceneDelegate.swift).
  * 4. Adds the app's privacy manifest (PrivacyInfo.xcprivacy) to the Xcode project.
  * 5. Build settings: iPhone only, version / build number from IOS_VERSION / IOS_BUILD_NUMBER,
  *    signing team from IOS_TEAM_ID (all optional; Xcode keeps whatever was set there before).
@@ -96,6 +97,40 @@ const PLIST = {
 };
 for (const [key, value] of Object.entries(PLIST)) setKey(key, value);
 writeFileSync(plistPath, plist);
+
+// ---------------------------------------------------------------- Swipe back
+// The edge swipe for going back (WKWebView turns it off) comes from a small CAPBridgeViewController
+// subclass kept in SceneDelegate.swift, so no new file has to be added to the Xcode project.
+// The Capacitor template creates SceneDelegate.swift without it.
+const sceneDelegatePath = 'ios/App/App/SceneDelegate.swift';
+if (existsSync(sceneDelegatePath)) {
+  let scene = readFileSync(sceneDelegatePath, 'utf8');
+  if (!scene.includes('class RangoBridgeViewController')) {
+    const rootLine = 'window?.rootViewController = CAPBridgeViewController()';
+    if (!scene.includes(rootLine) || !scene.includes('class SceneDelegate')) {
+      console.warn('[ios] SceneDelegate.swift beklenen biçimde değil: geri kaydırma hareketi eklenmedi.');
+    } else {
+      const subclass = [
+        '/// Capacitor\'s view controller with the iOS edge swipe for going back (WKWebView turns it off by default).',
+        '/// Added by scripts/ios-prepare.mjs.',
+        'class RangoBridgeViewController: CAPBridgeViewController {',
+        '    override func capacitorDidLoad() {',
+        '        super.capacitorDidLoad()',
+        '        webView?.allowsBackForwardNavigationGestures = true',
+        '    }',
+        '}',
+        '',
+        '',
+      ].join('\n');
+      scene = scene
+        .replace(rootLine, 'window?.rootViewController = RangoBridgeViewController()')
+        .replace('class SceneDelegate', `${subclass}class SceneDelegate`);
+      writeFileSync(sceneDelegatePath, scene);
+    }
+  }
+} else {
+  console.warn('[ios] SceneDelegate.swift yok: geri kaydırma hareketi eklenmedi.');
+}
 
 // ---------------------------------------------------------------- Privacy manifest
 const pbxPath = 'ios/App/App.xcodeproj/project.pbxproj';

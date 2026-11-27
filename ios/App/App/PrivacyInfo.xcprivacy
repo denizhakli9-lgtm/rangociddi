@@ -200,6 +200,16 @@
 		</dict>
 	</array>
 	<key>NSPrivacyAccessedAPITypes</key>
-	<array/>
+	<array>
+		<!-- @capacitor/filesystem (data export / calendar file) reads file timestamps and ships no manifest of its own (plugin README). -->
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>C617.1</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

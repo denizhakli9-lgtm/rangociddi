@@ -270,3 +270,26 @@ export interface Slot {
   slot_start: string;
   slot_employee_id: string;
 }
+
+/** Content a signed-in user can report (App Review guideline 1.2). Mirrors content_reports.target_type. */
+export type ReportTargetType = 'review' | 'review_reply' | 'message' | 'business';
+export type ReportReason = 'spam' | 'harassment' | 'inappropriate' | 'fake' | 'other';
+export type ReportStatus = 'open' | 'actioned' | 'dismissed';
+
+/** A row of content_reports; only admins can read them. */
+export interface ContentReport {
+  id: string;
+  reporter_id: string;
+  target_type: ReportTargetType;
+  target_id: string;
+  business_id: string | null;
+  reported_user_id: string | null;
+  reason: ReportReason;
+  note: string;
+  content_snapshot: string;
+  status: ReportStatus;
+  admin_note: string | null;
+  resolved_by: string | null;
+  resolved_at: string | null;
+  created_at: string;
+}

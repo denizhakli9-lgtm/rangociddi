@@ -80,7 +80,7 @@ function MaintenanceRoutes() {
             path="/yasal/:slug"
             element={
               <div className="min-h-screen bg-ink">
-                <header className="mx-auto max-w-6xl px-4 pt-6 sm:px-6">
+                <header className="mx-auto max-w-6xl px-4 pt-[calc(1.5rem+env(safe-area-inset-top))] sm:px-6">
                   <Link to="/" className="font-display text-2xl font-semibold tracking-wide text-white">
                     Rango<span className="text-gold-500">.</span>
                   </Link>
@@ -141,7 +141,7 @@ export default function App() {
 
           <Route path="/isletme/*" element={<RequireAuth roles={['business']}><OwnerArea /></RequireAuth>} />
           <Route path="/yonetim/kurulum" element={<RequireAuth><AdminSetup /></RequireAuth>} />
-          <Route path="/yonetim/destek-ekibi" element={<RequireAuth><div className="min-h-screen bg-ink p-4 sm:p-8"><SupportCenter workspace /></div></RequireAuth>} />
+          <Route path="/yonetim/destek-ekibi" element={<RequireAuth><div className="min-h-screen bg-ink p-4 pt-[calc(1rem+env(safe-area-inset-top))] sm:p-8 sm:pt-[calc(2rem+env(safe-area-inset-top))]"><SupportCenter workspace /></div></RequireAuth>} />
           <Route path="/yonetim/*" element={<RequireAuth roles={['admin']}><AdminArea /></RequireAuth>} />
           {/* Field agents are ordinary accounts listed in field_agents; FieldArea checks membership itself. */}
           <Route path="/saha/*" element={<RequireAuth><FieldArea /></RequireAuth>} />

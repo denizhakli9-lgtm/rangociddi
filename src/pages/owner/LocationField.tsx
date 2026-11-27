@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { AlertTriangle, CheckCircle2, Crosshair, ExternalLink, Link2, MapPin, Trash2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Crosshair, ExternalLink, Link2, MapPin, Settings, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { isInIzmir, parseLocationInput, viewUrl, type Coords } from '@/lib/maps';
-import { getDevicePosition, systemLinkClick } from '@/lib/platform';
+import { canOpenAppSettings, getDevicePosition, isIOS, isNative, openAppSettings, systemLinkClick } from '@/lib/platform';
 
 interface Props {
   value: Coords | null;
@@ -10,12 +10,21 @@ interface Props {
   onChange: (value: Coords | null) => void;
 }
 
+/**
+ * A device fix less precise than this (metres) is not saved as the shop pin. With "Kesin Konum" off (iOS)
+ * or only approximate location allowed (Android), the phone reports a deliberately blurred position
+ * kilometres away, which would send customers to the wrong place.
+ */
+const MAX_PIN_ACCURACY_M = 150;
+
 const SHORT_LINK_MSG = 'Kısa linkler okunamıyor. Google Haritalar’da mağazanın üstüne basılı tutun, çıkan koordinatı (ör. 38.4375, 27.1435) kopyalayıp buraya yapıştırın.';
 
 export function LocationField({ value, district, onChange }: Props) {
   const [link, setLink] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
+  // iOS asks for location only once; after a refusal (or with "Kesin Konum" off) only Settings can change it.
+  const [settingsHint, setSettingsHint] = useState(false);
 
   const accept = (c: Coords) => {
     if (!isInIzmir(c)) {
@@ -23,6 +32,7 @@ export function LocationField({ value, district, onChange }: Props) {
       return;
     }
     setError(null);
+    setSettingsHint(false);
     setLink('');
     onChange(c);
   };
@@ -30,9 +40,22 @@ export function LocationField({ value, district, onChange }: Props) {
   const useMyLocation = () => {
     setLocating(true);
     setError(null);
+    setSettingsHint(false);
     getDevicePosition({ highAccuracy: true, timeout: 15000 }).then(
       (pos) => {
         setLocating(false);
+        if (!(pos.accuracy <= MAX_PIN_ACCURACY_M)) {
+          const radius = Number.isFinite(pos.accuracy) ? ` (yaklaşık ${Math.round(pos.accuracy)} m sapma)` : '';
+          setSettingsHint(true);
+          setError(
+            isIOS
+              ? `Konum yalnızca yaklaşık alındı${radius}, mağaza pini olarak kaydedilmedi. Ayarlar > Rango > Konum’dan “Kesin Konum”u açıp tekrar deneyin ya da harita linki yapıştırın.`
+              : isNative
+                ? `Konum yalnızca yaklaşık alındı${radius}, mağaza pini olarak kaydedilmedi. Telefon ayarlarından Rango için “tam konum” izni verip tekrar deneyin ya da harita linki yapıştırın.`
+                : `Konum yeterince kesin alınamadı${radius}, mağaza pini olarak kaydedilmedi. Telefonunuzdan mağazadayken tekrar deneyin ya da harita linki yapıştırın.`,
+          );
+          return;
+        }
         accept({ latitude: Math.round(pos.latitude * 1e6) / 1e6, longitude: Math.round(pos.longitude * 1e6) / 1e6 });
       },
       (err) => {
@@ -41,9 +64,16 @@ export function LocationField({ value, district, onChange }: Props) {
           err === 'unsupported'
             ? 'Tarayıcınız konum özelliğini desteklemiyor. Harita linki ile ekleyebilirsiniz.'
             : err === 'denied'
-              ? 'Konum izni verilmedi. Tarayıcı veya telefon ayarlarından izin verin ya da harita linki yapıştırın.'
+              ? isIOS
+                ? 'Konum izni kapalı. Ayarlar > Rango > Konum’dan “Uygulamayı Kullanırken” ve “Kesin Konum”u açın ya da harita linki yapıştırın.'
+                : 'Konum izni verilmedi. Tarayıcı veya telefon ayarlarından izin verin ya da harita linki yapıştırın.'
+              : err === 'off'
+                ? isIOS
+                  ? 'Telefonunuzun konum servisleri kapalı. Ayarlar > Gizlilik ve Güvenlik > Konum Servisleri’nden açıp tekrar deneyin ya da harita linki yapıştırın.'
+                  : 'Telefonunuzun konum özelliği kapalı. Hızlı ayarlardan Konum’u açıp tekrar deneyin ya da harita linki yapıştırın.'
               : 'Konumunuz alınamadı. Biraz sonra tekrar deneyin ya da harita linki yapıştırın.',
         );
+        if (err === 'denied') setSettingsHint(true);
       },
     );
   };
@@ -96,6 +126,7 @@ export function LocationField({ value, district, onChange }: Props) {
               onChange={(e) => {
                 setLink(e.target.value);
                 setError(null);
+                setSettingsHint(false);
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
@@ -117,6 +148,11 @@ export function LocationField({ value, district, onChange }: Props) {
         <p className="flex items-start gap-2 rounded-xl border border-warning-500/30 bg-warning-500/10 px-3 py-2.5 text-xs leading-relaxed text-warning-300" role="alert">
           <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" /> {error}
         </p>
+      )}
+      {error && settingsHint && canOpenAppSettings && (
+        <Button type="button" variant="ghost" full onClick={openAppSettings} icon={<Settings className="h-4 w-4" />}>
+          Ayarlar’ı aç
+        </Button>
       )}
     </div>
   );

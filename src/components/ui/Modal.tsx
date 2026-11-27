@@ -31,7 +31,7 @@ export function Modal({ open, onClose, title, subtitle, children, footer, wide }
     <div className="fixed inset-0 z-[90] flex items-end justify-center sm:items-center sm:p-6" role="dialog" aria-modal="true">
       <div className="absolute inset-0 animate-fade-in bg-black/60" onClick={onClose} />
       <div
-        className={`relative flex max-h-[92vh] w-full animate-slide-up flex-col rounded-t-2xl border border-line bg-coal shadow-pop sm:animate-scale-in sm:rounded-2xl ${wide ? 'sm:max-w-2xl' : 'sm:max-w-lg'}`}
+        className={`relative flex max-h-[92vh] w-full animate-slide-up flex-col rounded-t-2xl border border-line bg-coal pb-[env(safe-area-inset-bottom)] shadow-pop supports-[height:100dvh]:max-h-[min(92dvh,calc(100dvh-env(safe-area-inset-top)-0.5rem))] sm:animate-scale-in sm:rounded-2xl sm:pb-0 ${wide ? 'sm:max-w-2xl' : 'sm:max-w-lg'}`}
       >
         <div className="flex items-start justify-between gap-4 border-b border-line px-6 pb-4 pt-5">
           <div>
@@ -42,8 +42,8 @@ export function Modal({ open, onClose, title, subtitle, children, footer, wide }
             <X className="h-5 w-5" />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto px-6 py-5">{children}</div>
-        {footer && <div className="safe-bottom border-t border-line px-6 py-4">{footer}</div>}
+        <div className="flex-1 overflow-y-auto overscroll-contain px-6 py-5">{children}</div>
+        {footer && <div className="border-t border-line px-6 py-4">{footer}</div>}
       </div>
     </div>
   );

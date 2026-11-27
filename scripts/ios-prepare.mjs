@@ -64,20 +64,29 @@ function setKey(key, valueXml) {
   }
 }
 
+const LOCATION_TEXT =
+  'Konumunuz yalnızca siz istediğinizde kullanılır: müşteriler için size en yakın kuaför, berber ve güzellik salonlarını listelemek, işletme sahipleri için salonun haritadaki yerini işaretlemek. Örnek: "Konumumu kullan" düğmesine bastığınızda yakınınızdaki salonlar mesafeye göre sıralanır.';
+
 const PLIST = {
   // Turkish first: system texts (permission buttons, the in-app browser's "Done") follow the phone's
   // language, and the app ships Turkish and English.
   CFBundleDevelopmentRegion: str('tr'),
   CFBundleLocalizations: arr(['tr', 'en']),
   // Permission texts the user sees; App Review rejects vague ones (guideline 5.1.1).
-  NSLocationWhenInUseUsageDescription: str(
-    'Konumunuz, size en yakın kuaför, berber ve güzellik merkezlerini listelemek için kullanılır. Örnek: "Konumumu kullan" ile yakınınızdaki salonları mesafeye göre sıralarsınız.',
-  ),
+  // Without the location text iOS silently ignores the request and "Konumumu kullan" never answers.
+  NSLocationWhenInUseUsageDescription: str(LOCATION_TEXT),
+  // Never shown (the app only asks "while using"), but @capacitor/geolocation links a library that can
+  // track in the background, so Apple's upload check asks for it (plugin README; ITMS-90683).
+  NSLocationAlwaysAndWhenInUseUsageDescription: str(LOCATION_TEXT),
+  // Image inputs offer "Take Photo": without this text iOS closes the app.
   NSCameraUsageDescription: str(
-    'İşletme sahipleri salon, logo ve çalışan fotoğrafını kamerayla çekip işletme sayfasına yükleyebilir. Örnek: salonunuzun iç mekân fotoğrafını çekip galeriye eklemek.',
+    'İşletme sahipleri salon, logo ve çalışan fotoğrafını kamerayla çekip işletme sayfasına ekleyebilir. Örnek: "Fotoğraf Çek" ile salonunuzun iç mekânını çekip galeriye eklemek.',
   ),
   NSPhotoLibraryUsageDescription: str(
-    'İşletme sahipleri salon, logo ve çalışan fotoğraflarını galeriden seçip işletme sayfasına yükleyebilir. Örnek: salonunuzun kapak fotoğrafını seçmek.',
+    'İşletme sahipleri salon, logo ve çalışan fotoğraflarını galeriden seçip işletme sayfasına ekleyebilir. Örnek: salonunuzun kapak fotoğrafını seçmek.',
+  ),
+  NSPhotoLibraryAddUsageDescription: str(
+    'Uzun basıp "Fotoğraflara Ekle"yi seçtiğiniz görseller fotoğraf arşivinize kaydedilir. Örnek: beğendiğiniz bir saç modelinin fotoğrafını kaydetmek.',
   ),
   // The app only uses standard HTTPS (exempt encryption): no export compliance questions on every upload.
   ITSAppUsesNonExemptEncryption: '<false/>',

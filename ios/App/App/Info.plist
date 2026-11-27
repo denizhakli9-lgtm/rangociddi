@@ -70,12 +70,16 @@
 		<string>en</string>
 	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Konumunuz, size en yakın kuaför, berber ve güzellik merkezlerini listelemek için kullanılır. Örnek: "Konumumu kullan" ile yakınınızdaki salonları mesafeye göre sıralarsınız.</string>
+	<string>Konumunuz yalnızca siz istediğinizde kullanılır: müşteriler için size en yakın kuaför, berber ve güzellik salonlarını listelemek, işletme sahipleri için salonun haritadaki yerini işaretlemek. Örnek: "Konumumu kullan" düğmesine bastığınızda yakınınızdaki salonlar mesafeye göre sıralanır.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>İşletme sahipleri salon, logo ve çalışan fotoğrafını kamerayla çekip işletme sayfasına yükleyebilir. Örnek: salonunuzun iç mekân fotoğrafını çekip galeriye eklemek.</string>
+	<string>İşletme sahipleri salon, logo ve çalışan fotoğrafını kamerayla çekip işletme sayfasına ekleyebilir. Örnek: "Fotoğraf Çek" ile salonunuzun iç mekânını çekip galeriye eklemek.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>İşletme sahipleri salon, logo ve çalışan fotoğraflarını galeriden seçip işletme sayfasına yükleyebilir. Örnek: salonunuzun kapak fotoğrafını seçmek.</string>
+	<string>İşletme sahipleri salon, logo ve çalışan fotoğraflarını galeriden seçip işletme sayfasına ekleyebilir. Örnek: salonunuzun kapak fotoğrafını seçmek.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Konumunuz yalnızca siz istediğinizde kullanılır: müşteriler için size en yakın kuaför, berber ve güzellik salonlarını listelemek, işletme sahipleri için salonun haritadaki yerini işaretlemek. Örnek: "Konumumu kullan" düğmesine bastığınızda yakınınızdaki salonlar mesafeye göre sıralanır.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Uzun basıp "Fotoğraflara Ekle"yi seçtiğiniz görseller fotoğraf arşivinize kaydedilir. Örnek: beğendiğiniz bir saç modelinin fotoğrafını kaydetmek.</string>
 </dict>
 </plist>

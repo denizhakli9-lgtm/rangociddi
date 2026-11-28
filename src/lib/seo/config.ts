@@ -27,4 +27,4 @@ export function isTestBusiness(slug: string | null | undefined): boolean {
  *
  * Site "PayTR canlı"ya geçtiğinde `false` yapıp yeniden yayınlayın.
  */
-export const PAYMENTS_IN_TEST_MODE = true;
+export const PAYMENTS_IN_TEST_MODE = false;

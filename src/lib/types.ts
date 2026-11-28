@@ -121,6 +121,11 @@ export interface BlockedSlot {
   starts_at: string;
   ends_at: string;
   reason: string;
+  /** 'booking': a booking the business added itself (phone, walk-in); 'block': time off. Older rows have none. */
+  kind?: 'block' | 'booking';
+  service_id?: string | null;
+  customer_name?: string | null;
+  customer_phone?: string | null;
 }
 
 export interface Appointment {

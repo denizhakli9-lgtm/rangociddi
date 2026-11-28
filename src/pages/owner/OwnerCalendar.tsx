@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react';
-import { ChevronLeft, ChevronRight, Lock, Plus, Trash2 } from 'lucide-react';
+import { CalendarPlus, ChevronLeft, ChevronRight, Lock, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAsync } from '@/lib/useAsync';
 import { addDays, dateKey, formatTime, isoWeekday, keyLabel, timeToMinutes } from '@/lib/format';
@@ -10,10 +10,11 @@ import { Input, Select } from '@/components/ui/Field';
 import { Modal } from '@/components/ui/Modal';
 import { ErrorState, SkeletonList } from '@/components/ui/Feedback';
 import { PageHeader } from '@/components/layout/PageHeader';
-import type { Appointment, BlockedSlot, Employee, WorkingHours } from '@/lib/types';
+import type { Appointment, BlockedSlot, Employee, Service, WorkingHours } from '@/lib/types';
 import { useOwnerBusiness } from './OwnerContext';
 import { fetchOwnerAppointments, istanbulDayStart } from './ownerApi';
 import { AppointmentDetailModal } from './AppointmentDetailModal';
+import { ManualBookingModal } from './ManualBookingModal';
 
 const PX = 1.1;
 const HIDDEN = ['cancelled', 'rejected'];
@@ -42,23 +43,28 @@ export default function OwnerCalendar() {
   const [day, setDay] = useState(dateKey());
   const [open, setOpen] = useState<Appointment | null>(null);
   const [blockOpen, setBlockOpen] = useState(false);
+  const [bookOpen, setBookOpen] = useState(false);
 
   const { data, loading, error, reload } = useAsync(async () => {
-    const [appts, employees, hours, blocks] = await Promise.all([
+    const [appts, employees, hours, blocks, services] = await Promise.all([
       fetchOwnerAppointments(business.id, { from: istanbulDayStart(day), to: istanbulDayStart(addDays(day, 1)) }),
       // Inactive employees are loaded too, so their remaining appointments stay visible (see `columns`).
       supabase.from('employees').select('*').eq('business_id', business.id).order('sort_order'),
       supabase.from('working_hours').select('*').eq('business_id', business.id),
       supabase.from('time_slots').select('*').eq('business_id', business.id).lt('starts_at', istanbulDayStart(addDays(day, 1))).gt('ends_at', istanbulDayStart(day)),
+      // Names for the bookings the business added itself (time_slots.service_id).
+      supabase.from('services').select('id, name').eq('business_id', business.id),
     ]);
     if (employees.error) throw employees.error;
     if (hours.error) throw hours.error;
     if (blocks.error) throw blocks.error;
+    if (services.error) throw services.error;
     return {
       appts: appts.filter((a) => !HIDDEN.includes(a.status)),
       employees: (employees.data ?? []) as Employee[],
       hours: (hours.data ?? []) as WorkingHours[],
       blocks: (blocks.data ?? []) as BlockedSlot[],
+      serviceNames: new Map(((services.data ?? []) as Pick<Service, 'id' | 'name'>[]).map((x) => [x.id, x.name])),
     };
   }, [business.id, day]);
 
@@ -110,6 +116,9 @@ export default function OwnerCalendar() {
         text={todayHours?.is_closed ? 'Bu gün kapalı olarak ayarlı.' : 'Uzman bazında günlük doluluk. Randevuya dokunarak detayları açın.'}
         action={
           <>
+            <Button size="sm" icon={<CalendarPlus className="h-3.5 w-3.5" />} onClick={() => setBookOpen(true)}>
+              Randevu ekle
+            </Button>
             <Button variant="dark" size="sm" onClick={() => setDay(dateKey())}>
               Bugün
             </Button>
@@ -180,8 +189,11 @@ export default function OwnerCalendar() {
                     .map((b) => {
                       const top = clampTop(b.starts_at, dayStartIso);
                       const end = b.ends_at >= istanbulDayStart(addDays(day, 1)) ? range.end : minutesOf(b.ends_at);
-                      return (
-                        <BlockChip key={b.id} block={b} top={(top - range.start) * PX} height={Math.max(20, (end - top) * PX)} onRemove={removeBlock} />
+                      const pos = { top: (top - range.start) * PX, height: Math.max(20, (end - top) * PX) };
+                      return b.kind === 'booking' ? (
+                        <BookingChip key={b.id} block={b} serviceName={b.service_id ? data.serviceNames.get(b.service_id) : undefined} {...pos} onRemove={removeBlock} />
+                      ) : (
+                        <BlockChip key={b.id} block={b} {...pos} onRemove={removeBlock} />
                       );
                     })}
                   {apptsFor(col)
@@ -217,6 +229,7 @@ export default function OwnerCalendar() {
           reload();
         }}
       />
+      <ManualBookingModal key={`book-${bookOpen}`} open={bookOpen} employees={activeEmployees} hours={data?.hours ?? []} onClose={() => setBookOpen(false)} onSaved={() => { setBookOpen(false); reload(); }} />
       <BlockModal key={`${day}-${blockOpen}`} open={blockOpen} day={day} employees={activeEmployees} onClose={() => setBlockOpen(false)} onSaved={() => { setBlockOpen(false); reload(); }} />
     </div>
   );
@@ -245,6 +258,40 @@ function BlockChip({ block, top, height, onRemove }: { block: BlockedSlot; top: 
       >
         <Trash2 className="h-3 w-3" />
       </button>
+    </div>
+  );
+}
+
+/** A booking the business added itself (phone, walk-in): who, when, what; removable like a block. */
+function BookingChip({ block, serviceName, top, height, onRemove }: { block: BlockedSlot; serviceName?: string; top: number; height: number; onRemove: (b: BlockedSlot) => Promise<string | null> }) {
+  const { toast } = useToast();
+  const [busy, setBusy] = useState(false);
+  return (
+    <div style={{ top: top + 1, height: height - 2 }} className="group absolute inset-x-1 overflow-hidden rounded-lg border border-white/30 bg-white/10 px-2 py-1 text-[11px] leading-tight text-white">
+      <div className="flex items-start justify-between gap-1">
+        <p className="truncate font-semibold">
+          {formatTime(block.starts_at)} {block.customer_name || 'Randevu'}
+        </p>
+        <button
+          type="button"
+          disabled={busy}
+          aria-label="Randevuyu sil"
+          onClick={async () => {
+            if (!window.confirm('Bu randevu silinsin mi? Saat yeniden online randevuya açılır.')) return;
+            setBusy(true);
+            const err = await onRemove(block);
+            setBusy(false);
+            if (err) toast(err, 'error');
+            else toast('Randevu silindi.', 'success');
+          }}
+          className="shrink-0 rounded p-0.5 text-mist-2 transition hover:text-error-300"
+        >
+          <Trash2 className="h-3 w-3" />
+        </button>
+      </div>
+      <p className="truncate opacity-80">
+        {serviceName ?? 'Hizmet'} · <span className="text-mist">Elle</span>
+      </p>
     </div>
   );
 }

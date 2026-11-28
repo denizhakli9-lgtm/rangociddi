@@ -76,9 +76,9 @@ export function SlotPicker({ serviceId, employeeId, hours, days = 30, excludeApp
                 active ? 'border-gold-500 bg-primary text-primary-fg' : closed ? 'cursor-not-allowed border-line-soft text-mist-3' : 'border-line bg-coal text-white hover:border-white/30'
               }`}
             >
-              <span className={`text-[10px] uppercase tracking-wider ${active ? 'text-ink/70' : 'text-mist-2'}`}>{d === today ? tx('Bugün', 'Today') : keyLabel(d, { weekday: 'short' })}</span>
+              <span className={`text-[10px] uppercase tracking-wider ${active ? 'text-primary-fg/70' : 'text-mist-2'}`}>{d === today ? tx('Bugün', 'Today') : keyLabel(d, { weekday: 'short' })}</span>
               <span className="mt-1 text-lg font-semibold tracking-tight leading-none">{keyLabel(d, { day: 'numeric' })}</span>
-              <span className={`mt-1 text-[10px] ${active ? 'text-ink/70' : 'text-mist-2'}`}>{closed ? tx('Kapalı', 'Closed') : keyLabel(d, { month: 'short' })}</span>
+              <span className={`mt-1 text-[10px] ${active ? 'text-primary-fg/70' : 'text-mist-2'}`}>{closed ? tx('Kapalı', 'Closed') : keyLabel(d, { month: 'short' })}</span>
             </button>
           );
         })}

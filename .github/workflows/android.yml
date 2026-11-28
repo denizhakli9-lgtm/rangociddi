@@ -77,14 +77,32 @@ jobs:
             done
             # Windows'ta üretilen metinde satır sonu / boşluk olabilir.
             printf '%s' "$KEYSTORE_B64" | tr -d '\r\n\t ' | base64 -d > "$RUNNER_TEMP/upload.jks"
-            # Anahtar, şifre ve alias'ı derlemeden önce doğrula; SHA-1'i Play Console'daki
-            # "Yükleme anahtarı sertifikası" ile karşılaştırmak için yazdır.
-            if ! keytool -list -v -keystore "$RUNNER_TEMP/upload.jks" -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS" > "$RUNNER_TEMP/cert.txt" 2>&1; then
-              echo "::error::Keystore açılamadı: şifre ya da alias yanlış, veya ANDROID_KEYSTORE_BASE64 eksik kopyalandı."
-              grep -m1 "keytool error" "$RUNNER_TEMP/cert.txt" || true
+            # Önce yalnızca şifreyle aç: dosya ve şifre birbirini tutuyor mu?
+            if ! keytool -list -keystore "$RUNNER_TEMP/upload.jks" -storepass "$STORE_PASSWORD" > "$RUNNER_TEMP/list.txt" 2>&1; then
+              echo "::error::Keystore açılamadı: şifre yanlış, veya KEYSTORE_BASE64 sırrına başka bir anahtar dosyası / eksik metin girildi."
+              grep -m1 "keytool error" "$RUNNER_TEMP/list.txt" || true
               exit 1
             fi
+            # Alias gizli değildir. Elle girilen alias'taki boşlukları at; depoda yoksa ve depoda
+            # tek anahtar varsa onu kullan (yanlış yazılmış bir alias derlemeyi durdurmasın).
+            KEY_ALIAS="$(printf '%s' "$KEY_ALIAS" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+            mapfile -t ALIASES < <(grep -E ', *PrivateKeyEntry' "$RUNNER_TEMP/list.txt" | cut -d, -f1)
+            MATCH="$(printf '%s\n' "${ALIASES[@]}" | grep -ixF -m1 -- "$KEY_ALIAS" || true)"
+            if [ -n "$MATCH" ]; then
+              KEY_ALIAS="$MATCH"
+            else
+              if [ "${#ALIASES[@]}" -eq 1 ]; then
+                echo "::warning::KEY_ALIAS sırrındaki ad bu anahtar deposunda yok; depodaki tek anahtar '${ALIASES[0]}' kullanılıyor. Sırrı '${ALIASES[0]}' olarak düzeltin."
+                KEY_ALIAS="${ALIASES[0]}"
+              else
+                echo "::error::KEY_ALIAS sırrındaki ad bu anahtar deposunda yok. Depodaki anahtarlar: ${ALIASES[*]}"
+                exit 1
+              fi
+            fi
+            # SHA-1'i Play Console'daki "Yükleme anahtarı sertifikası" ile karşılaştırmak için yazdır.
+            keytool -list -v -keystore "$RUNNER_TEMP/upload.jks" -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS" > "$RUNNER_TEMP/cert.txt" 2>&1
             echo "İmza sertifikası:"; grep -E "SHA1:|SHA256:|Owner:|Valid" "$RUNNER_TEMP/cert.txt"
+            echo "SIGN_ALIAS=$KEY_ALIAS" >> "$GITHUB_ENV"
             echo "SIGN=1" >> "$GITHUB_ENV"
           else
             echo "::warning::İmza sırları tanımlı değil; yalnızca deneme (debug) APK üretilecek. Kurulum: MOBIL-REHBERI.md"
@@ -94,19 +112,19 @@ jobs:
         working-directory: android
         env:
           STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD || secrets.RANGO_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS || secrets.RANGO_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD || secrets.RANGO_KEY_PASSWORD }}
         run: |
           # Sırlar yapıştırılırken sona eklenen satır sonlarını (Windows: \r\n) at.
-          for v in STORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+          for v in STORE_PASSWORD KEY_PASSWORD; do
             val="${!v}"; while [[ "$val" == *$'\n' || "$val" == *$'\r' ]]; do val="${val%?}"; done
             printf -v "$v" '%s' "$val"
           done
           if [ "$SIGN" = "1" ]; then
+            # SIGN_ALIAS: önceki adımda anahtar deposunda doğrulanan alias.
             ./gradlew --no-daemon bundleRelease assembleRelease \
               -Pandroid.injected.signing.store.file="$RUNNER_TEMP/upload.jks" \
               -Pandroid.injected.signing.store.password="$STORE_PASSWORD" \
-              -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
+              -Pandroid.injected.signing.key.alias="$SIGN_ALIAS" \
               -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
           else
             ./gradlew --no-daemon assembleDebug

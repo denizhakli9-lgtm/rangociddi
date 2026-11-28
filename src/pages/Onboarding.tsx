@@ -51,11 +51,11 @@ export default function Onboarding() {
           />
         ))}
         <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-ink to-transparent lg:hidden" />
-        <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/60 to-transparent" />
-        <div className="absolute left-6 top-6 [&_span]:text-[#fff]">
+        <div className="absolute inset-x-0 top-0 h-[calc(7rem+env(safe-area-inset-top))] bg-gradient-to-b from-black/60 to-transparent" />
+        <div className="absolute left-6 top-[calc(1.5rem+env(safe-area-inset-top))] [&_span]:text-[#fff]">
           <Logo size="sm" />
         </div>
-        <div className="absolute right-5 top-4 flex items-center gap-2">
+        <div className="absolute right-5 top-[calc(1rem+env(safe-area-inset-top))] flex items-center gap-2">
           <LanguageToggle className="!text-[#fff]" />
           <button onClick={() => finish('/kesfet')} className="px-2 text-[13px] font-medium text-[#fff] transition-opacity hover:opacity-80">
             {tx('Atla', 'Skip')}
@@ -63,7 +63,7 @@ export default function Onboarding() {
         </div>
       </div>
 
-      <div className="relative -mt-16 flex flex-col justify-between px-6 pb-10 sm:px-12 lg:mt-0 lg:justify-center lg:px-20">
+      <div className="relative -mt-16 flex flex-col justify-between px-6 pb-[calc(2.5rem+env(safe-area-inset-bottom))] sm:px-12 lg:mt-0 lg:justify-center lg:px-20">
         <div key={index} className="animate-fade-up">
           <p className="mb-3 text-[13px] font-medium text-mist-2">{index + 1} / {slides.length}</p>
           <h1 className="max-w-md font-display text-4xl leading-[1.1] tracking-[-0.02em] text-white sm:text-5xl">{tx(slide.title[0], slide.title[1])}</h1>
@@ -88,6 +88,10 @@ export default function Onboarding() {
               </Button>
               <Button size="lg" variant="outline" full onClick={() => finish('/giris')}>
                 {tx('Giriş yap', 'Sign in')}
+              </Button>
+              {/* Browsing salons needs no account (App Review 5.1.1): say so on the last slide too, not only via "Atla". */}
+              <Button size="lg" variant="ghost" full onClick={() => finish('/kesfet')}>
+                {tx('Üye olmadan göz at', 'Browse without an account')}
               </Button>
             </div>
           ) : (

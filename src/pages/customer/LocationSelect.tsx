@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Check, Clock, LocateFixed, MapPin, Search, Sparkles } from 'lucide-react';
+import { ArrowRight, Check, Clock, LocateFixed, MapPin, Search, Settings, Sparkles } from 'lucide-react';
 import { ALL_DISTRICTS, CITY_LIST, areaAt, cityOrDefault, type City } from '@/lib/cities';
 import { useOpenCities } from '@/lib/useOpenCities';
 import { locativeTr } from '@/lib/seo/places';
 import { useUserLocation } from '@/contexts/LocationContext';
 import { useToast } from '@/contexts/ToastContext';
 import { Button } from '@/components/ui/Button';
-import { getDevicePosition } from '@/lib/platform';
+import { canOpenAppSettings, getDevicePosition, isIOS, openAppSettings } from '@/lib/platform';
 import { tx } from '@/i18n/locale';
 
 const FOLD: Record<string, string> = { ç: 'c', ğ: 'g', ı: 'i', ö: 'o', ş: 's', ü: 'u' };
@@ -51,6 +51,8 @@ export default function LocationSelect() {
   const openTr = joinNames(open, 've');
   const openEn = joinNames(open, 'and');
   const cityAvailability = availability(city);
+  // iOS asks for location only once; after "Don't Allow" it can only be turned on in Settings.
+  const [denied, setDenied] = useState(false);
 
   const choose = async (label: string, cityLabel: string, lat: number, lng: number) => {
     await setLocation({ label, city: cityLabel, lat, lng });
@@ -62,6 +64,7 @@ export default function LocationSelect() {
 
   const useDevice = () => {
     setLocating(true);
+    setDenied(false);
     getDevicePosition({ highAccuracy: false, timeout: 10000 }).then(
       ({ latitude, longitude }) => {
         setLocating(false);
@@ -80,7 +83,21 @@ export default function LocationSelect() {
       },
       (err) => {
         setLocating(false);
-        toast(err === 'unsupported' ? tx('Tarayıcınız konum özelliğini desteklemiyor.', 'Your browser does not support location.') : tx('Konum izni alınamadı. Lütfen listeden bir semt seçin.', 'Location permission was not granted. Please choose an area from the list.'), 'error');
+        if (err === 'denied') setDenied(true);
+        toast(
+          err === 'unsupported'
+            ? tx('Tarayıcınız konum özelliğini desteklemiyor.', 'Your browser does not support location.')
+            : err === 'denied'
+              ? isIOS
+                ? tx('Konum izni kapalı. Ayarlar > Rango > Konum’dan izin verebilir ya da listeden bir semt seçebilirsiniz.', 'Location access is off. You can allow it in Settings > Rango > Location, or choose an area from the list.')
+                : tx('Konum izni alınamadı. Lütfen listeden bir semt seçin.', 'Location permission was not granted. Please choose an area from the list.')
+              : err === 'off'
+                ? isIOS
+                  ? tx('Telefonunuzun konum servisleri kapalı. Ayarlar > Gizlilik ve Güvenlik > Konum Servisleri’nden açabilir ya da listeden bir semt seçebilirsiniz.', 'Location Services are off on your phone. You can turn them on in Settings > Privacy & Security > Location Services, or choose an area from the list.')
+                  : tx('Telefonunuzun konum özelliği kapalı. Hızlı ayarlardan Konum’u açabilir ya da listeden bir semt seçebilirsiniz.', 'Location is turned off on your phone. You can turn it on in quick settings, or choose an area from the list.')
+              : tx('Konumunuz şu an alınamadı. Lütfen listeden bir semt seçin.', 'Your location could not be found right now. Please choose an area from the list.'),
+          'error',
+        );
       },
     );
   };
@@ -109,6 +126,11 @@ export default function LocationSelect() {
       <Button variant="outline" full size="lg" className="mt-8" loading={locating} icon={<LocateFixed className="h-4 w-4" />} onClick={useDevice}>
         {tx('Mevcut konumumu kullan', 'Use my current location')}
       </Button>
+      {denied && canOpenAppSettings && (
+        <Button variant="ghost" full className="mt-2" icon={<Settings className="h-4 w-4" />} onClick={openAppSettings}>
+          {tx('Ayarlar’da konum iznini aç', 'Turn on location in Settings')}
+        </Button>
+      )}
       <p className="mt-2 text-xs leading-relaxed text-mist-2">{tx('Konumunuz yalnızca size en yakın semti bulmak için cihazınızda kullanılır; tam konumunuz saklanmaz, yalnızca seçilen semt kaydedilir.', 'Your location is only used on your device to find the nearest area; your exact position is never stored, only the chosen area.')}</p>
 
       <div role="group" aria-label={tx('Şehir', 'City')} className="mt-8">

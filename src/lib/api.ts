@@ -1,5 +1,5 @@
 import { supabase, MEDIA_BUCKET } from '@/lib/supabase';
-import type { Business, Category, Employee, PlatformSettings, Review, Service, Slot, WorkingHours } from '@/lib/types';
+import type { Business, Category, Employee, PlatformSettings, ReportReason, ReportTargetType, Review, Service, Slot, WorkingHours } from '@/lib/types';
 import { PUBLIC_BUSINESS_FIELDS, PUBLIC_REVIEW_FIELDS } from '@/lib/seo/queries';
 
 /** Keep owner_id: isDemoBusiness() (src/lib/demo.ts) uses owner_id === null to mark seeded sample businesses. */
@@ -178,4 +178,23 @@ export async function uploadBusinessImage(businessId: string, file: File, kind: 
   const { error } = await supabase.storage.from(MEDIA_BUCKET).upload(path, file, { contentType: file.type, upsert: false });
   if (error) throw error;
   return supabase.storage.from(MEDIA_BUCKET).getPublicUrl(path).data.publicUrl;
+}
+
+/** Reports a review, owner reply, booking message or business page to the Rango moderators. */
+export async function reportContent(targetType: ReportTargetType, targetId: string, reason: ReportReason, note = ''): Promise<void> {
+  const { error } = await supabase.rpc('report_content', { p_target_type: targetType, p_target_id: targetId, p_reason: reason, p_note: note.trim() });
+  if (error) throw error;
+}
+
+/** Whether the signed-in user blocked the other side of this booking's chat. */
+export async function fetchChatBlocked(appointmentId: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc('appointment_chat_blocked', { p_appointment: appointmentId });
+  if (error) throw error;
+  return data === true;
+}
+
+/** Blocks (or unblocks) the other side of this booking's chat. Bookings themselves are not affected. */
+export async function setChatBlocked(appointmentId: string, blocked: boolean): Promise<void> {
+  const { error } = await supabase.rpc('set_appointment_chat_block', { p_appointment: appointmentId, p_blocked: blocked });
+  if (error) throw error;
 }

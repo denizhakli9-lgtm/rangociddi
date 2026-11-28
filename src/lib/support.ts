@@ -20,6 +20,20 @@ export async function supportAction(action: string, thread?: string, text = '') 
   return data;
 }
 /**
+ * When the signed-in user agreed to the AI assistant (support_ai_consents), or null without consent. Fails closed:
+ * any read error (including a database without the table yet) counts as no consent, so the user gets a person.
+ */
+export async function fetchAIConsent(userId: string): Promise<string | null> {
+  const { data, error } = await supabase.from('support_ai_consents').select('consented_at').eq('user_id', userId).maybeSingle();
+  if (error || !data) return null;
+  return typeof data.consented_at === 'string' ? data.consented_at : null;
+}
+/** Gives (true) or withdraws (false) consent; withdrawing also moves open AI conversations to the support team. */
+export async function setAIConsent(consent: boolean): Promise<void> {
+  const { error } = await supabase.rpc('support_set_ai_consent', { p_consent: consent });
+  if (error) throw error;
+}
+/**
  * 'answered': the AI replied (or had nothing to do); 'handoff': the conversation was deliberately passed to the team;
  * 'failed': the AI could not be reached, so the conversation was queued for the team. Never throws: the user's
  * message is already saved when this runs.

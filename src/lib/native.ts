@@ -11,10 +11,36 @@ async function syncStatusBar() {
   const dark = document.documentElement.dataset.theme === 'dark';
   try {
     await StatusBar.setStyle({ style: dark ? Style.Dark : Style.Light });
+    // On iOS the background colour is only visible when overlaysWebView is false (it is true here).
     await StatusBar.setBackgroundColor({ color: dark ? '#080808' : '#f8f7f3' });
   } catch {
-    /* setBackgroundColor is Android-only */
+    /* not available on this platform */
   }
+}
+
+/**
+ * iOS resets the status bar to its default style whenever the app's screen re-appears after a
+ * full-screen sheet (in-app browser, PayTR, camera), which can make the clock unreadable on the
+ * light theme. JS gets no event for that moment, so the style is applied again once the closing
+ * animation is over (twice, in case the animation runs long).
+ */
+export function resyncStatusBarSoon() {
+  if (!isNative) return;
+  // Right away too, so a dark-theme user sees the light-text bar again as early as possible.
+  void syncStatusBar();
+  setTimeout(() => void syncStatusBar(), 400);
+  setTimeout(() => void syncStatusBar(), 1000);
+}
+
+/** Closes the in-app browser sheet, if one is open, and restores the status bar afterwards. */
+export async function closeInAppBrowser(): Promise<void> {
+  if (!isNative) return;
+  try {
+    await Browser.close();
+  } catch {
+    /* no sheet was open */
+  }
+  resyncStatusBarSoon();
 }
 
 /** Moves the in-app router to `path` without reloading the app. */
@@ -32,6 +58,15 @@ export function initNative() {
 
   void syncStatusBar();
   window.addEventListener('rango:theme', () => void syncStatusBar());
+  // The native screen re-appears: in-app browser closed by the user ("Bitti" / swipe down), app back
+  // from the background, photo/camera picker closed (a picked file or a cancel).
+  void Browser.addListener('browserFinished', resyncStatusBarSoon);
+  void App.addListener('resume', resyncStatusBarSoon);
+  const onFilePicker = (e: Event) => {
+    if (e.target instanceof HTMLInputElement && e.target.type === 'file') resyncStatusBarSoon();
+  };
+  document.addEventListener('change', onFilePicker, true);
+  document.addEventListener('cancel', onFilePicker, true);
 
   // Android hardware/gesture back: go back inside the app, leave it only from the first screen.
   void App.addListener('backButton', ({ canGoBack }) => {
@@ -54,7 +89,7 @@ export function initNative() {
       // PayTR's return page (see paytr-token): close the payment sheet and show the booking's payment screen.
       if (u.pathname === '/odeme-sonuc.html') {
         const id = u.searchParams.get('randevu') ?? '';
-        void Browser.close().catch(() => undefined);
+        void closeInAppBrowser();
         if (/^[0-9a-f-]{36}$/i.test(id)) goTo(`/odeme/${id}?paytr=${u.searchParams.get('durum') === 'ok' ? 'ok' : 'hata'}`);
         return;
       }

@@ -122,7 +122,7 @@ export default function Earnings() {
             <div className="flex h-48 items-end gap-3 sm:gap-6">
               {summary.months.map((m) => (
                 <div key={m.key} className="group flex flex-1 flex-col items-center gap-2">
-                  <span className="text-[10px] text-mist-2 opacity-0 transition group-hover:opacity-100">{formatTRY(m.gross)}</span>
+                  <span className="text-[10px] whitespace-nowrap text-mist-2 opacity-100 transition can-hover:opacity-0 group-hover:opacity-100">{formatTRY(m.gross)}</span>
                   <div className="relative flex w-full max-w-[56px] flex-1 items-end">
                     <div className="w-full rounded-t-lg bg-gold-500 transition-all duration-700" style={{ height: `${(m.gross / summary.max) * 100}%`, minHeight: m.gross ? 4 : 2 }} />
                   </div>

@@ -10,10 +10,16 @@ import { ToastProvider } from '@/contexts/ToastContext';
 // visitors' IP addresses are not sent to a third party abroad (KVKK md. 9).
 import './fonts.css';
 import './index.css';
+import { Capacitor } from '@capacitor/core';
 import { initNative } from '@/lib/native';
+import { initKeyboardBars } from '@/lib/keyboard';
 import { captureReferralFromUrl } from '@/lib/fieldAgent';
 
+// iOS-app-only styles (16px form controls, no long-press callout) hang off this class, so the
+// website and the Android app keep their design.
+if (Capacitor.getPlatform() === 'ios') document.documentElement.classList.add('ios');
 initNative();
+initKeyboardBars();
 // A field agent's link (?ref=CODE) is kept until the business sign-up form uses it.
 captureReferralFromUrl();
 

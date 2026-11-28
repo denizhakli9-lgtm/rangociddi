@@ -1,10 +1,14 @@
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
+import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
 import { Geolocation } from '@capacitor/geolocation';
 import { Share } from '@capacitor/share';
 
 /** True inside the Android / iOS app, false on the website. */
 export const isNative = Capacitor.isNativePlatform();
+
+/** True only inside the iOS app (iPhone wording such as "Ayarlar > Rango", iOS-only flows). */
+export const isIOS = Capacitor.getPlatform() === 'ios';
 
 /**
  * The public website. Inside the app `window.location.origin` is
@@ -75,37 +79,93 @@ export async function shareLink(title: string, url: string): Promise<'shared' | 
   return 'copied';
 }
 
-export type PositionError = 'unsupported' | 'denied' | 'unavailable';
+/**
+ * Hands a file the app generated (data export, calendar file) to the user. The app's WebView cannot
+ * download files (an `<a download>` does nothing there), so the file is written to the app's cache
+ * and offered through the system share sheet ("Dosyalara Kaydet", Mail, AirDrop...).
+ * App only; the website downloads the file itself. Resolves 'cancelled' when the sheet was closed
+ * without choosing anything, so callers never report a save that did not happen.
+ */
+export async function shareGeneratedFile(filename: string, data: string, dialogTitle: string): Promise<'shared' | 'cancelled'> {
+  const { uri } = await Filesystem.writeFile({ path: filename, data, directory: Directory.Cache, encoding: Encoding.UTF8 });
+  try {
+    await Share.share({ title: filename, files: [uri], dialogTitle });
+    return 'shared';
+  } catch (err) {
+    if (/cancel/i.test(String((err as { message?: string })?.message ?? err))) return 'cancelled';
+    throw err;
+  }
+}
+
+/** True where `openAppSettings` works: iOS opens the app's own page in Settings (Ayarlar > Rango). */
+export const canOpenAppSettings = isIOS;
+
+/** Opens Rango's page in the iOS Settings app (location permission etc.). The WebView hands the URL to iOS. */
+export function openAppSettings() {
+  if (canOpenAppSettings) window.location.href = 'app-settings:';
+}
+
+/** 'off': the phone's location services are switched off for every app (app only). */
+export type PositionError = 'unsupported' | 'denied' | 'off' | 'unavailable';
+
+/** Device position; `accuracy` is the radius in metres (large when only approximate location was allowed). */
+export interface DevicePosition {
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+}
+
+/** Rejects with 'unavailable' when `promise` has not settled within `ms`. */
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject('unavailable' as PositionError), ms);
+    promise.then(
+      (v) => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(timer);
+        reject(e);
+      },
+    );
+  });
+}
 
 /**
  * Current device position. In the app it uses the native location service (one
  * clear permission prompt); on the website the browser's geolocation.
- * Rejects with a `PositionError` string.
+ * Rejects with a `PositionError` string, and never hangs: the native permission
+ * request only settles when iOS reports a decision, so every native step is time-boxed.
  */
-export async function getDevicePosition(opts: { highAccuracy?: boolean; timeout?: number } = {}): Promise<{ latitude: number; longitude: number }> {
+export async function getDevicePosition(opts: { highAccuracy?: boolean; timeout?: number } = {}): Promise<DevicePosition> {
   const enableHighAccuracy = opts.highAccuracy ?? false;
   const timeout = opts.timeout ?? 10000;
 
   if (isNative) {
     try {
-      let perm = await Geolocation.checkPermissions();
+      let perm = await withTimeout(Geolocation.checkPermissions(), 5000);
       if (perm.location !== 'granted' && perm.coarseLocation !== 'granted') {
-        perm = await Geolocation.requestPermissions({ permissions: ['location', 'coarseLocation'] });
+        // Long enough for the user to read the system prompt.
+        perm = await withTimeout(Geolocation.requestPermissions({ permissions: ['location', 'coarseLocation'] }), 60000);
       }
       if (perm.location !== 'granted' && perm.coarseLocation !== 'granted') throw 'denied' as PositionError;
-      const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy, timeout, maximumAge: 0 });
-      return { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
+      const pos = await withTimeout(Geolocation.getCurrentPosition({ enableHighAccuracy, timeout, maximumAge: 0 }), timeout + 5000);
+      return { latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy };
     } catch (err) {
-      if (err === 'denied') throw err;
+      if (err === 'denied' || err === 'unavailable') throw err;
       const msg = String((err as { message?: string })?.message ?? err).toLowerCase();
-      throw (msg.includes('denied') || msg.includes('permission') ? 'denied' : 'unavailable') as PositionError;
+      // Location switched off for the whole phone ("Location services are not enabled.", Android's
+      // "...Network and Location turned off." or a refused "turn on location" dialog).
+      if (msg.includes('not enabled') || msg.includes('turned off') || msg.includes('enable location')) throw 'off' as PositionError;
+      throw (msg.includes('denied') || msg.includes('permission') || msg.includes('restricted') ? 'denied' : 'unavailable') as PositionError;
     }
   }
 
   if (!('geolocation' in navigator)) throw 'unsupported' as PositionError;
   return new Promise((resolve, reject) => {
     navigator.geolocation.getCurrentPosition(
-      (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+      (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy }),
       (err) => reject((err.code === err.PERMISSION_DENIED ? 'denied' : 'unavailable') as PositionError),
       { enableHighAccuracy, timeout, maximumAge: 0 },
     );

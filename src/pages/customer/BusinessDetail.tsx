@@ -28,6 +28,8 @@ import { locale, tx } from '@/i18n/locale';
 import { businessMeta } from '@/lib/seo/meta';
 import { cityCategoryPath, cityPath, pagesCityOf } from '@/lib/seo/places';
 import { Blocks } from '@/components/seo/Blocks';
+import { ReportButton } from '@/components/ReportContent';
+import { useAuth } from '@/contexts/AuthContext';
 import { useSeo } from '@/lib/seo/useSeo';
 
 type Tab = 'services' | 'staff' | 'reviews' | 'info';
@@ -43,6 +45,7 @@ export default function BusinessDetail() {
   const { slug = '' } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { profile } = useAuth();
   const { location, hasChosen } = useUserLocation();
   const { ids, toggle } = useFavorites();
   const [tab, setTab] = useState<Tab>('services');
@@ -87,6 +90,8 @@ export default function BusinessDetail() {
 
   const { business: b, services, employees, hours, reviews } = data;
   const demo = isDemoBusiness(b);
+  // The owner viewing their own page: no "Report" on their own business or replies.
+  const ownBusiness = !!profile && !!b.owner_id && profile.id === b.owner_id;
   // A profile can be booked once it is a real business that lists at least one service.
   const bookable = !demo && services.length > 0;
   const ownPhotos = [b.cover_url, ...(b.gallery ?? [])].map(safeImageUrl).filter((src): src is string => !!src);
@@ -275,9 +280,15 @@ export default function BusinessDetail() {
                         <Stars value={r.rating} />
                       </div>
                       {r.comment && <p className="mt-3 text-sm leading-relaxed text-mist">{r.comment}</p>}
+                      <div className="mt-3 flex justify-end">
+                        <ReportButton targetType="review" targetId={r.id} />
+                      </div>
                       {r.owner_reply && (
-                        <div className="mt-4 rounded-xl bg-coal-2 px-4 py-3">
-                          <p className="text-xs font-semibold text-white">{tx('İşletme yanıtı', 'Reply from the business')}</p>
+                        <div className="mt-3 rounded-xl bg-coal-2 px-4 py-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-xs font-semibold text-white">{tx('İşletme yanıtı', 'Reply from the business')}</p>
+                            {!ownBusiness && <ReportButton targetType="review_reply" targetId={r.id} />}
+                          </div>
                           <p className="mt-1 text-sm text-mist">{r.owner_reply}</p>
                         </div>
                       )}
@@ -321,6 +332,17 @@ export default function BusinessDetail() {
               </div>
             </section>
           </div>
+
+          {!demo && !ownBusiness && (
+            <div className="mt-8 flex justify-center sm:justify-start">
+              <ReportButton
+                targetType="business"
+                targetId={b.id}
+                label={tx('Bu işletmeyi, fotoğraflarını veya metinlerini şikâyet et', 'Report this business, its photos or texts')}
+                className="inline-flex min-h-11 items-center gap-1.5 text-xs text-mist-2 transition-colors hover:text-white"
+              />
+            </div>
+          )}
         </div>
 
         <aside className="hidden lg:block">
@@ -348,7 +370,7 @@ export default function BusinessDetail() {
         </aside>
       </div>
 
-      <div data-booking-bar className="safe-bottom sticky bottom-[60px] z-30 -mx-4 mt-10 border-t border-line bg-ink/95 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6 md:bottom-0 lg:hidden">
+      <div data-booking-bar className="sticky bottom-[calc(60px+env(safe-area-inset-bottom))] z-30 -mx-4 mt-10 border-t border-line bg-ink/95 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6 md:bottom-0 md:pb-[calc(0.75rem+env(safe-area-inset-bottom))] lg:hidden">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
           <div className="min-w-0">
             {demo ? (

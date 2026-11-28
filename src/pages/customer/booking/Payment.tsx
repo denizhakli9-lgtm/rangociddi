@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { App as CapacitorApp } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
 import { AlertTriangle, CalendarClock, CreditCard, Loader2, Lock, MapPin, Timer, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -26,7 +27,8 @@ import { Button } from '@/components/ui/Button';
 import { EmptyState, ErrorState, PageLoader } from '@/components/ui/Feedback';
 import type { Appointment } from '@/lib/types';
 import { locale, tx } from '@/i18n/locale';
-import { isNative, newTabClick } from '@/lib/platform';
+import { isIOS, isNative, newTabClick } from '@/lib/platform';
+import { closeInAppBrowser } from '@/lib/native';
 import { invokeEdge } from '@/lib/functions';
 
 /**
@@ -246,7 +248,7 @@ export default function Payment() {
   const checkPaid = useCallback(async (): Promise<boolean> => {
     const { data: row } = await supabase.from('appointments').select('status').eq('id', id).maybeSingle();
     if (row && row.status !== 'pending_payment') {
-      if (isNative) void Browser.close().catch(() => undefined);
+      if (isNative) void closeInAppBrowser();
       navigate(`/onay/${id}`, { replace: true });
       return true;
     }
@@ -305,6 +307,14 @@ export default function Payment() {
     });
     return () => void listener.then((l) => l.remove());
   }, [phase, startChecking, checkPaid, id]);
+
+  // Back in the app after a while away (bank app for 3-D Secure, home screen): the page's timers may have
+  // been paused meanwhile, so ask PayTR right away instead of waiting for the next poll.
+  useEffect(() => {
+    if (!isNative || !tracking) return;
+    const listener = CapacitorApp.addListener('resume', () => void reconcilePaytr(id).then(checkPaid));
+    return () => void listener.then((l) => l.remove());
+  }, [tracking, checkPaid, id]);
 
   // PayTR's page talks to its host page: it expired, or a step needs another height. Only PayTR's origin counts.
   useEffect(() => {
@@ -541,7 +551,9 @@ export default function Payment() {
             <p className="flex items-center gap-3 rounded-xl border border-line bg-coal-2 px-4 py-3 text-sm text-white">
               <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
               {phase === 'open'
-                ? tx('PayTR ödeme sayfası açık. Ödemeyi tamamlayınca bu ekrana dönün; onay otomatik gelir.', 'The PayTR payment page is open. Come back here when you have paid; the confirmation appears automatically.')
+                ? isIOS
+                  ? tx('PayTR ödeme sayfası açık. Ödemeyi tamamlayınca sol üstteki “Bitti”ye dokunun; onay otomatik gelir.', 'The PayTR payment page is open. When you have paid, tap “Done” at the top left; the confirmation appears automatically.')
+                  : tx('PayTR ödeme sayfası açık. Ödemeyi tamamlayınca bu ekrana dönün; onay otomatik gelir.', 'The PayTR payment page is open. Come back here when you have paid; the confirmation appears automatically.')
                 : tx('Ödemeniz kontrol ediliyor. Bu birkaç saniye sürebilir, lütfen sayfayı kapatmayın.', 'Checking your payment. This can take a few seconds, please keep this page open.')}
             </p>
             {phase === 'open' && isNative && (

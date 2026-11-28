@@ -180,7 +180,7 @@ export default function BusinessProfile() {
                   ) : (
                     <div className="grid h-full place-items-center bg-coal-3 p-2 text-center text-[10px] text-mist-3">Görsel gösterilemiyor</div>
                   )}
-                  <button type="button" aria-label="Görseli kaldır" onClick={() => setMedia((m) => ({ ...m, gallery: m.gallery.filter((g) => g !== url) }))} className="absolute right-1.5 top-1.5 grid h-7 w-7 place-items-center rounded-full bg-ink/80 text-white opacity-0 transition group-hover:opacity-100">
+                  <button type="button" aria-label="Görseli kaldır" onClick={() => setMedia((m) => ({ ...m, gallery: m.gallery.filter((g) => g !== url) }))} className="absolute right-1.5 top-1.5 grid h-7 w-7 place-items-center rounded-full bg-ink/80 text-white opacity-100 transition focus-visible:opacity-100 can-hover:opacity-0 group-hover:opacity-100">
                     <X className="h-3.5 w-3.5" />
                   </button>
                 </div>
@@ -251,7 +251,7 @@ export default function BusinessProfile() {
         <PayoutAccountCard businessId={business.id} />
       </div>
 
-      <div className="fixed inset-x-0 bottom-[60px] z-30 border-t border-line bg-ink/90 p-4 backdrop-blur lg:bottom-0 lg:left-64">
+      <div data-save-bar className="fixed inset-x-0 bottom-[calc(60px+env(safe-area-inset-bottom))] z-30 border-t border-line bg-ink/90 p-4 backdrop-blur lg:bottom-0 lg:left-64 lg:pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <div className="mx-auto flex max-w-5xl items-center justify-end gap-3">
           <span className="hidden text-xs text-mist-2 sm:block">Değişiklikler kaydedildiğinde müşteri sayfanız güncellenir.</span>
           <Button loading={saving} onClick={save} icon={<Save className="h-4 w-4" />} disabled={!!uploading}>

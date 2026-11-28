@@ -11,6 +11,7 @@ import { Avatar, Segmented, Stars } from '@/components/ui/Brand';
 import { Badge } from '@/components/ui/Badge';
 import { EmptyState, ErrorState, SkeletonList } from '@/components/ui/Feedback';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { ReportButton } from '@/components/ReportContent';
 import type { Review } from '@/lib/types';
 import { useOwnerBusiness } from './OwnerContext';
 
@@ -113,6 +114,8 @@ function ReviewItem({ review, onSaved }: { review: Review; onSaved: (reply: stri
             {review.service_name} · {formatRelative(review.created_at)}
           </p>
         </div>
+        {/* Abusive or fake reviews go to the Rango moderators; the owner cannot hide reviews. */}
+        {!review.is_hidden && <ReportButton targetType="review" targetId={review.id} label="Yorumu şikâyet et" className="inline-flex min-h-9 shrink-0 items-center gap-1 text-[11px] text-mist-2 transition-colors hover:text-white" />}
       </div>
       {review.comment && <p className="mt-3 text-sm leading-relaxed text-mist">{review.comment}</p>}
 

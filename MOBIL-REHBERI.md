@@ -5,6 +5,8 @@ Site ile uygulama **aynı kodu** kullanır: bir şeyi düzelttiğinde ikisinde b
 
 Uygulama kimliği: **`tr.com.rango.app`** (`capacitor.config.ts`). Mağazaya yüklendikten sonra değiştirilemez.
 
+**iPhone / App Store için adım adım rehber: [`APP-STORE-REHBERI.md`](APP-STORE-REHBERI.md).** Bu dosyadaki iOS notları özet niteliğindedir.
+
 ---
 
 ## 0. Bir kerelik hazırlık
@@ -41,7 +43,7 @@ npx cap add android
 npx cap add ios        # yalnızca Mac'te
 ```
 
-Bu komutlar `android/` ve `ios/` klasörlerini oluşturur. `android/` git'te tutulmaz; her derlemede `scripts/android-prepare.mjs` ile yeniden oluşturulur (bkz. 3b). `ios/` klasörünü GitHub'a gönder.
+`android/` git'te tutulmaz; her derlemede `scripts/android-prepare.mjs` ile yeniden oluşturulur (bkz. 3b). `ios/` ise git'te **hazır** durur (Xcode imza ayarını orada saklar). `npx cap add ios` çalıştırmana gerek yok: `npm run ios` her seferinde `scripts/ios-prepare.mjs` ile projeyi günceller.
 
 ---
 
@@ -56,12 +58,7 @@ Uygulama "Konumumu kullan" düğmesi için telefonun konumunu kullanır.
 <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 ```
 
-**iOS:** `ios/App/App/Info.plist` içinde `<dict>` altına ekle:
-
-```xml
-<key>NSLocationWhenInUseUsageDescription</key>
-<string>Size en yakın kuaför, berber ve güzellik merkezlerini göstermek için konumunuzu kullanıyoruz.</string>
-```
+**iOS:** elle bir şey ekleme. Konum (`NSLocationWhenInUseUsageDescription` ve eklentinin istediği `NSLocationAlwaysAndWhenInUseUsageDescription`), kamera ve fotoğraf izin metinlerini `scripts/ios-prepare.mjs` her derlemede `Info.plist`'e yazar. Metni değiştirmek için o dosyadaki `PLIST` bölümünü düzenle.
 
 ---
 
@@ -75,7 +72,7 @@ npm run ios         # derler, Xcode'u açar (Mac)
 - Android Studio'da yeşil ▶ düğmesi telefonda/emülatörde çalıştırır.
 - Play Store dosyası için: **Build → Generate Signed App Bundle / APK → Android App Bundle (.aab)**.
   Oluşturduğun **imza anahtarını (keystore) ve şifresini kaybetme.** Kaybedersen uygulamayı bir daha güncelleyemezsin.
-- iOS: Xcode'da **Product → Archive → Distribute App**.
+- iOS: Xcode'da **Product → Archive → Distribute App** (ayrıntı: `APP-STORE-REHBERI.md` 7. adım; her yüklemede `IOS_BUILD_NUMBER`'ı artır).
 
 Kodda değişiklik yaptıktan sonra yeniden `npm run android` veya `npm run ios` çalıştırman yeterli.
 
@@ -138,11 +135,7 @@ GitHub → **Actions** → "Android uygulaması" → **Run workflow** ile elle d
 ## 4. Simge ve açılış ekranı
 
 Android'de bu adım `scripts/android-prepare.mjs` ile kendiliğinden yapılır. `assets/` klasöründe sitedeki logodan üretilmiş 1024×1024 `icon.png`, 2732×2732 `splash.png` (açık zemin `#f8f7f3`) ve `splash-dark.png` (koyu tema) var. Değiştirmek için bu dosyaları aynı boyutta yenileriyle değiştir.
-iOS için elle:
-
-```bash
-npx @capacitor/assets generate --iconBackgroundColor '#f8f7f3' --splashBackgroundColor '#f8f7f3'
-```
+iOS'ta da aynı dosyalardan `scripts/ios-prepare.mjs` üretir (`npm run ios`).
 
 ---
 
@@ -174,9 +167,10 @@ Uygulama tarafı hazır (`src/lib/native.ts`). Uygulamayı imzaladıktan sonra i
 
 ## 7. Mağaza incelemesi için notlar
 
-- **Hesap silme** uygulamada var (Profil → Hesabımı sil). İki mağaza da bunu zorunlu tutuyor.
+- **Hesap silme** uygulamada var (Profil → Verilerim ve gizlilik → Hesabımı sil). Müşteri hesabı hemen silinir; işletme/yönetici hesabı silmeyi uygulama içinden başlatır, Yönetim → Hesap silme talepleri'nden 30 gün içinde tamamlanır. İki mağaza da bunu zorunlu tutuyor.
+- **Kullanıcı içeriği:** yorumlar, işletme yanıtları, işletme sayfaları ve mesajlar "Şikâyet et" ile bildirilebilir, sohbette "Engelle" var; şikâyetler Yönetim → Şikâyetler'de 24 saat içinde incelenir (Apple 1.2).
 - **Ödeme:** Fiziksel hizmet (kuaför randevusu) ödemeleri Apple/Google uygulama içi satın alma kuralına girmez. iyzico/PayTR kullanılabilir.
 - **Gizlilik politikası linki:** Mağaza formlarına `https://rango.com.tr/yasal/aydinlatma-metni` yaz.
 - **Test hesabı:** Apple inceleme ekibi için bir müşteri hesabı ve bir işletme hesabı hazırla, bilgilerini inceleme notuna yaz.
 - **Apple 4.2 kuralı ("site kopyası"):** Apple bazen yalnızca siteyi gösteren uygulamaları reddedebilir. Rango'nun yerel konum, paylaşım ve harita entegrasyonu
-  bu riski azaltır. Ret gelirse sıradaki adım **anlık bildirim** (randevu hatırlatma) eklemek olur.
+  bu riski azaltır. Ret gelirse sıradaki adım **anlık bildirim** (randevu hatırlatma) eklemek olur. Kenardan kaydırarak geri gitme, takvime ekleme ve paylaşım menüsüyle veri dışa aktarma da uygulamaya özgü özelliklerdir.

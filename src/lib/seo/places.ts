@@ -59,10 +59,19 @@ export function locativeTr(name: string): string {
 }
 
 /**
- * Cities that have their own landing pages. The app serves every city in `src/lib/cities.ts`;
- * a city gets pages here (and in the static build, seo/prerender.ts) once it has businesses.
+ * Kendi sayfaları (`/izmir`, `/izmir/karsiyaka`, …) olan şehirler.
+ *
+ * Uygulama `src/lib/cities.ts` içindeki tüm açık şehirlerde çalışır, ama bir şehrin sayfaları
+ * ancak o şehirde işletme kayıtları başladığında açılır; boş şehir sayfası üretilmez. Şimdilik
+ * yalnızca kayıtlı işletmesi olan pilot şehir İzmir burada.
+ *
+ * Yeni bir şehrin sayfalarını açmak: adını bu listeye ekleyin. Not: statik derleme
+ * (seo/prerender.ts) şu an yalnızca `DEFAULT_CITY` için sayfa ve sitemap üretiyor; ikinci şehir
+ * açılırken orası da bu listeyi dolaşacak şekilde güncellenmeli.
  */
-export const CITIES: PlaceCity[] = ['İzmir'].map((name) => {
+const CITIES_WITH_PAGES = ['İzmir'];
+
+export const CITIES: PlaceCity[] = CITIES_WITH_PAGES.map((name) => {
   const city = cityOrDefault(name);
   return { name: city.name, slug: slugifyTr(city.name), districts: city.districts.map((d) => ({ name: d.name, slug: slugifyTr(d.name), lat: d.lat, lng: d.lng })) };
 });

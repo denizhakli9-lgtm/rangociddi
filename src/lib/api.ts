@@ -1,10 +1,11 @@
 import { supabase, MEDIA_BUCKET } from '@/lib/supabase';
 import type { Business, Category, Employee, PlatformSettings, ReportReason, ReportTargetType, Review, Service, Slot, WorkingHours } from '@/lib/types';
 import { PUBLIC_BUSINESS_FIELDS, PUBLIC_REVIEW_FIELDS } from '@/lib/seo/queries';
+import { withoutAppSamples } from '@/lib/demo';
 
 /** Keep owner_id: isDemoBusiness() (src/lib/demo.ts) uses owner_id === null to mark seeded sample businesses. */
 export const BUSINESS_LIST_COLUMNS =
-  'id, owner_id, category_id, name, slug, description, address, district, city, latitude, longitude, logo_url, cover_url, gallery, gender_focus, deposit_type, deposit_value, cancellation_hours, auto_confirm, status, is_verified, is_featured, rating_avg, review_count, booking_count, min_price, created_at, phone, email, categories(name, slug, icon)';
+  'id, owner_id, category_id, extra_category_ids, name, slug, description, address, district, city, latitude, longitude, logo_url, cover_url, gallery, gender_focus, deposit_type, deposit_value, cancellation_hours, auto_confirm, status, is_verified, is_featured, rating_avg, review_count, booking_count, min_price, created_at, phone, email, categories(name, slug, icon)';
 
 /**
  * What customers and visitors get: the same, minus the business's phone and e-mail.
@@ -68,10 +69,12 @@ export async function searchBusinesses(q: DiscoveryQuery): Promise<DiscoveryPage
     p_offset: q.offset ?? 0,
   });
   if (error) throw error;
-  const list = (Array.isArray(data) ? data : []) as { business: Business; distance_km: number | null; total_count: number }[];
+  const all = (Array.isArray(data) ? data : []) as { business: Business; distance_km: number | null; total_count: number }[];
+  // The app leaves sample businesses out (see withoutAppSamples); the total drops by what this page removed.
+  const list = withoutAppSamples(all, (r) => r.business);
   return {
     rows: list.map((r) => ({ business: r.business, distance: r.distance_km })),
-    total: list.length ? Number(list[0].total_count) : 0,
+    total: all.length ? Math.max(0, Number(all[0].total_count) - (all.length - list.length)) : 0,
   };
 }
 

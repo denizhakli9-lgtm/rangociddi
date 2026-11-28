@@ -7,7 +7,7 @@
  * (müşteriler Rango üzerinden randevu alır; bkz. `PUBLIC_BUSINESS_COLUMNS`, src/lib/api.ts).
  */
 export const PUBLIC_BUSINESS_FIELDS =
-  'id, owner_id, category_id, name, slug, description, address, district, city, latitude, longitude, logo_url, cover_url, gallery, gender_focus, deposit_type, deposit_value, cancellation_hours, auto_confirm, status, is_verified, is_featured, rating_avg, review_count, booking_count, min_price, created_at, categories(name, slug, icon)';
+  'id, owner_id, category_id, extra_category_ids, name, slug, description, address, district, city, latitude, longitude, logo_url, cover_url, gallery, gender_focus, deposit_type, deposit_value, cancellation_hours, auto_confirm, status, is_verified, is_featured, rating_avg, review_count, booking_count, min_price, created_at, categories(name, slug, icon)';
 
 /** A city's approved businesses with what a listing page shows: services (for prices) and working hours. */
 export const LISTING_SELECT = `${PUBLIC_BUSINESS_FIELDS}, services(name, description, price, duration_minutes, is_active, sort_order), working_hours(weekday, is_closed, open_time, close_time)`;

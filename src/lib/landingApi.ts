@@ -3,6 +3,7 @@ import { fetchCategories } from '@/lib/api';
 import { prerendered, type ListedBusiness } from '@/lib/prerenderData';
 import { LISTING_SELECT } from '@/lib/seo/queries';
 import { useCached } from '@/lib/useCached';
+import { withoutAppSamples } from '@/lib/demo';
 import type { Category } from '@/lib/types';
 
 /**
@@ -14,7 +15,7 @@ import type { Category } from '@/lib/types';
  * query per district and category instead.
  */
 function normalize(rows: ListedBusiness[]): ListedBusiness[] {
-  return rows.map((b) => ({
+  return withoutAppSamples(rows, (b) => b).map((b) => ({
     ...b,
     services: (b.services ?? []).filter((s) => s.is_active).sort((a, z) => a.sort_order - z.sort_order),
     working_hours: [...(b.working_hours ?? [])].sort((a, z) => a.weekday - z.weekday),

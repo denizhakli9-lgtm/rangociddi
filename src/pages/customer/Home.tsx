@@ -70,7 +70,7 @@ export default function Home() {
     () => ({
       lang,
       city: DEFAULT_CITY,
-      categories: (categoriesQ.data ?? []).map((c) => ({ slug: c.slug, name: categoryName(c) })),
+      categories: (categoriesQ.data ?? []).map((c) => ({ id: c.id, slug: c.slug, name: categoryName(c) })),
       businesses: listingQ.data,
       supabaseUrl: import.meta.env.VITE_SUPABASE_URL as string | undefined,
     }),

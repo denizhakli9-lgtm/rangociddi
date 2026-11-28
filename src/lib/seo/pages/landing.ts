@@ -17,6 +17,7 @@ import { cityCategoryPath, cityPath, districtCategoryPath, districtPath, locativ
 import {
   aggregateServicePrices,
   buildFacets,
+  categorySlugsOf,
   filterByScope,
   formatPrice,
   formatPriceRange,
@@ -76,8 +77,7 @@ function countLabel(lang: SeoLang, count: number): string {
 function categoryMix(input: LandingInput, listed: ListingBusiness[]): { slug: string; name: string; count: number }[] {
   const counts = new Map<string, number>();
   for (const b of listed) {
-    const slug = b.categories?.slug;
-    if (slug) counts.set(slug, (counts.get(slug) ?? 0) + 1);
+    for (const slug of categorySlugsOf(b, input.categories)) counts.set(slug, (counts.get(slug) ?? 0) + 1);
   }
   return input.categories
     .filter((c) => counts.has(c.slug))
@@ -325,10 +325,10 @@ export function buildLandingPage(input: LandingInput): LandingModel {
   const scope = { district, categorySlug: category?.slug };
   const kind = landingKind(scope);
   const path = landingPath(city, district, category?.slug);
-  const inScope = filterByScope(city, input.businesses, scope);
+  const inScope = filterByScope(city, input.businesses, scope, input.categories);
   const listed = sortForListing(inScope.filter(isBookable));
   const samples = listed.length ? [] : sortForListing(inScope.filter((b) => isSampleBusiness(b) && b.services.length > 0)).slice(0, MAX_SAMPLES);
-  const facets = buildFacets(city, input.businesses);
+  const facets = buildFacets(city, input.businesses, input.categories);
   const indexable = isLandingIndexable(kind, listed.length);
   const copy = copyFor(input, kind, listed);
   const labelOf = (b: ListingBusiness) => input.categories.find((c) => c.slug === b.categories?.slug)?.name;

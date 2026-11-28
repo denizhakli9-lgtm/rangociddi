@@ -71,7 +71,7 @@ export function homeExtraBlocks(input: HomeExtrasInput): Block[] {
   blocks.push(howItWorksBlock(lang));
 
   if (businesses) {
-    const facets = buildFacets(city, businesses);
+    const facets = buildFacets(city, businesses, categories);
     const services: BlockLink[] = categories
       .map((c) => ({ c, n: facets.byCategory.get(c.slug) ?? 0 }))
       .filter(({ n }) => isLandingIndexable('cityCategory', n))

@@ -274,9 +274,12 @@ function categoriesBody(categories: SeoCategory[]): string {
 }
 
 /** Mirrors the layout of pages/customer/BusinessDetail.tsx so the page does not jump when the app takes over. */
-function businessBody(b: DetailRow, supabaseUrl: string): string {
+function businessBody(b: DetailRow, supabaseUrl: string, categories: SeoCategory[]): string {
   const photo = leadPhoto(b, supabaseUrl);
   const category = b.categories?.name ?? '';
+  const extraCategories = (b.extra_category_ids ?? [])
+    .map((id) => categories.find((c) => c.id === id))
+    .filter((c): c is SeoCategory => !!c);
   const photoAlt = [b.name, [b.district, category].filter(Boolean).join(' ')].filter(Boolean).join(' – ');
   // The street address often already ends with the district ("…, Karşıyaka"); do not repeat it.
   const address = [b.address, b.district, b.city].reduce<string[]>((parts, part) => (part && !parts.some((p) => p.includes(part)) ? [...parts, part] : parts), []).join(', ');
@@ -337,7 +340,10 @@ function businessBody(b: DetailRow, supabaseUrl: string): string {
           <div class="mt-6 grid gap-10 lg:grid-cols-[1fr_340px]">
             <div class="min-w-0">
               <div class="mb-4">${renderBlocks([crumbs])}</div>
-              ${category ? `<p class="text-[13px] text-mist">${categoryHref ? `<a href="${e(categoryHref)}">${e(category)}</a>` : e(category)}</p>` : ''}
+              ${category ? `<p class="text-[13px] text-mist">${[
+                categoryHref ? `<a href="${e(categoryHref)}">${e(category)}</a>` : e(category),
+                ...extraCategories.map((c) => (pageCity ? `<a href="${e(cityCategoryPath(pageCity, c.slug))}">${e(c.name)}</a>` : e(c.name))),
+              ].join(' · ')}</p>` : ''}
               <h1 class="mt-2 font-display text-4xl leading-[1.08] tracking-[-0.02em] text-white sm:text-5xl">${e(b.name)}</h1>
               ${reviews > 0 ? `<p class="mt-3 text-sm text-mist"><span class="font-semibold text-white">★ ${Number(b.rating_avg ?? 0).toFixed(1)}</span> (${reviews} değerlendirme)</p>` : ''}
               ${address ? `<p class="mt-5 rounded-2xl border border-line bg-coal p-4 text-sm leading-relaxed text-white">${e(address)}</p>` : ''}
@@ -458,7 +464,7 @@ export function seoPrerender(supabase: { url: string; key: string }): Plugin {
         pages.push({ file: 'kesfet', meta: home, body: homeHtml, data: shared });
 
         // Categories: the structured list names only the categories whose page may be indexed.
-        const facetsNow = data ? buildFacets(city, data.listing) : null;
+        const facetsNow = data ? buildFacets(city, data.listing, data.categories) : null;
         const indexableCategories = (data?.categories ?? []).filter((c) => isLandingIndexable('cityCategory', facetsNow?.byCategory.get(c.slug) ?? 0));
         pages.push({ file: 'kategoriler', meta: categoriesMeta('tr', indexableCategories), body: categoriesBody(data?.categories ?? []), data: shared });
 
@@ -472,7 +478,7 @@ export function seoPrerender(supabase: { url: string; key: string }): Plugin {
 
         if (data) {
           // City, district and category pages: only the ones with enough bookable businesses (see INDEX_THRESHOLDS).
-          const facets = buildFacets(city, data.listing);
+          const facets = buildFacets(city, data.listing, data.categories);
           const input = { lang: 'tr' as const, city, categories: data.categories, businesses: data.listing, supabaseUrl: supabase.url };
           const landings = [buildLandingPage(input)];
           for (const category of data.categories) {
@@ -496,7 +502,7 @@ export function seoPrerender(supabase: { url: string; key: string }): Plugin {
             pages.push({
               file: `i/${b.slug}`,
               meta: businessMeta('tr', b, b.services, b.working_hours, undefined, { photo: photo.placeholder ? undefined : photo.src, reviews: b.reviews }),
-              body: businessBody(b, supabase.url),
+              body: businessBody(b, supabase.url, data.categories),
               data: { business: businessPayload(b) },
             });
           }

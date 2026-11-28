@@ -99,6 +99,18 @@ jobs:
                 exit 1
               fi
             fi
+            # Anahtar şifresini de dene. keytool'un ürettiği PKCS12 depolarında anahtar şifresi depo
+            # şifresiyle aynıdır; KEY_PASSWORD yanlış girildiyse depo şifresiyle devam et.
+            key_ok() { CHECK_STORE_PASSWORD="$STORE_PASSWORD" CHECK_KEY_PASSWORD="$1" java scripts/KeyCheck.java "$RUNNER_TEMP/upload.jks" "$KEY_ALIAS"; }
+            if ! key_ok "$KEY_PASSWORD"; then
+              if key_ok "$STORE_PASSWORD"; then
+                echo "::warning::KEY_PASSWORD sırrı anahtarı açmıyor; depo şifresi kullanılıyor. KEY_PASSWORD sırrını depo şifresiyle aynı yapın."
+                echo "SIGN_KEY_PW_FROM_STORE=1" >> "$GITHUB_ENV"
+              else
+                echo "::error::Anahtar şifresi yanlış: KEY_PASSWORD sırrı da depo şifresi de anahtarı açmıyor."
+                exit 1
+              fi
+            fi
             # SHA-1'i Play Console'daki "Yükleme anahtarı sertifikası" ile karşılaştırmak için yazdır.
             keytool -list -v -keystore "$RUNNER_TEMP/upload.jks" -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS" > "$RUNNER_TEMP/cert.txt" 2>&1
             echo "İmza sertifikası:"; grep -E "SHA1:|SHA256:|Owner:|Valid" "$RUNNER_TEMP/cert.txt"
@@ -120,7 +132,8 @@ jobs:
             printf -v "$v" '%s' "$val"
           done
           if [ "$SIGN" = "1" ]; then
-            # SIGN_ALIAS: önceki adımda anahtar deposunda doğrulanan alias.
+            # SIGN_ALIAS ve SIGN_KEY_PW_FROM_STORE: önceki adımda anahtar deposunda doğrulandı.
+            if [ "$SIGN_KEY_PW_FROM_STORE" = "1" ]; then KEY_PASSWORD="$STORE_PASSWORD"; fi
             ./gradlew --no-daemon bundleRelease assembleRelease \
               -Pandroid.injected.signing.store.file="$RUNNER_TEMP/upload.jks" \
               -Pandroid.injected.signing.store.password="$STORE_PASSWORD" \

@@ -112,9 +112,12 @@ export default function Home() {
       </section>
 
       <section aria-label={tx('Hizmet kategorileri', 'Service categories')}>
-        <div className="mb-4 flex items-end justify-between gap-4">
-          <h2 className="font-display text-[26px] text-white sm:text-3xl">{tx('Hizmete göre keşfedin', 'Browse by service')}</h2>
-          <Link to="/kategoriler" className="flex min-h-11 shrink-0 items-center gap-1 text-[13px] font-medium text-mist transition-colors hover:text-white">{tx('Tüm kategoriler', 'All categories')} <ArrowRight className="h-3.5 w-3.5" /></Link>
+        <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
+          <div className="min-w-0">
+            <h2 className="font-display text-[26px] leading-tight text-white sm:text-3xl">{tx('Bugün kendinizi nasıl şımartmak istersiniz?', 'How would you like to treat yourself today?')}</h2>
+            <p className="mt-1.5 text-sm text-mist">{tx('Saçtan tırnağa, masajdan cilt bakımına; size iyi gelecek hizmeti seçin.', 'From hair to nails, massage to skin care: choose what feels good today.')}</p>
+          </div>
+          <Link to="/kategoriler" className="flex min-h-11 shrink-0 items-center gap-1 self-start text-[13px] sm:self-auto font-medium text-mist transition-colors hover:text-white">{tx('Tüm kategoriler', 'All categories')} <ArrowRight className="h-3.5 w-3.5" /></Link>
         </div>
         {categoriesQ.error ? <ErrorState onRetry={categoriesQ.reload} /> : (
           <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">

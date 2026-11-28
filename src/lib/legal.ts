@@ -16,7 +16,7 @@ export const COMPANY = {
   /** Uygulamanın marka adı. */
   brand: 'Rango',
   /** Açık adres (mahalle, cadde/sokak, no, ilçe/il). */
-  address: 'Karabağlar / İzmir',
+  address: 'Limontepe Mahallesi, 9722 Sokak No: 5 Daire: 1, Karabağlar / İzmir',
   /** Vergi kimlik numarası. */
   taxNumber: '2930362722',
   /** MERSİS numarası (16 hane, varsa). Boş bırakılırsa gösterilmez. */

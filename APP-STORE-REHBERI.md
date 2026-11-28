@@ -95,8 +95,8 @@ Yapılacaklar:
    Şifreleri yalnızca App Store Connect'e yaz.
 3. **Örnek işletmeler:** gönderimden önce ya gizle (durumu askıya al) ya da gerçek işletme sayısı onları geçsin.
    Hizmeti olmayan gerçek işletmeleri hizmet eklenene kadar gizle. Boş kategorileri ("Yakında") listede alta al ya da gizle.
-4. **İletişim bilgisi:** `src/lib/legal.ts` → `COMPANY.address` yalnızca "Karabağlar / İzmir", `phone` boş.
-   Apple'ın **Support URL** kuralı açık adres, e-posta ve telefon istiyor. Tam adresi ve bir telefon numarasını yaz.
+4. **İletişim bilgisi:** `src/lib/legal.ts` → `COMPANY.address` açık adresle dolduruldu (28 Kasım 2026); `phone` hâlâ boş.
+   Apple'ın **Support URL** kuralı açık adres, e-posta ve telefon istiyor. Bir telefon numarası da yaz.
    Bunlar https://rango.com.tr/yasal/kunye sayfasında görünür; o adres Support URL olarak kullanılacak.
 
 ---

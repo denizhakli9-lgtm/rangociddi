@@ -79,6 +79,16 @@ export const CITIES: PlaceCity[] = CITIES_WITH_PAGES.map((name) => {
 /** Rango's pilot city; every landing address currently starts with it. */
 export const DEFAULT_CITY = CITIES[0];
 
+/**
+ * The landing-page city a business belongs to, or undefined while its city has no pages yet
+ * (its page then links to neither a city nor a city category). Records saved before cities
+ * existed have no other city than İzmir.
+ */
+export function pagesCityOf(cityName: string | null | undefined): PlaceCity | undefined {
+  const name = (cityName?.trim() || DEFAULT_CITY.name).toLocaleLowerCase('tr-TR');
+  return CITIES.find((c) => c.name.toLocaleLowerCase('tr-TR') === name);
+}
+
 export function findCity(slug: string | undefined): PlaceCity | undefined {
   return CITIES.find((c) => c.slug === slug);
 }

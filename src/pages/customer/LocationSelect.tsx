@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Check, Clock, LocateFixed, MapPin, Search, Sparkles } from 'lucide-react';
-import { ALL_DISTRICTS, CITY_LIST, SERVICE_RADIUS_KM, cityOrDefault, nearestArea, type City } from '@/lib/cities';
+import { ALL_DISTRICTS, CITY_LIST, areaAt, cityOrDefault, type City } from '@/lib/cities';
 import { useOpenCities } from '@/lib/useOpenCities';
 import { locativeTr } from '@/lib/seo/places';
 import { useUserLocation } from '@/contexts/LocationContext';
@@ -28,7 +28,7 @@ function CityChip({ city, availability, selected, current, onClick }: { city: Ci
       ? 'border-line bg-coal text-mist hover:border-white/40 hover:text-white'
       : 'border-dashed border-gold-500/40 text-mist hover:border-gold-500/70 hover:text-white';
   return (
-    <button type="button" role="radio" aria-checked={selected} onClick={onClick} className={`flex h-10 shrink-0 items-center gap-1.5 rounded-full border px-4 text-sm transition-colors ${look}`}>
+    <button type="button" aria-pressed={selected} onClick={onClick} className={`flex h-10 shrink-0 items-center gap-1.5 rounded-full border px-4 text-sm transition-colors ${look}`}>
       {city.name}
       {current && <span className="h-1.5 w-1.5 rounded-full bg-gold-400" aria-label={tx('seçili konum', 'current location')} />}
     </button>
@@ -65,14 +65,14 @@ export default function LocationSelect() {
     getDevicePosition({ highAccuracy: false, timeout: 10000 }).then(
       ({ latitude, longitude }) => {
         setLocating(false);
-        const nearest = nearestArea(latitude, longitude);
+        const nearest = areaAt(latitude, longitude);
         // Only the matched district centre is kept, never the exact device fix,
         // so a precise home address is never stored on the account.
-        if (nearest.km < SERVICE_RADIUS_KM && !isOpen(nearest.city)) {
+        if (nearest && !isOpen(nearest.city)) {
           setCityName(nearest.city.name);
           setQuery('');
           toast(tx(`Rango ${locativeTr(nearest.city.name)} çok yakında! Şimdilik ${locativeTr(openTr)} randevu alabilirsiniz.`, `Rango is coming to ${nearest.city.name} very soon! For now you can book in ${openEn}.`), 'info');
-        } else if (nearest.km < SERVICE_RADIUS_KM) {
+        } else if (nearest) {
           choose(`${nearest.district.name} (${tx('Konumum', 'My location')})`, nearest.city.name, nearest.district.lat, nearest.district.lng);
         } else {
           toast(tx('Konumunuz hizmet verdiğimiz şehirlerin dışında görünüyor. Lütfen listeden bir şehir ve semt seçin.', 'You seem to be outside the cities we serve. Please choose a city and area from the list.'), 'error');
@@ -103,7 +103,7 @@ export default function LocationSelect() {
       <h1 className="text-2xl font-semibold tracking-tight sm:text-[28px] text-white">{tx('Konumunuzu seçin', 'Choose your location')}</h1>
       <p className="mt-2 text-sm text-mist">{tx(
           `Size en yakın işletmeleri göstermek için konumunuzu seçin. Rango şu an ${locativeTr(openTr)} hizmet veriyor${soon.length ? `; ${joinNames(soon, 've')} çok yakında` : ''}.`,
-          `Choose your location to see the businesses nearest to you. Rango currently serves ${openEn}${soon.length ? `; ${joinNames(soon, 'and')} are coming very soon` : ''}.`,
+          `Choose your location to see the businesses nearest to you. Rango currently serves ${openEn}${soon.length ? `; ${joinNames(soon, 'and')} ${soon.length === 1 ? 'is' : 'are'} coming very soon` : ''}.`,
         )}</p>
 
       <Button variant="outline" full size="lg" className="mt-8" loading={locating} icon={<LocateFixed className="h-4 w-4" />} onClick={useDevice}>
@@ -111,7 +111,7 @@ export default function LocationSelect() {
       </Button>
       <p className="mt-2 text-xs leading-relaxed text-mist-2">{tx('Konumunuz yalnızca size en yakın semti bulmak için cihazınızda kullanılır; tam konumunuz saklanmaz, yalnızca seçilen semt kaydedilir.', 'Your location is only used on your device to find the nearest area; your exact position is never stored, only the chosen area.')}</p>
 
-      <div role="radiogroup" aria-label={tx('Şehir', 'City')} className="mt-8">
+      <div role="group" aria-label={tx('Şehir', 'City')} className="mt-8">
         <p className="text-[13px] font-medium text-mist-2">{open.length > 1 ? tx('Hizmet verdiğimiz şehirler', 'Cities we serve') : tx('Hizmet verdiğimiz şehir', 'City we serve')}</p>
         <div className="mt-2 flex flex-wrap gap-2">
           {open.map((c) => <CityChip key={c.name} city={c} availability="open" selected={c.name === city.name} current={location.city === c.name} onClick={() => selectCity(c)} />)}

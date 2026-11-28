@@ -37,11 +37,13 @@ export default function Home() {
   const listingQ = useCityListing(DEFAULT_CITY.name);
   // One request feeds every list on the page: nearest first once a location is chosen, most booked otherwise.
   const discoveryQ = useBusinessSearch({ sort: hasChosen ? 'mesafe' : 'populer' }, HOME_PAGE_SIZE);
+  // Discovery is not limited to a city; the sections below are titled with the chosen one, so keep to it.
+  const inCity = useMemo(() => discoveryQ.items.filter((i) => (i.business.city || 'İzmir') === location.city), [discoveryQ.items, location.city]);
   const bookable = useMemo(
-    () => discoveryQ.items.filter((i) => !isDemoBusiness(i.business) && !isTestBusiness(i.business.slug) && Number(i.business.min_price) > 0).slice(0, MAX_BOOKABLE),
-    [discoveryQ.items],
+    () => inCity.filter((i) => !isDemoBusiness(i.business) && !isTestBusiness(i.business.slug) && Number(i.business.min_price) > 0).slice(0, MAX_BOOKABLE),
+    [inCity],
   );
-  const samples = useMemo(() => discoveryQ.items.filter((i) => isDemoBusiness(i.business)).slice(0, MAX_SAMPLES), [discoveryQ.items]);
+  const samples = useMemo(() => inCity.filter((i) => isDemoBusiness(i.business)).slice(0, MAX_SAMPLES), [inCity]);
   const upcomingQ = useAsync(() => fetchUpcomingAppointment(profile?.role === 'customer' ? profile.id : undefined), [profile?.id, profile?.role]);
   const [availabilityVersion, setAvailabilityVersion] = useState(0);
   useEffect(() => {

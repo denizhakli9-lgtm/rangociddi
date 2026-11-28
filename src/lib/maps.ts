@@ -1,5 +1,4 @@
-import { ALL_DISTRICTS, SERVICE_RADIUS_KM, cityOrDefault } from '@/lib/cities';
-import { distanceKm } from '@/lib/geo';
+import { ALL_DISTRICTS, cityAt, cityByName, isInCityBounds } from '@/lib/cities';
 
 export interface MapTarget {
   name: string;
@@ -17,9 +16,11 @@ export interface Coords {
 
 export type MapApp = 'google' | 'apple' | 'yandex';
 
-/** True when the point is within reach of one of the city's districts. */
+/** True when the point lies in the given city, or (no city given) in any of our cities. */
 export function isInCity({ latitude, longitude }: Coords, city: string | null | undefined): boolean {
-  return cityOrDefault(city).districts.some((d) => distanceKm(latitude, longitude, d.lat, d.lng) <= SERVICE_RADIUS_KM);
+  if (!city) return !!cityAt(latitude, longitude);
+  const c = cityByName(city);
+  return !!c && isInCityBounds(c, latitude, longitude);
 }
 
 /** True when the coordinates are just the district centre rather than a pin the owner placed. */

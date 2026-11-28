@@ -7,7 +7,7 @@ import { BUSINESS_LIST_COLUMNS, fetchCategories } from '@/lib/api';
 import { claimBusinessReferral, clearStoredReferralCode, normalizeReferralCode, REFERRAL_CODE_PATTERN, storedReferralCode } from '@/lib/fieldAgent';
 import { slugify } from '@/lib/format';
 import { friendlyError } from '@/lib/errors';
-import { SERVICE_RADIUS_KM, acceptsBusinesses, cityByName, cityOrDefault, findCityDistrict, nearestArea } from '@/lib/cities';
+import { acceptsBusinesses, areaAt, cityByName, cityOrDefault, findCityDistrict } from '@/lib/cities';
 import { formatTrPhone, isPhone } from '@/lib/validation';
 import { isReservedEmail } from '@/lib/phoneLogin';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,7 +16,7 @@ import { AuthShell } from '@/pages/auth/AuthShell';
 import { Button } from '@/components/ui/Button';
 import { Input, Select, Textarea } from '@/components/ui/Field';
 import type { Business, GenderFocus } from '@/lib/types';
-import type { Coords } from '@/lib/maps';
+import { isInCity, type Coords } from '@/lib/maps';
 import { CitySelect, districtCoords } from './BusinessFields';
 import { LocationField } from './LocationField';
 import { SectorCoverPicker } from './SectorCoverPicker';
@@ -119,7 +119,9 @@ export default function CreateBusiness({ onCreated }: { onCreated: (b: Business)
     category_id: '',
     gender_focus: 'unisex',
     phone: formatTrPhone(profile?.phone ?? ''),
-    city: acceptsBusinesses(cityByName(profile?.city)) ? cityByName(profile?.city)!.name : '',
+    // Not taken from profile.city: that column defaults to İzmir for every account. A draft saved
+    // before cities existed already has an İzmir district, so it stays in İzmir.
+    city: (draft?.form as Partial<SetupForm> | undefined)?.city === undefined && draft?.form?.district ? 'İzmir' : '',
     district: '',
     address: '',
     description: '',
@@ -163,10 +165,10 @@ export default function CreateBusiness({ onCreated }: { onCreated: (b: Business)
     setPin(c);
     // A pinned location tells us the city and district; fill them in if the district is still empty.
     if (c && !form.district) {
-      const near = nearestArea(c.latitude, c.longitude);
-      if (near.km < SERVICE_RADIUS_KM && acceptsBusinesses(near.city)) {
-        set('city', near.city.name);
-        set('district', near.district.name);
+      const area = areaAt(c.latitude, c.longitude);
+      if (area && acceptsBusinesses(area.city)) {
+        set('city', area.city.name);
+        set('district', area.district.name);
       }
     }
   };
@@ -356,7 +358,16 @@ export default function CreateBusiness({ onCreated }: { onCreated: (b: Business)
           <div className="space-y-6">
             <LocationField value={pin} city={form.city} district={form.district} onChange={changePin} />
             <div className="space-y-4 border-t border-line pt-6">
-              <CitySelect value={form.city} error={errors.city} onChange={(city) => { set('city', city); set('district', ''); }} />
+              <CitySelect
+                value={form.city}
+                error={errors.city}
+                onChange={(city) => {
+                  set('city', city);
+                  set('district', '');
+                  // A pin from another city would leave the saved city and coordinates disagreeing.
+                  if (pin && !isInCity(pin, city)) setPin(null);
+                }}
+              />
               <Select label={`İlçe / semt (${form.city || 'önce şehir seçin'})`} name="district" value={form.district} error={errors.district} disabled={!form.city} hint="Konumunuzu eklediyseniz şehri ve ilçeyi sizin için seçtik; yanlışsa değiştirin." onChange={(e) => set('district', e.target.value)}>
                 <option value="">Seçin</option>
                 {cityOrDefault(form.city).districts.map((d) => (

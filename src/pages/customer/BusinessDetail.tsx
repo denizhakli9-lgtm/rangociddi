@@ -25,8 +25,8 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, ErrorState, PageLoader } from '@/components/ui/Feedback';
 import { locale, tx } from '@/i18n/locale';
-import { businessMeta, categoryPath } from '@/lib/seo/meta';
-import { DEFAULT_CITY, cityPath } from '@/lib/seo/places';
+import { businessMeta } from '@/lib/seo/meta';
+import { cityCategoryPath, cityPath, pagesCityOf } from '@/lib/seo/places';
 import { Blocks } from '@/components/seo/Blocks';
 import { useSeo } from '@/lib/seo/useSeo';
 
@@ -95,10 +95,13 @@ export default function BusinessDetail() {
   const photos = placeholderPhoto ? [businessCover(b).src] : ownPhotos;
   const categoryLabel = categoryName(b.categories);
   const photoAlt = [b.name, [b.district, categoryLabel].filter(Boolean).join(' ')].filter(Boolean).join(' – ');
+  // City and category links only while the business's city has its own pages (places.ts).
+  const pageCity = pagesCityOf(b.city);
+  const categoryHref = pageCity && b.categories?.slug ? cityCategoryPath(pageCity, b.categories.slug) : null;
   const crumbs = [
     { name: 'Rango', path: '/' },
-    { name: DEFAULT_CITY.name, path: cityPath(DEFAULT_CITY) },
-    ...(b.categories?.slug ? [{ name: categoryLabel, path: categoryPath(b.categories.slug) }] : []),
+    ...(pageCity ? [{ name: pageCity.name, path: cityPath(pageCity) }] : []),
+    ...(categoryHref ? [{ name: categoryLabel, path: categoryHref }] : []),
     { name: b.name },
   ];
   const todayWd = isoWeekday(dateKey());
@@ -160,7 +163,7 @@ export default function BusinessDetail() {
           <div>
             <div className="mb-4"><Blocks blocks={[{ kind: 'breadcrumb', items: crumbs }]} /></div>
             <div className="flex flex-wrap items-center gap-2 text-[13px] text-mist">
-              {b.categories?.slug ? <Link to={categoryPath(b.categories.slug)} className="hover:underline">{categoryLabel}</Link> : categoryLabel}
+              {categoryHref ? <Link to={categoryHref} className="hover:underline">{categoryLabel}</Link> : categoryLabel}
               <span className="text-mist-3">·</span>
               <span>{t.genderFocus[b.gender_focus]}</span>
             </div>

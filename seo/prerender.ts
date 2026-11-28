@@ -55,7 +55,7 @@ import { faqPage } from '../src/lib/seo/pages/faq';
 import { forBusinessPage } from '../src/lib/seo/pages/forBusiness';
 import { homeExtraBlocks, homeSchemas, type HomeExtrasInput } from '../src/lib/seo/pages/home';
 import { buildLandingPage } from '../src/lib/seo/pages/landing';
-import { DEFAULT_CITY, cityPath } from '../src/lib/seo/places';
+import { DEFAULT_CITY, cityCategoryPath, cityPath, pagesCityOf } from '../src/lib/seo/places';
 import { LISTING_SELECT, MAX_EMBEDDED_LISTING, PUBLIC_BUSINESS_FIELDS, PUBLIC_REVIEW_FIELDS } from '../src/lib/seo/queries';
 import { leadPhoto } from '../src/lib/sectorCovers';
 import { LEGAL_DOCUMENTS, type LegalBlock } from '../src/pages/legal/legalContent';
@@ -280,12 +280,15 @@ function businessBody(b: DetailRow, supabaseUrl: string): string {
   const photoAlt = [b.name, [b.district, category].filter(Boolean).join(' ')].filter(Boolean).join(' – ');
   // The street address often already ends with the district ("…, Karşıyaka"); do not repeat it.
   const address = [b.address, b.district, b.city].reduce<string[]>((parts, part) => (part && !parts.some((p) => p.includes(part)) ? [...parts, part] : parts), []).join(', ');
+  // City and category links only while the business's city has its own pages (places.ts).
+  const pageCity = pagesCityOf(b.city);
+  const categoryHref = pageCity && b.categories?.slug ? cityCategoryPath(pageCity, b.categories.slug) : null;
   const crumbs: Block = {
     kind: 'breadcrumb',
     items: [
       { name: 'Rango', path: '/' },
-      { name: DEFAULT_CITY.name, path: cityPath(DEFAULT_CITY) },
-      ...(b.categories?.slug ? [{ name: category, path: categoryPath(b.categories.slug) }] : []),
+      ...(pageCity ? [{ name: pageCity.name, path: cityPath(pageCity) }] : []),
+      ...(categoryHref ? [{ name: category, path: categoryHref }] : []),
       { name: b.name },
     ],
   };
@@ -334,7 +337,7 @@ function businessBody(b: DetailRow, supabaseUrl: string): string {
           <div class="mt-6 grid gap-10 lg:grid-cols-[1fr_340px]">
             <div class="min-w-0">
               <div class="mb-4">${renderBlocks([crumbs])}</div>
-              ${category ? `<p class="text-[13px] text-mist">${b.categories?.slug ? `<a href="${e(categoryPath(b.categories.slug))}">${e(category)}</a>` : e(category)}</p>` : ''}
+              ${category ? `<p class="text-[13px] text-mist">${categoryHref ? `<a href="${e(categoryHref)}">${e(category)}</a>` : e(category)}</p>` : ''}
               <h1 class="mt-2 font-display text-4xl leading-[1.08] tracking-[-0.02em] text-white sm:text-5xl">${e(b.name)}</h1>
               ${reviews > 0 ? `<p class="mt-3 text-sm text-mist"><span class="font-semibold text-white">★ ${Number(b.rating_avg ?? 0).toFixed(1)}</span> (${reviews} değerlendirme)</p>` : ''}
               ${address ? `<p class="mt-5 rounded-2xl border border-line bg-coal p-4 text-sm leading-relaxed text-white">${e(address)}</p>` : ''}

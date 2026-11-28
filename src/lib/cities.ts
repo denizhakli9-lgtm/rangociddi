@@ -25,6 +25,11 @@ export interface City {
   /** Nüfus, milyon (yaklaşık). */
   population: number;
   status: CityStatus;
+  /**
+   * İl sınırlarını kaba olarak kapsayan kutu: bir konumun hangi şehirde olduğunu anlamak ve
+   * işletme sahibinin işaretlediği noktayı denetlemek için. Kutular birbiriyle çakışmaz.
+   */
+  bounds: { minLat: number; maxLat: number; minLng: number; maxLng: number };
   /** Şehir merkezi: konum seçilmemişken kullanılan nokta. */
   center: District;
   districts: District[];
@@ -38,6 +43,7 @@ export const CITY_LIST: City[] = [
     plate: 34,
     population: 15.7,
     status: 'soon',
+    bounds: { minLat: 40.8, maxLat: 41.6, minLng: 27.95, maxLng: 29.95 },
     center: d('Şişli', 41.06, 28.987),
     districts: [
       d('Kadıköy', 40.9906, 29.029),
@@ -69,6 +75,7 @@ export const CITY_LIST: City[] = [
     plate: 6,
     population: 5.86,
     status: 'soon',
+    bounds: { minLat: 38.7, maxLat: 40.7, minLng: 31.25, maxLng: 33.95 },
     center: d('Kızılay', 39.9208, 32.8541),
     districts: [
       d('Kızılay', 39.9208, 32.8541),
@@ -93,6 +100,7 @@ export const CITY_LIST: City[] = [
     plate: 35,
     population: 4.49,
     status: 'open',
+    bounds: { minLat: 37.8, maxLat: 39.4, minLng: 26.0, maxLng: 28.6 },
     center: d('Konak', 38.4189, 27.1287),
     // Pilot şehrin listesi: kayıtlı işletmeler bu adları kullanıyor, sıra ve adlar korunmalı.
     districts: [
@@ -119,6 +127,7 @@ export const CITY_LIST: City[] = [
     plate: 16,
     population: 3.24,
     status: 'soon',
+    bounds: { minLat: 39.55, maxLat: 40.65, minLng: 28.15, maxLng: 29.95 },
     center: d('Osmangazi', 40.195, 29.06),
     districts: [
       d('Nilüfer', 40.215, 28.985),
@@ -161,15 +170,28 @@ export function findCityDistrict(cityName: string | null | undefined, districtNa
 /** Every district of every city, with its city: for search and nearest-area lookups. */
 export const ALL_DISTRICTS: { city: City; district: District }[] = CITY_LIST.flatMap((city) => city.districts.map((district) => ({ city, district })));
 
-/** The closest known district to a point, across every city. */
-export function nearestArea(lat: number, lng: number): { city: City; district: District; km: number } {
-  let best = { ...ALL_DISTRICTS[0], km: Infinity };
-  for (const entry of ALL_DISTRICTS) {
-    const km = distanceKm(lat, lng, entry.district.lat, entry.district.lng);
-    if (km < best.km) best = { ...entry, km };
-  }
-  return best;
+export function isInCityBounds(city: City, lat: number, lng: number): boolean {
+  const b = city.bounds;
+  return lat >= b.minLat && lat <= b.maxLat && lng >= b.minLng && lng <= b.maxLng;
 }
 
-/** How far from its nearest listed district a point may be and still count as inside a city. */
-export const SERVICE_RADIUS_KM = 40;
+/** The city a point lies in, if it is one of ours. */
+export function cityAt(lat: number, lng: number): City | undefined {
+  return CITY_LIST.find((c) => isInCityBounds(c, lat, lng));
+}
+
+/** The city a point lies in and that city's closest listed district. */
+export function areaAt(lat: number, lng: number): { city: City; district: District } | undefined {
+  const city = cityAt(lat, lng);
+  if (!city) return undefined;
+  let best = city.districts[0];
+  let bestKm = Infinity;
+  for (const d of city.districts) {
+    const km = distanceKm(lat, lng, d.lat, d.lng);
+    if (km < bestKm) {
+      best = d;
+      bestKm = km;
+    }
+  }
+  return { city, district: best };
+}

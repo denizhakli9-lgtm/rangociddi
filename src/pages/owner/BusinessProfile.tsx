@@ -19,7 +19,7 @@ import { Spinner } from '@/components/ui/Feedback';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useOwnerBusiness } from './OwnerContext';
 import { useImageUpload } from './useImageUpload';
-import { hasExactPin, type Coords } from '@/lib/maps';
+import { hasExactPin, isInCity, type Coords } from '@/lib/maps';
 import { BasicsFields, districtCoords, validateBasics, type BasicsErrors, type BasicsForm } from './BusinessFields';
 import { LocationField } from './LocationField';
 import { SectorCoverPicker } from './SectorCoverPicker';
@@ -62,6 +62,8 @@ export default function BusinessProfile() {
 
   const setBasic = <K extends keyof BasicsForm>(key: K, value: BasicsForm[K]) => {
     setBasics((f) => ({ ...f, [key]: value }));
+    // A pin from another city would leave the saved city and coordinates disagreeing.
+    if (key === 'city' && pin && !isInCity(pin, value as string)) setPin(null);
     setErrors((e) => ({ ...e, [key]: undefined }));
   };
 

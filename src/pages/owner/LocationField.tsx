@@ -20,7 +20,7 @@ export function LocationField({ value, city, district, onChange }: Props) {
 
   const accept = (c: Coords) => {
     if (!isInCity(c, city)) {
-      setError(`Bu konum ${city || 'seçtiğiniz şehrin'} dışında görünüyor. Mağazanın yerini ve seçtiğiniz şehri kontrol edin.`);
+      setError(city ? `Bu konum ${city} dışında görünüyor. Mağazanın yerini ve seçtiğiniz şehri kontrol edin.` : 'Bu konum hizmet verdiğimiz şehirlerin dışında görünüyor. Mağazanın yerini tekrar kontrol edin.');
       return;
     }
     setError(null);

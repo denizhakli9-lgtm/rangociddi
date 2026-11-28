@@ -1,5 +1,6 @@
 import { Input, Select, Textarea } from '@/components/ui/Field';
 import { REGISTRATION_CITIES, cityByName, cityOrDefault, findCityDistrict } from '@/lib/cities';
+import { useOpenCities } from '@/lib/useOpenCities';
 import { isEmail, isPhone } from '@/lib/validation';
 import type { Category, GenderFocus } from '@/lib/types';
 
@@ -101,15 +102,17 @@ export function BasicsFields({ form, errors, categories, onChange }: Props) {
 export function CitySelect({ value, error, onChange }: { value: string; error?: string; onChange: (city: string) => void }) {
   const current = cityByName(value);
   const options = current && !REGISTRATION_CITIES.includes(current) ? [...REGISTRATION_CITIES, current] : REGISTRATION_CITIES;
-  const soon = REGISTRATION_CITIES.filter((c) => c.status === 'soon').map((c) => c.name);
-  const hint = soon.length ? `${soon.join(', ')} müşterilere çok yakında açılıyor; şimdiden kaydolan işletmeler şehrin ilk işletmeleri olur.` : undefined;
+  const { isOpen } = useOpenCities();
+  const soon = REGISTRATION_CITIES.filter((c) => !isOpen(c)).map((c) => c.name);
+  const soonList = soon.length < 2 ? soon.join('') : `${soon.slice(0, -1).join(', ')} ve ${soon[soon.length - 1]}`;
+  const hint = soon.length ? `${soonList} müşterilere çok yakında açılıyor; şimdiden kaydolan işletmeler şehrin ilk işletmeleri olur.` : undefined;
   return (
     <Select label="Şehir" name="city" value={value} error={error} hint={hint} onChange={(e) => onChange(e.target.value)}>
       <option value="">Seçin</option>
       {options.map((c) => (
         <option key={c.name} value={c.name}>
           {c.name}
-          {c.status === 'soon' ? ' (çok yakında)' : ''}
+          {isOpen(c) ? '' : ' (çok yakında)'}
         </option>
       ))}
     </Select>

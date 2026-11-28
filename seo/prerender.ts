@@ -260,7 +260,7 @@ function homeBody(input: HomeExtrasInput): string {
             <img src="/sector-nails-7.webp" alt="" width="352" height="352" loading="lazy" decoding="async" class="absolute -bottom-8 -left-12 aspect-square w-44 rounded-2xl border-[5px] border-ink object-cover" />
           </div>
         </section>
-        ${input.categories.length ? `<section aria-label="Hizmet kategorileri"><h2 class="mb-4 font-display text-[26px] text-white sm:text-3xl">Hizmete göre keşfedin</h2>${categoryChips(input.categories)}</section>` : ''}
+        ${input.categories.length ? `<section aria-label="Hizmet kategorileri"><div class="mb-4"><h2 class="font-display text-[26px] leading-tight text-white sm:text-3xl">Bugün kendinizi nasıl şımartmak istersiniz?</h2><p class="mt-1.5 text-sm text-mist">Saçtan tırnağa, masajdan cilt bakımına; size iyi gelecek hizmeti seçin.</p></div>${categoryChips(input.categories)}</section>` : ''}
         ${renderBlocks(homeExtraBlocks(input).filter((block) => block.kind !== 'links'))}
       </div>`);
 }

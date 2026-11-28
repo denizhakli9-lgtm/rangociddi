@@ -14,6 +14,9 @@
 export const TEST_BUSINESS_SLUGS: ReadonlySet<string> = new Set([
   // "Black Blade Barbershop": tohum verisinden gelen, PayTR testinde kullanılan deneme işletmesi (YAYINLAMA-REHBERI.md).
   'black-blade',
+  // "Rango Demo Kuaför": App Store / Play incelemesi için demo işletme (kaporasız; APP-STORE-REHBERI.md, Adım 4).
+  // Ana sayfa listelerinde ve statik SEO sayfalarında görünmez; inceleme ekibi adıyla arayarak bulur.
+  'rango-demo-kuafor',
 ]);
 
 export function isTestBusiness(slug: string | null | undefined): boolean {

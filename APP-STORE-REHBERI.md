@@ -86,15 +86,19 @@ Apple inceleme ekibi uygulamada **bir randevuyu baştan sona alabilmeli.** Şu a
 - Canlı veritabanında 24 işletmenin **19'u "Örnek işletme / randevu alınamaz"**, kategorilerin çoğu **"Yakında"**. İnceleme ekibi bunu yarım içerik (kural 2.1) sayabilir.
 - Ödeme **canlı modda** (PayTR). İnceleme ekibi gerçek kartla ödeme yapmaz; gerçek bir salona sahte randevu da düşmemeli.
 
-Yapılacaklar:
-1. **Demo işletme:** kendi hesabına bağlı "Rango Demo Kuaför" gibi bir işletme aç. Onaylı olsun; 3+ hizmet, 1–2 çalışan, çalışma saatleri ve kendi çektiğin fotoğraflar eklensin.
-   **Kaporayı 0 yap.** Böylece randevu ödeme ekranına gitmeden onaylanır.
-2. **İki demo hesap** (e-posta + şifre, e-postası onaylı, **süresi dolmayan**):
-   - Müşteri: ör. `appreview.musteri@rango.com.tr`. Bu hesapla demo işletmeden 1 randevu al ve işletmeyle birkaç mesaj yazış. İnceleyici sohbeti, şikâyeti ve engellemeyi böylece görebilir.
-   - İşletme sahibi: demo işletmenin sahibi.
-   Şifreleri yalnızca App Store Connect'e yaz.
-3. **Örnek işletmeler:** gönderimden önce ya gizle (durumu askıya al) ya da gerçek işletme sayısı onları geçsin.
-   Hizmeti olmayan gerçek işletmeleri hizmet eklenene kadar gizle. Boş kategorileri ("Yakında") listede alta al ya da gizle.
+**28 Kasım 2026'da yapıldı:**
+1. ✅ **Demo işletme "Rango Demo Kuaför"** (`rango-demo-kuafor`, Kuaför, Alsancak / İzmir): onaylı, **kapora 0**, otomatik onay;
+   4 hizmet (Saç Kesimi, Fön, Saç Boyama, Sakal Tıraşı), 2 çalışan, Pzt–Cmt 09:00–20:00. Açıklamasında gerçek bir salon
+   olmadığı yazıyor. `TEST_BUSINESS_SLUGS` içinde olduğu için ana sayfa listelerinde ve SEO sayfalarında görünmez;
+   **Ara** sekmesinde adıyla bulunur. Fotoğrafı yok (sektör görseli gösterilir); istersen işletme panelinden ekleyebilirsin.
+2. ✅ **İki demo hesap** (e-postası onaylı, süresi dolmayan): `appreview.musteri@rango.com.tr` (müşteri) ve
+   `appreview.isletme@rango.com.tr` (demo işletmenin sahibi). **Şifreler bu depoda yok**; yalnızca App Store Connect'e yazılır.
+   Müşteri hesabıyla 3 Aralık 2026 11:00 için onaylı bir Saç Kesimi randevusu alındı ve iki taraf birer mesaj yazdı
+   (inceleyici sohbeti, şikâyeti ve engellemeyi görebilsin).
+3. ✅ **19 örnek işletme gizlendi** (`owner_id IS NULL`, durum `suspended`). Geri açmak için:
+   `UPDATE businesses SET status = 'approved' WHERE owner_id IS NULL AND status = 'suspended';`
+   Hizmeti olmayan gerçek işletmeler (ör. hizmet eklenmemiş onaylı işletmeler) listede boş görünür; hizmet eklenene kadar
+   gizlemeyi düşün. Boş kategorileri ("Yakında") listede alta al ya da gizle.
 4. **İletişim bilgisi:** `src/lib/legal.ts` → `COMPANY.address` açık adresle dolduruldu (28 Kasım 2026); `phone` hâlâ boş.
    Apple'ın **Support URL** kuralı açık adres, e-posta ve telefon istiyor. Bir telefon numarası da yaz.
    Bunlar https://rango.com.tr/yasal/kunye sayfasında görünür; o adres Support URL olarak kullanılacak.
@@ -275,8 +279,8 @@ Rango is a booking marketplace for hair, barber and beauty salons in İzmir, Tü
 The UI is Turkish by default; tap "EN" in the top bar to switch to English.
 
 Demo accounts (non-expiring):
-- Customer (Sign-in section above): browse, book "Rango Demo Kuaför", see bookings and chat.
-- Business owner: <e-posta> / <şifre> – manages the demo salon (services, staff, hours, calendar).
+- Customer (Sign-in section above): browse, book "Rango Demo Kuaför" (search for it in the "Ara" tab), see bookings and chat.
+- Business owner: appreview.isletme@rango.com.tr / <şifre> – manages the demo salon (services, staff, hours, calendar).
 Browsing salons works without an account (tap "Atla" / "Browse without an account").
 
 Booking: the demo salon takes no deposit, so a booking is confirmed without payment.

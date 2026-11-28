@@ -124,8 +124,13 @@ export interface BlockedSlot {
   /** 'booking': a booking the business added itself (phone, walk-in); 'block': time off. Older rows have none. */
   kind?: 'block' | 'booking';
   service_id?: string | null;
+  /** The service's name and price when the booking was added (the price can be edited). */
+  service_name?: string | null;
+  price?: number | string | null;
   customer_name?: string | null;
   customer_phone?: string | null;
+  /** The customer did not come: the booking is not counted as income. */
+  no_show?: boolean;
 }
 
 export interface Appointment {

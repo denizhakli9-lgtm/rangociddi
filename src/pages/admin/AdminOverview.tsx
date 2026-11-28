@@ -81,7 +81,7 @@ export default function AdminOverview() {
           <section className="card p-6">
             <h2 className="mb-6 text-base font-semibold text-white">Aylık randevu & komisyon</h2>
             {monthly.length ? (
-              <div className="flex h-52 items-end gap-3 sm:gap-6">
+              <div className="flex h-52 items-stretch gap-3 sm:gap-6">
                 {monthly.map((m) => (
                   <div key={m.month} className="group flex flex-1 flex-col items-center gap-2">
                     <span className="text-center text-[10px] leading-tight text-mist-2">

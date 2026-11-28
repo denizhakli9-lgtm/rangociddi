@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import { Banknote, ChevronRight, FlaskConical, Landmark, Percent, Receipt, Undo2, Wallet } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAsync } from '@/lib/useAsync';
 import { dateKey, formatDate, formatTRY, keyLabel } from '@/lib/format';
-import { StatCard } from '@/components/ui/Brand';
+import { Segmented, StatCard } from '@/components/ui/Brand';
 import { Badge, PayoutStatusBadge, TestBadge } from '@/components/ui/Badge';
 import { EmptyState, ErrorState, SkeletonList } from '@/components/ui/Feedback';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -12,11 +12,49 @@ import type { CommissionRecord, Payment, PayoutAccount } from '@/lib/types';
 import { maskIban } from '@/lib/validation';
 import { useOwnerBusiness } from './OwnerContext';
 import { isTestPayment } from './ownerApi';
+import { OwnEarnings } from './OwnEarnings';
 
 const COMMISSION_TONE = { pending: 'warning', invoiced: 'info', paid: 'success' } as const;
 const COMMISSION_LABEL = { pending: 'Bekliyor', invoiced: 'Faturalandı', paid: 'Ödendi' } as const;
 
+type Tab = 'rango' | 'kendi';
+
+/**
+ * Two separate books: bookings that came through Rango (commission) and the business's own
+ * customers added from the calendar (no commission). Never shown as one combined total.
+ */
 export default function Earnings() {
+  const [params, setParams] = useSearchParams();
+  const tab: Tab = params.get('sekme') === 'kendi' ? 'kendi' : 'rango';
+  const setTab = (t: Tab) => setParams(t === 'kendi' ? { sekme: 'kendi' } : {}, { replace: true });
+
+  return (
+    <div>
+      <PageHeader
+        eyebrow="Kazanç & Komisyon"
+        title="Finansal özet"
+        text={
+          tab === 'rango'
+            ? 'Komisyon, tamamlanan randevuların toplam hizmet bedeli üzerinden hesaplanır. Kalan tutarlar işletmede tahsil edilir.'
+            : 'Kendi eklediğiniz randevular ayrı tutulur; komisyon alınmaz.'
+        }
+      />
+      <div className="mb-6 w-fit max-w-full">
+        <Segmented<Tab>
+          value={tab}
+          onChange={setTab}
+          options={[
+            { value: 'rango', label: "Rango'dan gelen" },
+            { value: 'kendi', label: 'Kendi müşterilerim' },
+          ]}
+        />
+      </div>
+      {tab === 'rango' ? <RangoEarnings /> : <OwnEarnings />}
+    </div>
+  );
+}
+
+function RangoEarnings() {
   const { business } = useOwnerBusiness();
   const { data, loading, error, reload } = useAsync(async () => {
     const [records, payments, payout, settings] = await Promise.all([
@@ -72,8 +110,6 @@ export default function Earnings() {
 
   return (
     <div>
-      <PageHeader eyebrow="Kazanç & Komisyon" title="Finansal özet" text="Komisyon, tamamlanan randevuların toplam hizmet bedeli üzerinden hesaplanır. Kalan tutarlar işletmede tahsil edilir." />
-
       {loading && !data ? (
         <SkeletonList count={3} className="h-28" />
       ) : error ? (
@@ -119,7 +155,7 @@ export default function Earnings() {
 
           <section className="card p-6">
             <h2 className="mb-6 text-base font-semibold text-white">Son 6 ay</h2>
-            <div className="flex h-48 items-end gap-3 sm:gap-6">
+            <div className="flex h-48 items-stretch gap-3 sm:gap-6">
               {summary.months.map((m) => (
                 <div key={m.key} className="group flex flex-1 flex-col items-center gap-2">
                   <span className="text-[10px] whitespace-nowrap text-mist-2 opacity-100 transition can-hover:opacity-0 group-hover:opacity-100">{formatTRY(m.gross)}</span>

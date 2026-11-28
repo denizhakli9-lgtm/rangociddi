@@ -1,8 +1,9 @@
 import { useMemo, useState, type FormEvent } from 'react';
-import { CalendarPlus, ChevronLeft, ChevronRight, Lock, Plus, Trash2 } from 'lucide-react';
+import { CalendarPlus, ChevronLeft, ChevronRight, Lock, Plus, Trash2, UserCheck, UserX } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAsync } from '@/lib/useAsync';
-import { addDays, dateKey, formatTime, isoWeekday, keyLabel, timeToMinutes } from '@/lib/format';
+import { addDays, dateKey, formatTime, formatTRY, isoWeekday, keyLabel, timeToMinutes } from '@/lib/format';
 import { friendlyError } from '@/lib/errors';
 import { useToast } from '@/contexts/ToastContext';
 import { Button } from '@/components/ui/Button';
@@ -44,6 +45,7 @@ export default function OwnerCalendar() {
   const [open, setOpen] = useState<Appointment | null>(null);
   const [blockOpen, setBlockOpen] = useState(false);
   const [bookOpen, setBookOpen] = useState(false);
+  const [openBooking, setOpenBooking] = useState<BlockedSlot | null>(null);
 
   const { data, loading, error, reload } = useAsync(async () => {
     const [appts, employees, hours, blocks, services] = await Promise.all([
@@ -191,7 +193,7 @@ export default function OwnerCalendar() {
                       const end = b.ends_at >= istanbulDayStart(addDays(day, 1)) ? range.end : minutesOf(b.ends_at);
                       const pos = { top: (top - range.start) * PX, height: Math.max(20, (end - top) * PX) };
                       return b.kind === 'booking' ? (
-                        <BookingChip key={b.id} block={b} serviceName={b.service_id ? data.serviceNames.get(b.service_id) : undefined} {...pos} onRemove={removeBlock} />
+                        <BookingChip key={b.id} block={b} serviceName={b.service_id ? data.serviceNames.get(b.service_id) : undefined} {...pos} onOpen={setOpenBooking} />
                       ) : (
                         <BlockChip key={b.id} block={b} {...pos} onRemove={removeBlock} />
                       );
@@ -229,6 +231,13 @@ export default function OwnerCalendar() {
           reload();
         }}
       />
+      <BookingDetailModal
+        block={openBooking}
+        employees={data?.employees ?? []}
+        serviceName={openBooking?.service_id ? data?.serviceNames.get(openBooking.service_id) : undefined}
+        onClose={() => setOpenBooking(null)}
+        onChanged={() => { setOpenBooking(null); reload(); }}
+      />
       <ManualBookingModal key={`book-${bookOpen}`} open={bookOpen} employees={activeEmployees} hours={data?.hours ?? []} onClose={() => setBookOpen(false)} onSaved={() => { setBookOpen(false); reload(); }} />
       <BlockModal key={`${day}-${blockOpen}`} open={blockOpen} day={day} employees={activeEmployees} onClose={() => setBlockOpen(false)} onSaved={() => { setBlockOpen(false); reload(); }} />
     </div>
@@ -262,37 +271,107 @@ function BlockChip({ block, top, height, onRemove }: { block: BlockedSlot; top: 
   );
 }
 
-/** A booking the business added itself (phone, walk-in): who, when, what; removable like a block. */
-function BookingChip({ block, serviceName, top, height, onRemove }: { block: BlockedSlot; serviceName?: string; top: number; height: number; onRemove: (b: BlockedSlot) => Promise<string | null> }) {
-  const { toast } = useToast();
-  const [busy, setBusy] = useState(false);
+/** A booking the business added itself (phone, walk-in): who, when, what. Opens BookingDetailModal. */
+function BookingChip({ block, serviceName, top, height, onOpen }: { block: BlockedSlot; serviceName?: string; top: number; height: number; onOpen: (b: BlockedSlot) => void }) {
   return (
-    <div style={{ top: top + 1, height: height - 2 }} className="group absolute inset-x-1 overflow-hidden rounded-lg border border-white/30 bg-white/10 px-2 py-1 text-[11px] leading-tight text-white">
-      <div className="flex items-start justify-between gap-1">
-        <p className="truncate font-semibold">
-          {formatTime(block.starts_at)} {block.customer_name || 'Randevu'}
-        </p>
-        <button
-          type="button"
-          disabled={busy}
-          aria-label="Randevuyu sil"
-          onClick={async () => {
-            if (!window.confirm('Bu randevu silinsin mi? Saat yeniden online randevuya açılır.')) return;
-            setBusy(true);
-            const err = await onRemove(block);
-            setBusy(false);
-            if (err) toast(err, 'error');
-            else toast('Randevu silindi.', 'success');
-          }}
-          className="shrink-0 rounded p-0.5 text-mist-2 transition hover:text-error-300"
-        >
-          <Trash2 className="h-3 w-3" />
-        </button>
-      </div>
-      <p className="truncate opacity-80">
-        {serviceName ?? 'Hizmet'} · <span className="text-mist">Elle</span>
+    <button
+      type="button"
+      onClick={() => onOpen(block)}
+      style={{ top: top + 1, height: height - 2 }}
+      className={`absolute inset-x-1 overflow-hidden rounded-lg border px-2 py-1 text-left text-[11px] leading-tight transition hover:z-10 hover:scale-[1.02] ${block.no_show ? 'border-error-500/40 bg-error-500/10 text-error-300' : 'border-white/30 bg-white/10 text-white'}`}
+    >
+      <p className={`truncate font-semibold ${block.no_show ? 'line-through' : ''}`}>
+        {formatTime(block.starts_at)} {block.customer_name || 'Randevu'}
       </p>
-    </div>
+      <p className="truncate opacity-80">
+        {block.service_name || serviceName || 'Hizmet'} · <span className="text-mist">{block.no_show ? 'Gelmedi' : 'Elle'}</span>
+      </p>
+    </button>
+  );
+}
+
+/** Details of a booking the business added itself: mark "did not come" (not counted as income) or delete. */
+function BookingDetailModal({ block, employees, serviceName, onClose, onChanged }: { block: BlockedSlot | null; employees: Employee[]; serviceName?: string; onClose: () => void; onChanged: () => void }) {
+  const { toast } = useToast();
+  const [busy, setBusy] = useState<'no_show' | 'delete' | null>(null);
+  if (!block) return null;
+  const started = new Date(block.starts_at).getTime() <= Date.now();
+  const employee = employees.find((e) => e.id === block.employee_id);
+  const price = block.price === null || block.price === undefined ? null : Number(block.price);
+
+  const toggleNoShow = async () => {
+    setBusy('no_show');
+    const { error } = await supabase.from('time_slots').update({ no_show: !block.no_show }).eq('id', block.id);
+    setBusy(null);
+    if (error) return toast(friendlyError(error), 'error');
+    toast(block.no_show ? 'Randevu yeniden kazancınıza sayılıyor.' : 'Gelmedi olarak işaretlendi; kazancınıza sayılmaz.', 'success');
+    onChanged();
+  };
+  const remove = async () => {
+    if (!window.confirm('Bu randevu silinsin mi? Saat yeniden online randevuya açılır.')) return;
+    setBusy('delete');
+    const { error } = await supabase.from('time_slots').delete().eq('id', block.id);
+    setBusy(null);
+    if (error) return toast(friendlyError(error), 'error');
+    toast('Randevu silindi.', 'success');
+    onChanged();
+  };
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title={block.customer_name || 'Randevu'}
+      subtitle="Kendi müşteriniz · elle eklendi"
+      footer={
+        <>
+          <Button variant="danger" loading={busy === 'delete'} onClick={remove} icon={<Trash2 className="h-4 w-4" />}>
+            Randevuyu sil
+          </Button>
+          {started && (
+            <Button variant={block.no_show ? 'outline' : 'dark'} loading={busy === 'no_show'} onClick={toggleNoShow} icon={block.no_show ? <UserCheck className="h-4 w-4" /> : <UserX className="h-4 w-4" />}>
+              {block.no_show ? 'Geldi olarak düzelt' : 'Gelmedi'}
+            </Button>
+          )}
+        </>
+      }
+    >
+      <dl className="grid grid-cols-[6rem_1fr] gap-x-4 gap-y-3 text-sm">
+        <dt className="text-mist-2">Hizmet</dt>
+        <dd className="text-white">{block.service_name || serviceName || '—'}</dd>
+        <dt className="text-mist-2">Saat</dt>
+        <dd className="text-white">
+          {keyLabel(dateKey(new Date(block.starts_at)), { weekday: 'long', day: 'numeric', month: 'long' })}, {formatTime(block.starts_at)}–{formatTime(block.ends_at)}
+        </dd>
+        {employee && (
+          <>
+            <dt className="text-mist-2">Uzman</dt>
+            <dd className="text-white">{employee.full_name}</dd>
+          </>
+        )}
+        <dt className="text-mist-2">Ücret</dt>
+        <dd className="text-white">{price === null ? '—' : formatTRY(price)}</dd>
+        {block.customer_phone && (
+          <>
+            <dt className="text-mist-2">Telefon</dt>
+            <dd>
+              <a href={`tel:${block.customer_phone.replace(/[^0-9+]/g, '')}`} className="text-white underline underline-offset-4">
+                {block.customer_phone}
+              </a>
+            </dd>
+          </>
+        )}
+        <dt className="text-mist-2">Durum</dt>
+        <dd className={block.no_show ? 'text-error-300' : 'text-white'}>{block.no_show ? 'Gelmedi · kazanca sayılmaz' : started ? 'Gerçekleşti · kazanca sayılır' : 'Yaklaşan'}</dd>
+      </dl>
+      <p className="mt-5 text-xs leading-relaxed text-mist-2">
+        Kendi müşterilerinizin ücretleri komisyona tabi değildir ve Rango'dan gelen kazancınızla toplanmaz. Toplamı{' '}
+        <Link to="/isletme/kazanc?sekme=kendi" className="font-medium text-white underline underline-offset-4">
+          Kazanç → Kendi müşterilerim
+        </Link>{' '}
+        sekmesinde görürsünüz.
+      </p>
+    </Modal>
   );
 }
 

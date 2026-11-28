@@ -40,6 +40,8 @@ export function ManualBookingModal({ open, employees, hours, onClose, onSaved }:
   const [more, setMore] = useState(false);
   const [phone, setPhone] = useState('');
   const [note, setNote] = useState('');
+  // Prefilled with the service price; the business can type what it actually charged.
+  const [price, setPrice] = useState('');
   const [saving, setSaving] = useState(false);
 
   const service = services?.find((s) => s.id === serviceId);
@@ -47,10 +49,14 @@ export function ManualBookingModal({ open, employees, hours, onClose, onSaved }:
   const chooseService = (id: string) => {
     setServiceId(id);
     setSlot(null);
+    const chosen = services?.find((s) => s.id === id);
+    setPrice(chosen ? String(Number(chosen.price)) : '');
   };
+  const priceValue = Number(price.replace(',', '.'));
+  const priceValid = price.trim() === '' || (Number.isFinite(priceValue) && priceValue >= 0 && priceValue <= 1_000_000);
 
   const save = async () => {
-    if (!service || !slot) return;
+    if (!service || !slot || !priceValid) return;
     setSaving(true);
     const startsAt = new Date(slot.slot_start);
     const customer = name.trim();
@@ -61,6 +67,8 @@ export function ManualBookingModal({ open, employees, hours, onClose, onSaved }:
       ends_at: new Date(startsAt.getTime() + service.duration_minutes * 60000).toISOString(),
       kind: 'booking',
       service_id: service.id,
+      service_name: service.name,
+      price: price.trim() === '' ? null : Math.round(priceValue * 100) / 100,
       customer_name: customer.slice(0, 80) || null,
       customer_phone: phone.trim().slice(0, 30) || null,
       // Shown by older app versions, which only know blocked slots.
@@ -93,7 +101,7 @@ export function ManualBookingModal({ open, employees, hours, onClose, onSaved }:
               'Hizmet ve saat seçin.'
             )}
           </p>
-          <Button onClick={save} loading={saving} disabled={!service || !slot} icon={<Check className="h-4 w-4" />}>
+          <Button onClick={save} loading={saving} disabled={!service || !slot || !priceValid} icon={<Check className="h-4 w-4" />}>
             Kaydet
           </Button>
         </div>
@@ -164,7 +172,10 @@ export function ManualBookingModal({ open, employees, hours, onClose, onSaved }:
         {service && slot && (
           <section>
             <h3 className="mb-2 text-[13px] font-medium text-mist">3. Müşteri</h3>
-            <Input label="Müşteri adı (isteğe bağlı)" value={name} maxLength={80} onChange={(e) => setName(e.target.value)} placeholder="ör. Ayşe Yılmaz" autoComplete="off" />
+            <div className="grid grid-cols-[1fr_7.5rem] gap-3">
+              <Input label="Müşteri adı (isteğe bağlı)" value={name} maxLength={80} onChange={(e) => setName(e.target.value)} placeholder="ör. Ayşe Yılmaz" autoComplete="off" />
+              <Input label="Ücret (₺)" inputMode="decimal" value={price} maxLength={10} error={priceValid ? undefined : 'Geçersiz'} onChange={(e) => setPrice(e.target.value.replace(/[^0-9.,]/g, ''))} />
+            </div>
             {more ? (
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <Input label="Telefon (isteğe bağlı)" type="tel" inputMode="tel" value={phone} maxLength={30} onChange={(e) => setPhone(e.target.value)} placeholder="05xx xxx xx xx" autoComplete="off" />

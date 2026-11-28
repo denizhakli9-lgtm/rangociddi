@@ -59,13 +59,19 @@ Apple incelemesi genelde 1–2 gün.
 ## Adım 3 – Veritabanı ve sunucu (uygulamayı göndermeden ÖNCE)
 
 Yeni özellikler (şikâyet/engelleme, yapay zekâ onayı, hesap silme talebi) iki yeni migration ister. İkisi de **yalnızca ekleme** yapar; yayındaki site etkilenmez.
-`YAYINLAMA-REHBERİ`ndeki gibi **tek tek** SQL Editor'de (ya da Supabase bağlantısıyla) uygula; `supabase db push` kullanma:
 
-1. `supabase/migrations/20261127140000_content_reports_and_chat_blocks.sql`
-2. `supabase/migrations/20261127150000_support_ai_consent_and_deletion_requests.sql`
-3. **support-ai** Edge Function'ını yeniden deploy et (onay kontrolü eklendi).
-4. Supabase → Advisors → Security: yeni tablolar (`content_reports`, `user_blocks` …) için uyarı çıkmamalı.
-5. Bu dalı `main`'e alıp siteyi yayınla. Uygulama ile site aynı kodu kullanır; App Review site üzerinden de bakabilir.
+**28 Kasım 2026'da yapıldı** (Frankfurt projesi, Supabase bağlantısıyla):
+
+1. ✅ `supabase/migrations/20261127140000_content_reports_and_chat_blocks.sql`
+2. ✅ `supabase/migrations/20261127150000_support_ai_consent_and_deletion_requests.sql`
+3. ✅ **support-ai** Edge Function'ı yeniden yayınlandı (sürüm 3; yayındaki dosya depodakiyle bayt bayt aynı).
+4. ✅ Supabase → Advisors → Security: yeni tablolar için uyarı yok (yalnızca `private` şemasındaki PayTR tabloları için bilinen 3 bilgi notu).
+5. Bu dal `main`'e alınıp site yayınlanır. Uygulama ile site aynı kodu kullanır; App Review site üzerinden de bakabilir.
+
+Uygulamadan önce kontrol edildi: değiştirilen fonksiyonlar (`send_appointment_message`, `run_retention`,
+`support_claim_ai`, `support_action`) ve `appointment_messages` okuma kuralı canlıdaki hâlleriyle aynı temelden geliyor;
+eski sürümler (Play'deki Android 1.45 ve eski site) çalışmaya devam ediyor. Onları kullananların destek konuşmaları
+yapay zekâ yerine doğrudan bir kişiye gider.
 
 Sonra:
 - En az bir yönetici **Yönetim → Şikâyetler** sayfasına her gün baksın. Apple şikâyetlere **24 saat** içinde işlem yapılmasını bekliyor; Kullanım Koşulları artık bunu taahhüt ediyor.

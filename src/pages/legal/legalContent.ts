@@ -100,7 +100,8 @@ const aydinlatma: LegalDocument = {
             ['Randevunun oluşturulması, işletmeye iletilmesi, onay/ret, iptal, erteleme ve hatırlatma bildirimlerinin gönderilmesi', 'Sözleşmenin kurulması ve ifası (c)'],
             ['Kaporanın tahsili, iadesi, komisyon ve işletme hak edişlerinin hesaplanması ve ödenmesi', 'Sözleşmenin ifası (c), hukuki yükümlülük (ç)'],
             ['Konumunuza ve tercihlerinize göre işletmelerin listelenmesi ve sıralanması', 'Sözleşmenin ifası (c), meşru menfaat (f)'],
-            ['Destek taleplerinin yanıtlanması (yapay zekâ destekli ön yanıt dahil)', 'Sözleşmenin ifası (c), meşru menfaat (f)'],
+            ['Destek taleplerinin yanıtlanması', 'Sözleşmenin ifası (c), meşru menfaat (f)'],
+            ['Destek mesajlarına yapay zekâ ile ön yanıt hazırlanması ve bu amaçla yurt dışına aktarılması (isteğe bağlı)', 'Açık rıza (KVKK md. 5/1 ve md. 9)'],
             ['Değerlendirme ve yorumların yayınlanması, uygunsuz içeriğin denetlenmesi', 'Sözleşmenin ifası (c), meşru menfaat (f)'],
             ['Bilgi güvenliğinin sağlanması, dolandırıcılık ve kötüye kullanımın önlenmesi, erişim kayıtlarının tutulması', 'Hukuki yükümlülük (ç), meşru menfaat (f)'],
             ['Satış onayının kaydedilmesi ve saklanması; harcama itirazı, iade ve uyuşmazlık süreçlerinde ödeme kuruluşuna, bankalara ve yetkili kurumlara ispat amacıyla sunulması', 'Sözleşmenin kurulması ve ifası (c), hukuki yükümlülük (ç), bir hakkın tesisi, kullanılması veya korunması (e)'],
@@ -108,7 +109,7 @@ const aydinlatma: LegalDocument = {
             ['Uyuşmazlıklarda hakların tesisi, kullanılması ve korunması; yetkili makam taleplerinin karşılanması', 'Bir hakkın tesisi, kullanılması veya korunması (e), hukuki yükümlülük (ç)'],
           ],
         ),
-        p('Yukarıdaki işlemler için açık rızanız aranmaz. İleride kampanya ve tanıtım amaçlı ticari elektronik ileti göndermek istersek, bunu ayrıca ve isteğe bağlı olarak onayınızı alarak yaparız; onay vermemeniz hizmetten yararlanmanızı etkilemez.'),
+        p('Yapay zekâ ile ön yanıt dışındaki işlemler için açık rızanız aranmaz. İleride kampanya ve tanıtım amaçlı ticari elektronik ileti göndermek istersek, bunu ayrıca ve isteğe bağlı olarak onayınızı alarak yaparız; onay vermemeniz hizmetten yararlanmanızı etkilemez.'),
       ],
     },
     {
@@ -119,7 +120,7 @@ const aydinlatma: LegalDocument = {
           `Lisanslı ödeme kuruluşu ${PAYMENT_PROVIDER.name}: kaporanın tahsili ve iadesi, ödeme ve sahtecilik önleme hizmetlerinin sunulması ve harcama itirazı (chargeback) süreçlerinin yürütülmesi için ad soyad, e-posta, telefon, ödeme anındaki IP adresi, profilinizdeki il/ilçe bilgisi ve sipariş bilgileri (sipariş numarası, tutar, işletme ve hizmet adı); harcama itirazı veya iade uyuşmazlığında ayrıca satış onayı kaydı ile randevu, iptal ve hizmet kayıtları. ${PAYMENT_PROVIDER.shortName} bu bilgileri harcama itirazı sürecinde kartı çıkaran bankaya ve iş ortağı bankalara iletebilir. Kart bilgileriniz ${COMPANY.brand}’ya uğramadan doğrudan ${PAYMENT_PROVIDER.shortName}’nin güvenli ödeme sayfasında işlenir (sözleşmenin kurulması ve ifası, hukuki yükümlülük, bir hakkın tesisi, kullanılması veya korunması).`,
           'Altyapı ve barındırma hizmet sağlayıcıları: veritabanı, kimlik doğrulama, şifre yenileme e-postalarının gönderimi ve dosya depolama hizmeti veren Supabase, Inc. ile web barındırma hizmeti veren Hostinger; verileriniz bu hizmetler aracılığıyla saklanır.',
           `WhatsApp destek hattı (WhatsApp, Meta Platforms): destek hattımıza (${WHATSAPP_SUPPORT.display}) yazdığınızda telefon numaranız, WhatsApp profil adınız ve mesaj içerikleriniz; destek verilmesi, kimlik doğrulaması ve telefon numarasıyla üye olan işletme sahiplerine geçici şifre iletilmesi amacıyla bu hizmet üzerinden işlenir. WhatsApp’ı kullanmak sizin tercihinizdir; uygulama içi destek merkezi de kullanılabilir.`,
-          'Yapay zekâ destek hizmeti sağlayıcısı (OpenAI, L.L.C.): yalnızca destek merkezinde yapay zekâ asistanı etkin olduğunda, yazdığınız mesaj içerikleri ön yanıt üretmek amacıyla iletilir. Gönderimden önce e-posta adresleri, telefon, IBAN, kart, kimlik numarası ve rezervasyon kodu gibi bilgiler otomatik olarak maskelenir; ödeme, iade, şifre, şikâyet, KVKK ve sağlık gibi konular tespit edildiğinde mesajınız yapay zekâya gönderilmeden temsilciye aktarılır. Ad ve adres gibi bilgileri destek mesajlarınıza yazmamanızı rica ederiz.',
+          'Yapay zekâ destek hizmeti sağlayıcısı (OpenAI, L.L.C., ABD): yalnızca destek merkezinde yapay zekâ asistanını kullanmayı uygulama içinde açıkça onayladıysanız, destek talebinde yazdığınız mesajların metni ön yanıt üretmek amacıyla iletilir. Onay vermezseniz mesajlarınız yapay zekâya hiç gönderilmez ve talebinizi destek ekibimiz yanıtlar; onayınızı Yardım ve Destek sayfasından istediğiniz zaman geri çekebilirsiniz. Gönderimden önce e-posta adresleri, telefon, IBAN, kart, kimlik numarası ve rezervasyon kodu gibi bilgiler otomatik olarak maskelenir; ödeme, iade, şifre, şikâyet, KVKK ve sağlık gibi konular tespit edildiğinde mesajınız yapay zekâya gönderilmeden temsilciye aktarılır. Ad ve adres gibi bilgileri destek mesajlarınıza yazmamanızı rica ederiz.',
           'Görsel içerik sağlayıcısı (Pexels): bazı tanıtım görselleri bu sağlayıcının sunucularından yüklenir; bu sırada tarayıcınız IP adresinizi iletir.',
           'Harita uygulamaları: “Yol tarifi al” bağlantısına tıkladığınızda seçtiğiniz harita uygulamasına (Google Haritalar, Apple Haritalar, Yandex Haritalar) yalnızca işletmenin konumu iletilir.',
           'Yetkili kamu kurum ve kuruluşları ile hukuken yetkili özel kişiler: kanuni yükümlülükler kapsamında ve talep edilmesi halinde.',
@@ -129,7 +130,7 @@ const aydinlatma: LegalDocument = {
     {
       title: '5. Yurt dışına aktarım',
       blocks: [
-        p('Altyapı (Supabase, Inc.), web barındırma (Hostinger) ve etkinleştirildiğinde yapay zekâ destek (OpenAI, L.L.C. – ABD) hizmet sağlayıcılarımızın sunucuları yurt dışında bulunmaktadır. Bu aktarımlar KVKK’nın 9. maddesi kapsamında, Kişisel Verileri Koruma Kurulu tarafından ilan edilen standart sözleşmelerin düzenlenmesi ve Kuruma bildirilmesi suretiyle gerçekleştirilir. Yapay zekâ destek hizmetine, yukarıda açıklandığı şekilde maskelenmiş destek mesajı içerikleri dışında veri iletilmez. WhatsApp destek hattına yazdığınızda mesajlarınız WhatsApp’ın (Meta Platforms) yurt dışındaki sunucularında da işlenir.'),
+        p('Altyapı (Supabase, Inc.), web barındırma (Hostinger) ve yapay zekâ destek (OpenAI, L.L.C. – ABD) hizmet sağlayıcılarımızın sunucuları yurt dışında bulunmaktadır. Bu aktarımlar KVKK’nın 9. maddesi kapsamında, Kişisel Verileri Koruma Kurulu tarafından ilan edilen standart sözleşmelerin düzenlenmesi ve Kuruma bildirilmesi suretiyle gerçekleştirilir; yapay zekâ destek hizmetine aktarım ayrıca yalnızca uygulama içinde verdiğiniz açık rızaya dayanır. Yapay zekâ destek hizmetine, yukarıda açıklandığı şekilde maskelenmiş destek mesajı içerikleri dışında veri iletilmez. WhatsApp destek hattına yazdığınızda mesajlarınız WhatsApp’ın (Meta Platforms) yurt dışındaki sunucularında da işlenir.'),
       ],
     },
     {
@@ -219,6 +220,7 @@ const kosullar: LegalDocument = {
           'Platformu hukuka, genel ahlaka ve bu koşullara uygun şekilde kullanmak.',
           'Gerçek olmayan randevu oluşturmamak, başkası adına izinsiz işlem yapmamak.',
           'Yorum ve değerlendirmelerde yalnızca gerçekten aldığınız hizmete ilişkin, hakaret, kişisel veri, reklam ve hukuka aykırı içerik barındırmayan ifadeler kullanmak.',
+          'Platformda sakıncalı içeriğe ve taciz edici kullanıcılara tolerans gösterilmez. Yorumları, işletme yanıtlarını, işletme sayfalarını (fotoğraf ve metinler dahil) ve randevu mesajlarını “Şikâyet et” seçeneğiyle bize bildirebilir, randevu mesajlarında karşı tarafı “Engelle” seçeneğiyle engelleyebilirsiniz; engellediğiniz kişinin mesajları size iletilmez. Şikâyetler en geç 24 saat içinde incelenir; bu koşullara aykırı içerik yayından kaldırılır ve ihlalde bulunan hesaplar askıya alınabilir.',
           'Platformun güvenliğini tehlikeye atacak, otomatik veri toplama (scraping), tersine mühendislik veya aşırı yük oluşturacak girişimlerde bulunmamak.',
           'İşletmeler; sunduğu hizmet, fiyat, çalışma saati ve iptal politikası bilgilerinin doğruluğundan ve müşterilerinin kişisel verilerini yalnızca randevu hizmeti için, KVKK’ya uygun şekilde kullanmaktan sorumludur.',
         ),
@@ -532,9 +534,9 @@ const hesapSilme: LegalDocument = {
           `${COMPANY.brand} uygulamasını açın veya ${COMPANY.website.replace('https://', '')} adresine gidin ve hesabınıza giriş yapın.`,
           'Alttaki menüden “Profil” sayfasına girin.',
           '“Verilerim ve gizlilik” bölümündeki “Hesabımı sil” düğmesine dokunun.',
-          'Açılan pencerede onay kutusunu işaretleyip “Hesabımı kalıcı olarak sil” düğmesine dokunun.',
+          'Açılan pencerede onay kutusunu işaretleyip “Hesabımı kalıcı olarak sil” (işletme ve yönetici hesaplarında “Hesabımı silmeyi başlat”) düğmesine dokunun.',
         ),
-        p('Müşteri hesapları anında silinir. İşletme hesaplarında bekleyen ödeme ve hak edişler bulunabileceğinden, işletme sahipleri silme talebini işletme panelindeki “Yardım ve Destek” bölümünden veya 2. maddedeki yöntemlerle iletir; talep en geç 30 gün içinde sonuçlandırılır. Yaklaşan veya ödeme/onay bekleyen randevunuz ya da sonuçlanmamış bir iade talebiniz varsa, hesabınızı silmeden önce bunların iptal edilmesi veya tamamlanması gerekir.'),
+        p('Müşteri hesapları anında silinir. İşletme ve yönetici hesaplarında aynı “Hesabımı sil” düğmesi silme işlemini başlatır: talep hemen kaydedilir, oturum kapatılır ve yaklaşan randevusu olmayan işletme aramalardan hemen kaldırılır; yaklaşan randevusu olan işletme, yeni randevu almaması için ekibimiz tarafından yayından kaldırılır. Bekleyen randevu, iade ve hak edişler sonuçlandırıldıktan sonra hesap en geç 30 gün içinde silinir; işletmenin iletişim bilgileri kaldırılır. Hak ediş (IBAN) kayıtları da diğer mali kayıtlar gibi yasal süre boyunca saklanır. Yaklaşan veya ödeme/onay bekleyen randevunuz ya da sonuçlanmamış bir iade talebiniz varsa, hesabınızı silmeden önce bunların iptal edilmesi veya tamamlanması gerekir.'),
       ],
     },
     {
@@ -573,7 +575,7 @@ const hesapSilme: LegalDocument = {
     {
       title: 'English summary',
       blocks: [
-        p(`To delete your ${COMPANY.brand} account (developer: ${COMPANY.legalName}): open the ${COMPANY.brand} app or ${COMPANY.website.replace('https://', '')}, sign in, go to Profile → “My data & privacy” → “Delete my account” and confirm. Customer accounts are deleted immediately. Business owners request deletion through “Help & Support” in the business panel or by email or WhatsApp (below); it is completed within 30 days. If you cannot access the app, email ${COMPANY.kvkkEmail} from your account’s email address with the subject “Account deletion request”. If you signed up with a phone number and no email, send “Account deletion request” to our WhatsApp support line (${WHATSAPP_SUPPORT.display}) from that phone number instead. It will be completed within 30 days.`),
+        p(`To delete your ${COMPANY.brand} account (developer: ${COMPANY.legalName}): open the ${COMPANY.brand} app or ${COMPANY.website.replace('https://', '')}, sign in, go to Profile → “My data & privacy” → “Delete my account” and confirm (“Permanently delete my account”, or “Start deleting my account” for business and admin accounts). Customer accounts are deleted immediately. For business and admin accounts the same button starts the deletion: the request is recorded at once, you are signed out and a business without upcoming bookings is removed from search immediately; the account is deleted within 30 days, once pending bookings, refunds and payouts are settled. If you cannot access the app, email ${COMPANY.kvkkEmail} from your account’s email address with the subject “Account deletion request”. If you signed up with a phone number and no email, send “Account deletion request” to our WhatsApp support line (${WHATSAPP_SUPPORT.display}) from that phone number instead. It will be completed within 30 days.`),
         p('Deleted: name, email, phone, profile, location preferences, favourites, notifications and sign-in access. Reviews remain anonymously as “Deleted user”. Kept without being linked to your identity: booking, payment, refund and purchase-confirmation records for 10 years (tax and commercial law), booking notes for 12 months and support messages for 2 years.'),
       ],
     },

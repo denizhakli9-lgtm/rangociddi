@@ -13,6 +13,7 @@ import { friendlyError } from '@/lib/errors';
 import { formatDate, formatTRY } from '@/lib/format';
 import { fieldAgentSetBusinessStatus, setupGaps, type FieldAgentBusiness } from '@/lib/fieldAgent';
 import { isReservedEmail } from '@/lib/phoneLogin';
+import { newTabClick } from '@/lib/platform';
 import type { BusinessStatus } from '@/lib/types';
 import { useField } from './FieldContext';
 
@@ -147,7 +148,7 @@ export default function FieldBusinesses() {
                 {(canDecide || b.status === 'approved') && (
                   <div className="flex flex-wrap gap-2 border-t border-line bg-ink/30 px-4 py-3 sm:px-5">
                     {b.status === 'approved' && (
-                      <Link to={`/i/${b.slug}`} target="_blank" className="inline-flex h-9 items-center gap-1.5 rounded-full border border-line px-4 text-xs text-white transition hover:border-white/30">
+                      <Link to={`/i/${b.slug}`} target="_blank" onClick={newTabClick(`/i/${b.slug}`)} className="inline-flex h-9 items-center gap-1.5 rounded-full border border-line px-4 text-xs text-white transition hover:border-white/30">
                         <ExternalLink className="h-3.5 w-3.5 text-gold-400" /> Sayfayı gör
                       </Link>
                     )}

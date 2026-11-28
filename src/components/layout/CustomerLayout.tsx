@@ -49,7 +49,7 @@ export function CustomerLayout() {
 
   return (
     <div className="flex min-h-screen flex-col bg-ink">
-      <header className="sticky top-0 z-40 border-b border-line-soft bg-ink/90 backdrop-blur-md">
+      <header className="sticky top-0 z-40 border-b border-line-soft bg-ink/90 pt-[env(safe-area-inset-top)] backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4 sm:px-6">
           <Link to={homePath} aria-label={tx('Rango ana sayfa', 'Rango home')} className="shrink-0">
             <Logo size="sm" />
@@ -112,7 +112,7 @@ export function CustomerLayout() {
 
       <WhatsAppFab />
 
-      <nav aria-label={tx('Alt menü', 'Tab bar')} className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-line-soft bg-ink/95 backdrop-blur-md md:hidden">
+      <nav data-tabbar aria-label={tx('Alt menü', 'Tab bar')} className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-line-soft bg-ink/95 backdrop-blur-md md:hidden">
         <div className="grid grid-cols-5">
           {tabs.map(({ to, label, icon: Icon }) => (
             <NavLink

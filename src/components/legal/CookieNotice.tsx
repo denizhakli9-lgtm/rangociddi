@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LEGAL_VERSIONS, legalPath } from '@/lib/legal';
 import { tx } from '@/i18n/locale';
+import { isNative } from '@/lib/platform';
 
 const KEY = 'rango.cookie-notice';
 
@@ -18,6 +19,8 @@ function alreadySeen(): boolean {
  * user-requested preference storage, so no consent is collected (KVKK Çerez
  * Uygulamaları Rehberi). If analytics/marketing cookies are ever added, this
  * must become an opt-in consent banner that blocks them until accepted.
+ * The app stores the same data in its own storage on the device, so there the notice says
+ * "on this device / in the app" instead of "in your browser"; the duty to inform is the same.
  */
 export function CookieNotice() {
   const [open, setOpen] = useState(() => !alreadySeen());
@@ -37,11 +40,13 @@ export function CookieNotice() {
       role="region"
       data-cookie-notice
       aria-label={tx('Çerez bilgilendirmesi', 'Cookie notice')}
-      className="fixed inset-x-3 bottom-[76px] z-[80] animate-fade-up rounded-xl border border-line bg-coal p-4 shadow-pop md:inset-x-auto md:bottom-5 md:left-5 md:max-w-sm [body:has([data-booking-bar])_&]:bottom-[156px] lg:[body:has([data-booking-bar])_&]:bottom-5"
+      className="fixed inset-x-3 bottom-[calc(76px+env(safe-area-inset-bottom))] z-[80] animate-fade-up rounded-xl border border-line bg-coal p-4 shadow-pop md:inset-x-auto md:bottom-[calc(1.25rem+env(safe-area-inset-bottom))] md:left-5 md:max-w-sm [body:has([data-booking-bar])_&]:bottom-[calc(156px+env(safe-area-inset-bottom))] lg:[body:has([data-booking-bar])_&]:bottom-[calc(1.25rem+env(safe-area-inset-bottom))]"
     >
       <div className="flex items-end gap-4 md:flex-col md:items-start md:gap-3">
         <p className="flex-1 text-xs leading-relaxed text-mist">
-          {tx('Reklam veya analitik çerezi kullanmıyoruz. Tarayıcınızda yalnızca oturumunuzu ve seçtiğiniz tema/konum/dil tercihlerini saklıyoruz.', 'We use no advertising or analytics cookies. We only store your session and your theme, location and language choices on this device.')}{' '}
+          {isNative
+            ? tx('Reklam veya analitik amaçlı çerez ya da benzeri bir teknoloji kullanmıyoruz. Uygulama, cihazınızda yalnızca oturumunuzu ve seçtiğiniz tema/konum/dil tercihlerini saklar.', 'We use no advertising or analytics cookies or similar technologies. The app only stores your session and your theme, location and language choices on this device.')
+            : tx('Reklam veya analitik çerezi kullanmıyoruz. Tarayıcınızda yalnızca oturumunuzu ve seçtiğiniz tema/konum/dil tercihlerini saklıyoruz.', 'We use no advertising or analytics cookies. We only store your session and your theme, location and language choices on this device.')}{' '}
           <Link to={legalPath('cerez-politikasi')} className="font-medium text-white underline underline-offset-2">
             {tx('Çerez Politikası', 'Cookie Policy')}
           </Link>

@@ -10,7 +10,7 @@ export function Spinner({ className = 'h-6 w-6' }: { className?: string }) {
 export function PageLoader() {
   return (
     // Fills the screen below the header, so the footer stays out of view and does not jump when the page arrives.
-    <div className="flex min-h-[calc(100vh-5.5rem)] items-center justify-center">
+    <div className="flex min-h-[calc(100vh-5.5rem-env(safe-area-inset-top))] items-center supports-[height:100svh]:min-h-[calc(100svh-5.5rem-env(safe-area-inset-top))] justify-center">
       <Spinner className="h-8 w-8" />
     </div>
   );

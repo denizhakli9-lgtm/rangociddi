@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarCheck, Gauge, MapPin, ShieldCheck } from 'lucide-react';
+import { CalendarCheck, MapPin, ShieldCheck, Sparkles } from 'lucide-react';
 import { COMPANY, legalPath } from '@/lib/legal';
 import { tx } from '@/i18n/locale';
 import './maintenance.css';
@@ -70,7 +70,7 @@ export default function Maintenance() {
   const assurances = [
     { icon: CalendarCheck, label: tx('Randevularınız güvende', 'Your bookings are safe') },
     { icon: ShieldCheck, label: tx('Hesabınız korunuyor', 'Your account is protected') },
-    { icon: Gauge, label: tx('Daha hızlı altyapı', 'A faster platform') },
+    { icon: Sparkles, label: tx('Yenilenen deneyim', 'A refreshed experience') },
   ];
 
   return (
@@ -187,8 +187,8 @@ export default function Maintenance() {
 
               <p className="deco-body deco-rise" style={{ animationDelay: '0.35s' }}>
                 {tx(
-                  'Rango’yu Avrupa’daki daha hızlı ve daha güvenli yeni sunucularımıza taşıyoruz. Randevularınız ve hesabınız güvende; kısa süre içinde yeniden buradayız.',
-                  'We are moving Rango to faster, more secure new servers in Europe. Your appointments and your account are safe, and we will be back shortly.',
+                  'Rango’yu sizin için yeniliyoruz. Randevularınız ve hesabınız güvende; kısa süre içinde daha iyi bir deneyimle yeniden buradayız.',
+                  'We are giving Rango a refresh. Your appointments and your account are safe, and we will be back shortly with a better experience.',
                 )}
               </p>
 

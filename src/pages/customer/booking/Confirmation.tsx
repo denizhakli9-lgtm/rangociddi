@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
-import { CalendarCheck, CalendarPlus, CheckCircle2, Clock, Hourglass, Info, MapPin, XCircle } from 'lucide-react';
+import { CalendarCheck, CalendarPlus, CheckCircle2, ChevronRight, Clock, FileDown, Hourglass, Info, MapPin, XCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { fetchSettings } from '@/lib/api';
 import { useAsync } from '@/lib/useAsync';
@@ -9,7 +10,9 @@ import { Button } from '@/components/ui/Button';
 import { EmptyState, ErrorState, PageLoader } from '@/components/ui/Feedback';
 import type { Appointment, PaymentStatus } from '@/lib/types';
 import { DirectionsButton } from '@/components/DirectionsSheet';
-import { isNative } from '@/lib/platform';
+import { Modal } from '@/components/ui/Modal';
+import { useToast } from '@/contexts/ToastContext';
+import { isIOS, isNative, openExternal, shareGeneratedFile } from '@/lib/platform';
 import { tx } from '@/i18n/locale';
 
 type ConfirmationPayment = { id: string; status: PaymentStatus; amount: number; provider_payment_id: string | null };
@@ -25,13 +28,8 @@ function icsText(s: string) {
 
 type CalendarAppt = Pick<Appointment, 'id' | 'starts_at' | 'ends_at' | 'service_name' | 'booking_code' | 'businesses'>;
 
-/**
- * The phone apps cannot save a downloaded .ics file, so there the booking opens in the
- * calendar through a Google Calendar "add event" link (the system hands it to the calendar app
- * or the browser). The website keeps the .ics download, which every calendar understands.
- */
-function addToCalendar(a: CalendarAppt) {
-  if (!isNative) return downloadIcs(a);
+/** Google Calendar "add event" link for the booking. */
+function googleCalendarUrl(a: CalendarAppt) {
   const params = new URLSearchParams({
     action: 'TEMPLATE',
     text: `${a.service_name} - ${a.businesses?.name ?? ''}`,
@@ -39,11 +37,11 @@ function addToCalendar(a: CalendarAppt) {
     location: a.businesses?.address ?? '',
     details: tx(`Rezervasyon kodu ${a.booking_code}`, `Booking code ${a.booking_code}`),
   });
-  window.location.href = `https://calendar.google.com/calendar/render?${params.toString()}`;
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
 
-function downloadIcs(a: CalendarAppt) {
-  const body = [
+function icsBody(a: CalendarAppt) {
+  return [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
     'PRODID:-//Rango//TR',
@@ -58,12 +56,79 @@ function downloadIcs(a: CalendarAppt) {
     'END:VEVENT',
     'END:VCALENDAR',
   ].join('\r\n');
-  const url = URL.createObjectURL(new Blob([body], { type: 'text/calendar' }));
+}
+
+function downloadIcs(a: CalendarAppt) {
+  const url = URL.createObjectURL(new Blob([icsBody(a)], { type: 'text/calendar' }));
   const link = document.createElement('a');
   link.href = url;
   link.download = `rango-${a.booking_code}.ics`;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+/**
+ * "Takvime ekle". The website downloads an .ics file, which every calendar understands. The app's
+ * WebView cannot download files, so:
+ * - Android hands a Google Calendar "add event" link to the system (Google Calendar is the default there).
+ * - iOS offers a choice, since most iPhone users use Apple's Calendar rather than Google's: the .ics file
+ *   through the share sheet (save it, or send it with Mail/Messages, which offer "Add to Calendar"), or
+ *   Google Calendar in the in-app browser sheet, so the customer stays in the app.
+ */
+function AddToCalendarButton({ appt }: { appt: CalendarAppt }) {
+  const { toast } = useToast();
+  const [chooser, setChooser] = useState(false);
+
+  const onClick = () => {
+    if (!isNative) return downloadIcs(appt);
+    if (isIOS) return setChooser(true);
+    window.location.href = googleCalendarUrl(appt);
+  };
+
+  const shareIcs = async () => {
+    setChooser(false);
+    try {
+      await shareGeneratedFile(`rango-${appt.booking_code}.ics`, icsBody(appt), tx('Takvime ekle', 'Add to calendar'));
+    } catch {
+      toast(tx('Takvim dosyası hazırlanamadı. Google Takvim ile deneyebilirsiniz.', 'The calendar file could not be prepared. You can try Google Calendar instead.'), 'error');
+    }
+  };
+
+  const openGoogle = () => {
+    setChooser(false);
+    void openExternal(googleCalendarUrl(appt)).catch(() => toast(tx('Google Takvim açılamadı.', 'Google Calendar could not be opened.'), 'error'));
+  };
+
+  const options = [
+    { key: 'ics', icon: FileDown, label: tx('Takvim dosyası (.ics)', 'Calendar file (.ics)'), hint: tx('iPhone Takvim ve diğerleri: kaydedin ya da Mail veya Mesajlar ile gönderip açın', 'iPhone Calendar and others: save it, or send it with Mail or Messages and open it'), onClick: shareIcs },
+    { key: 'google', icon: CalendarPlus, label: tx('Google Takvim', 'Google Calendar'), hint: tx('Google hesabınızla giriş yaparak ekleyin', 'Add it by signing in with your Google account'), onClick: openGoogle },
+  ];
+
+  return (
+    <>
+      <Button variant="outline" full icon={<CalendarPlus className="h-4 w-4" />} onClick={onClick}>{tx('Takvime ekle', 'Add to calendar')}</Button>
+      {isIOS && (
+        <Modal open={chooser} onClose={() => setChooser(false)} title={tx('Takvime ekle', 'Add to calendar')} subtitle={appt.businesses?.name}>
+          <ul className="space-y-2 text-left">
+            {options.map((o) => (
+              <li key={o.key}>
+                <button type="button" onClick={o.onClick} className="group flex w-full items-center gap-4 rounded-2xl border border-line bg-coal-2 px-4 py-3.5 text-left transition hover:border-white/30 hover:bg-white/[0.03]">
+                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gold-500/10 text-gold-400">
+                    <o.icon className="h-5 w-5" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-medium text-white">{o.label}</span>
+                    <span className="block text-xs text-mist-2">{o.hint}</span>
+                  </span>
+                  <ChevronRight className="h-4 w-4 text-mist-3 transition group-hover:translate-x-0.5 group-hover:text-gold-400" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </Modal>
+      )}
+    </>
+  );
 }
 
 export default function Confirmation() {
@@ -163,7 +228,7 @@ export default function Confirmation() {
 
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
         {active && (
-          <Button variant="outline" full icon={<CalendarPlus className="h-4 w-4" />} onClick={() => addToCalendar(appt)}>{tx('Takvime ekle', 'Add to calendar')}</Button>
+          <AddToCalendarButton appt={appt} />
         )}
         <Link to="/randevularim" className="flex-1">
           <Button full>{tx('Randevularım', 'My bookings')}</Button>

@@ -7,6 +7,7 @@ import { useUnreadCount } from '@/lib/useUnreadCount';
 import { useT } from '@/i18n/I18nProvider';
 import { WhatsAppFab, WhatsAppIcon } from '@/components/WhatsAppSupport';
 import { WHATSAPP_SUPPORT, whatsAppLinkProps } from '@/lib/whatsapp';
+import { tx } from '@/i18n/locale';
 
 export interface DashNavItem {
   to: string;
@@ -64,7 +65,7 @@ export function DashboardLayout({ title, items, notificationsPath, whatsAppMessa
 
   return (
     <div className="min-h-screen bg-ink lg:flex">
-      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-line-soft bg-coal p-4 lg:flex">
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-line-soft bg-coal p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] lg:flex">
         <Link to={items[0]?.to ?? '/'} className="flex items-center gap-2.5 px-2 pt-1">
           <Logo size="sm" />
         </Link>
@@ -83,7 +84,7 @@ export function DashboardLayout({ title, items, notificationsPath, whatsAppMessa
       </aside>
 
       <div className="min-w-0 flex-1">
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line-soft bg-ink/90 px-4 backdrop-blur-md sm:px-6 lg:h-16">
+        <header className="sticky top-0 z-30 flex h-[calc(3.5rem+env(safe-area-inset-top))] items-center justify-between border-b border-line-soft bg-ink/90 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-md sm:px-6 lg:h-[calc(4rem+env(safe-area-inset-top))]">
           <div className="flex items-center gap-3 lg:hidden">
             <Logo size="sm" />
             <span className="border-l border-line pl-3 text-xs font-medium text-mist-2">{title}</span>
@@ -100,12 +101,12 @@ export function DashboardLayout({ title, items, notificationsPath, whatsAppMessa
                 )}
               </Link>
             )}
-            <button onClick={() => setDrawer(true)} className="flex h-10 w-10 items-center justify-center rounded-lg text-mist transition-colors hover:bg-white/5 hover:text-white lg:hidden" aria-label="Menü">
+            <button onClick={() => setDrawer(true)} className="flex h-10 w-10 items-center justify-center rounded-lg text-mist transition-colors hover:bg-white/5 hover:text-white lg:hidden" aria-label={tx('Menü', 'Menu')}>
               <Menu className="h-5 w-5" />
             </button>
           </div>
         </header>
-        <main className={`mx-auto max-w-6xl px-4 pb-28 pt-6 sm:px-6 ${whatsApp ? '' : 'lg:pb-12'}`}>
+        <main className={`mx-auto max-w-6xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-6 sm:px-6 ${whatsApp ? '' : 'lg:pb-[calc(3rem+env(safe-area-inset-bottom))]'}`}>
           <Outlet />
         </main>
       </div>
@@ -113,10 +114,10 @@ export function DashboardLayout({ title, items, notificationsPath, whatsAppMessa
       {drawer && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 animate-fade-in bg-black/60" onClick={() => setDrawer(false)} />
-          <div className="absolute right-0 top-0 flex h-full w-72 animate-fade-in flex-col border-l border-line bg-coal p-5">
+          <div className="absolute right-0 top-0 flex h-full w-72 animate-fade-in flex-col border-l border-line bg-coal p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-[calc(1.25rem+env(safe-area-inset-top))]">
             <div className="mb-6 flex items-center justify-between">
               <Logo size="sm" />
-              <button onClick={() => setDrawer(false)} className="rounded-lg p-2 text-mist transition-colors hover:bg-white/5 hover:text-white" aria-label="Kapat">
+              <button onClick={() => setDrawer(false)} className="rounded-lg p-2 text-mist transition-colors hover:bg-white/5 hover:text-white" aria-label={tx('Kapat', 'Close')}>
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -133,7 +134,7 @@ export function DashboardLayout({ title, items, notificationsPath, whatsAppMessa
               >
                 <WhatsAppIcon className="h-[18px] w-[18px] text-[#1fa855]" />
                 <span className="flex-1">
-                  <span className="block font-medium">WhatsApp destek</span>
+                  <span className="block font-medium">{tx('WhatsApp destek', 'WhatsApp support')}</span>
                   <span className="block text-xs text-mist-2">{WHATSAPP_SUPPORT.display}</span>
                 </span>
               </a>
@@ -148,7 +149,7 @@ export function DashboardLayout({ title, items, notificationsPath, whatsAppMessa
 
       {whatsApp && <WhatsAppFab message={whatsAppMessage} from="lg" />}
 
-      <nav className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-line-soft bg-ink/95 backdrop-blur-md lg:hidden">
+      <nav data-tabbar className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-line-soft bg-ink/95 backdrop-blur-md lg:hidden">
         <div className="grid" style={{ gridTemplateColumns: `repeat(${primary.length + 1}, minmax(0, 1fr))` }}>
           {primary.map(({ to, label, icon: Icon, end }) => (
             <NavLink
@@ -163,7 +164,7 @@ export function DashboardLayout({ title, items, notificationsPath, whatsAppMessa
           ))}
           <button onClick={() => setDrawer(true)} className="flex flex-col items-center gap-1 py-2.5 text-[10.5px] text-mist-2">
             <Menu className="h-5 w-5" strokeWidth={1.6} />
-            Menü
+            {tx('Menü', 'Menu')}
           </button>
         </div>
       </nav>

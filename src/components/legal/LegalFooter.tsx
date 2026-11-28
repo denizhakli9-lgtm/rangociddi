@@ -54,7 +54,7 @@ const columnLink = 'text-[13px] text-mist transition-colors hover:text-white';
 export function SiteFooter() {
   const links = siteLinks(locale());
   return (
-    <footer className="border-t border-line-soft pb-24 md:pb-0">
+    <footer className="border-t border-line-soft pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-[env(safe-area-inset-bottom)]">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="grid gap-x-8 gap-y-10 py-12 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1.2fr]">
           <div>

@@ -59,7 +59,7 @@ export default function Landing() {
   if (page === 'missing') {
     return (
       // As tall as the loading state it replaces, so the footer does not jump into view.
-      <div className="flex min-h-[calc(100vh-5.5rem)] items-center justify-center">
+      <div className="flex min-h-[calc(100vh-5.5rem-env(safe-area-inset-top))] items-center supports-[height:100svh]:min-h-[calc(100svh-5.5rem-env(safe-area-inset-top))] justify-center">
         <EmptyState
           icon={<MapPinOff className="h-6 w-6" />}
           title={tx('Sayfa bulunamadı', 'Page not found')}

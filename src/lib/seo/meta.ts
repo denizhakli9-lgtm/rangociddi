@@ -8,6 +8,7 @@
 import { COMPANY, LEGAL_LINKS, type LegalSlug } from '../legal';
 import { isTestBusiness } from './config';
 import { formatPrice } from './format';
+import { ALL_DISTRICTS } from '../cities';
 import { DEFAULT_CITY, cityCategoryPath, cityPath } from './places';
 
 export const SITE_URL = 'https://rango.com.tr';
@@ -193,7 +194,7 @@ const MAX_SCHEMA_REVIEWS = 5;
 
 /** Same test as `isDistrictCentre` in src/lib/maps.ts. */
 function isDistrictCentre(latitude: number, longitude: number): boolean {
-  return DEFAULT_CITY.districts.some((d) => Math.abs(d.lat - latitude) < 0.00005 && Math.abs(d.lng - longitude) < 0.00005);
+  return ALL_DISTRICTS.some(({ district: d }) => Math.abs(d.lat - latitude) < 0.00005 && Math.abs(d.lng - longitude) < 0.00005);
 }
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 

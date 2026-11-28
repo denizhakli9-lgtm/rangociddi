@@ -17,7 +17,7 @@ import { AppointmentStatusBadge } from '@/components/ui/Badge';
 import { HomeBusinessSection } from './HomeSections';
 import { categoryName } from '@/i18n/categories';
 import { locale, tx } from '@/i18n/locale';
-import { DEFAULT_CITY, cityCategoryPath } from '@/lib/seo/places';
+import { DEFAULT_CITY, cityCategoryPath, locativeTr } from '@/lib/seo/places';
 import { homeMeta } from '@/lib/seo/meta';
 import { homeExtraBlocks, homeSchemas } from '@/lib/seo/pages/home';
 import { useSeo } from '@/lib/seo/useSeo';
@@ -87,7 +87,7 @@ export default function Home() {
         <div>
           {firstName && <p className="mb-3 text-sm text-mist">{tx(`Merhaba, ${firstName}`, `Hello, ${firstName}`)}</p>}
           <h1 className="font-display text-[42px] leading-[1.04] tracking-[-0.02em] text-white sm:text-6xl lg:text-[68px]">{tx('Randevunun yeni yolu.', 'The new way to book.')}</h1>
-          <p className="mt-4 max-w-md text-[15px] leading-relaxed text-mist sm:text-base">{tx('Kuaför, berber ve güzellik randevunuzu online alın: İzmir’deki işletmeleri keşfedin, size en uygun saati seçin.', 'Book hair, barber and beauty appointments online: discover businesses in İzmir and pick the time that suits you.')}</p>
+          <p className="mt-4 max-w-md text-[15px] leading-relaxed text-mist sm:text-base">{tx(`Kuaför, berber ve güzellik randevunuzu online alın: ${locativeTr(location.city)}ki işletmeleri keşfedin, size en uygun saati seçin.`, `Book hair, barber and beauty appointments online: discover businesses in ${location.city} and pick the time that suits you.`)}</p>
           <form onSubmit={submit} role="search" className="mt-7 flex max-w-xl items-center gap-1 rounded-2xl border border-line bg-coal p-1.5 shadow-gold transition-colors focus-within:border-white/50">
             <Search className="ml-2.5 h-[18px] w-[18px] shrink-0 text-mist-3" strokeWidth={1.75} />
             <input aria-label={searchLabel} value={query} onChange={(e) => setQuery(e.target.value)} placeholder={searchLabel} enterKeyHint="search" className="h-11 min-w-0 flex-1 bg-transparent px-1.5 text-[15px] text-white placeholder:text-mist-3 focus:outline-none" />
@@ -141,7 +141,7 @@ export default function Home() {
         </section>
       ))}
 
-      <HomeBusinessSection {...shared} items={bookable} availability={availabilityQ.data ?? undefined} title={tx('İzmir’de randevu alabileceğiniz işletmeler', 'Businesses you can book in İzmir')} href="/ara" />
+      <HomeBusinessSection {...shared} items={bookable} availability={availabilityQ.data ?? undefined} title={tx(`${locativeTr(location.city)} randevu alabileceğiniz işletmeler`, `Businesses you can book in ${location.city}`)} href="/ara" />
       <HomeBusinessSection {...shared} items={samples} quiet title={tx('Örnek profiller', 'Sample profiles')} description={tx('Bir işletme sayfasının Rango’da nasıl göründüğünü gösteren örnekler. Bu profillerden randevu alınamaz.', 'Examples of how a business page looks on Rango. These profiles cannot be booked.')} />
 
       <Blocks blocks={extras} />

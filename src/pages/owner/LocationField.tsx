@@ -1,25 +1,26 @@
 import { useState } from 'react';
 import { AlertTriangle, CheckCircle2, Crosshair, ExternalLink, Link2, MapPin, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { isInIzmir, parseLocationInput, viewUrl, type Coords } from '@/lib/maps';
+import { isInCity, parseLocationInput, viewUrl, type Coords } from '@/lib/maps';
 import { getDevicePosition, systemLinkClick } from '@/lib/platform';
 
 interface Props {
   value: Coords | null;
+  city: string;
   district: string;
   onChange: (value: Coords | null) => void;
 }
 
 const SHORT_LINK_MSG = 'Kısa linkler okunamıyor. Google Haritalar’da mağazanın üstüne basılı tutun, çıkan koordinatı (ör. 38.4375, 27.1435) kopyalayıp buraya yapıştırın.';
 
-export function LocationField({ value, district, onChange }: Props) {
+export function LocationField({ value, city, district, onChange }: Props) {
   const [link, setLink] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
 
   const accept = (c: Coords) => {
-    if (!isInIzmir(c)) {
-      setError('Bu konum İzmir dışında görünüyor. Mağazanın yerini tekrar kontrol edin.');
+    if (!isInCity(c, city)) {
+      setError(`Bu konum ${city || 'seçtiğiniz şehrin'} dışında görünüyor. Mağazanın yerini ve seçtiğiniz şehri kontrol edin.`);
       return;
     }
     setError(null);

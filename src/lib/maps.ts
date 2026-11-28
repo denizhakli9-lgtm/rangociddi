@@ -1,4 +1,5 @@
-import { IZMIR_DISTRICTS } from '@/lib/geo';
+import { ALL_DISTRICTS, SERVICE_RADIUS_KM, cityOrDefault } from '@/lib/cities';
+import { distanceKm } from '@/lib/geo';
 
 export interface MapTarget {
   name: string;
@@ -16,16 +17,15 @@ export interface Coords {
 
 export type MapApp = 'google' | 'apple' | 'yandex';
 
-const IZMIR_BOUNDS = { minLat: 37.8, maxLat: 39.4, minLng: 26.0, maxLng: 28.6 };
-
-export function isInIzmir({ latitude, longitude }: Coords): boolean {
-  return latitude >= IZMIR_BOUNDS.minLat && latitude <= IZMIR_BOUNDS.maxLat && longitude >= IZMIR_BOUNDS.minLng && longitude <= IZMIR_BOUNDS.maxLng;
+/** True when the point is within reach of one of the city's districts. */
+export function isInCity({ latitude, longitude }: Coords, city: string | null | undefined): boolean {
+  return cityOrDefault(city).districts.some((d) => distanceKm(latitude, longitude, d.lat, d.lng) <= SERVICE_RADIUS_KM);
 }
 
 /** True when the coordinates are just the district centre rather than a pin the owner placed. */
 export function isDistrictCentre(c: { latitude: number | null; longitude: number | null }): boolean {
   if (c.latitude == null || c.longitude == null) return true;
-  return IZMIR_DISTRICTS.some((d) => Math.abs(d.lat - c.latitude!) < 0.00005 && Math.abs(d.lng - c.longitude!) < 0.00005);
+  return ALL_DISTRICTS.some(({ district: d }) => Math.abs(d.lat - c.latitude!) < 0.00005 && Math.abs(d.lng - c.longitude!) < 0.00005);
 }
 
 export function hasExactPin(t: { latitude: number | null; longitude: number | null }): t is Coords {

@@ -1,11 +1,11 @@
 /**
  * Şehir ve semt sayfalarının adresleri (`/izmir`, `/izmir/karsiyaka`, `/izmir/karsiyaka/berber`).
  *
- * Semt listesi uygulamanın kendi listesidir (`src/lib/geo.ts`); işletme sahipleri ilçeyi bu
+ * Semt listesi uygulamanın kendi listesidir (`src/lib/cities.ts`); işletme sahipleri ilçeyi bu
  * listeden seçtiği için işletmelerin `district` alanı buradaki adlarla birebir aynıdır.
  * Saf veri/işlev dosyasıdır: hem tarayıcıda hem derleme eklentisinde kullanılır.
  */
-import { IZMIR_DISTRICTS } from '../geo';
+import { cityOrDefault } from '../cities';
 
 export interface PlaceDistrict {
   name: string;
@@ -58,13 +58,14 @@ export function locativeTr(name: string): string {
   return `${name}’${consonant}${vowel}`;
 }
 
-export const CITIES: PlaceCity[] = [
-  {
-    name: 'İzmir',
-    slug: 'izmir',
-    districts: IZMIR_DISTRICTS.map((d) => ({ name: d.name, slug: slugifyTr(d.name), lat: d.lat, lng: d.lng })),
-  },
-];
+/**
+ * Cities that have their own landing pages. The app serves every city in `src/lib/cities.ts`;
+ * a city gets pages here (and in the static build, seo/prerender.ts) once it has businesses.
+ */
+export const CITIES: PlaceCity[] = ['İzmir'].map((name) => {
+  const city = cityOrDefault(name);
+  return { name: city.name, slug: slugifyTr(city.name), districts: city.districts.map((d) => ({ name: d.name, slug: slugifyTr(d.name), lat: d.lat, lng: d.lng })) };
+});
 
 /** Rango's pilot city; every landing address currently starts with it. */
 export const DEFAULT_CITY = CITIES[0];

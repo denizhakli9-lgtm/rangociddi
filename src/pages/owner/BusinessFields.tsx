@@ -1,11 +1,12 @@
 import { Input, Select, Textarea } from '@/components/ui/Field';
-import { IZMIR_DISTRICTS } from '@/lib/geo';
+import { CITY_LIST, cityOrDefault, findCityDistrict } from '@/lib/cities';
 import { isEmail, isPhone } from '@/lib/validation';
 import type { Category, GenderFocus } from '@/lib/types';
 
 export interface BasicsForm {
   name: string;
   category_id: string;
+  city: string;
   district: string;
   address: string;
   phone: string;
@@ -20,7 +21,8 @@ export function validateBasics(f: BasicsForm): BasicsErrors {
   const e: BasicsErrors = {};
   if (f.name.trim().length < 2) e.name = 'İşletme adı en az 2 karakter olmalıdır.';
   if (!f.category_id) e.category_id = 'Bir kategori seçin.';
-  if (!f.district) e.district = 'Bir ilçe seçin.';
+  if (!f.city) e.city = 'Bir şehir seçin.';
+  if (!f.district || !findCityDistrict(f.city, f.district)) e.district = 'Bir ilçe seçin.';
   if (f.address.trim().length < 5) e.address = 'Açık adres girin.';
   if (!isPhone(f.phone)) e.phone = 'Geçerli bir telefon numarası girin.';
   if (f.email && !isEmail(f.email)) e.email = 'Geçerli bir e-posta adresi girin.';
@@ -28,8 +30,8 @@ export function validateBasics(f: BasicsForm): BasicsErrors {
   return e;
 }
 
-export function districtCoords(name: string): { latitude: number; longitude: number } | null {
-  const d = IZMIR_DISTRICTS.find((x) => x.name === name);
+export function districtCoords(city: string, name: string): { latitude: number; longitude: number } | null {
+  const d = findCityDistrict(city, name);
   return d ? { latitude: d.lat, longitude: d.lng } : null;
 }
 
@@ -59,9 +61,10 @@ export function BasicsFields({ form, errors, categories, onChange }: Props) {
         <option value="female">Kadın</option>
         <option value="male">Erkek</option>
       </Select>
-      <Select label="İlçe (İzmir)" name="district" value={form.district} error={errors.district} onChange={(e) => onChange('district', e.target.value)}>
+      <CitySelect value={form.city} error={errors.city} onChange={(city) => { onChange('city', city); onChange('district', ''); }} />
+      <Select label={`İlçe / semt (${form.city || 'önce şehir seçin'})`} name="district" value={form.district} error={errors.district} disabled={!form.city} onChange={(e) => onChange('district', e.target.value)}>
         <option value="">Seçin</option>
-        {IZMIR_DISTRICTS.map((d) => (
+        {cityOrDefault(form.city).districts.map((d) => (
           <option key={d.name} value={d.name}>
             {d.name}
           </option>
@@ -87,5 +90,19 @@ export function BasicsFields({ form, errors, categories, onChange }: Props) {
         />
       </div>
     </div>
+  );
+}
+
+/** The cities Rango serves, most populous first. */
+export function CitySelect({ value, error, onChange }: { value: string; error?: string; onChange: (city: string) => void }) {
+  return (
+    <Select label="Şehir" name="city" value={value} error={error} onChange={(e) => onChange(e.target.value)}>
+      <option value="">Seçin</option>
+      {CITY_LIST.map((c) => (
+        <option key={c.name} value={c.name}>
+          {c.name}
+        </option>
+      ))}
+    </Select>
   );
 }

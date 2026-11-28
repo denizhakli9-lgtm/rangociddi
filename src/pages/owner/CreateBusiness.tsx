@@ -7,7 +7,7 @@ import { BUSINESS_LIST_COLUMNS, fetchCategories } from '@/lib/api';
 import { claimBusinessReferral, clearStoredReferralCode, normalizeReferralCode, REFERRAL_CODE_PATTERN, storedReferralCode } from '@/lib/fieldAgent';
 import { slugify } from '@/lib/format';
 import { friendlyError } from '@/lib/errors';
-import { SERVICE_RADIUS_KM, cityByName, cityOrDefault, findCityDistrict, nearestArea } from '@/lib/cities';
+import { SERVICE_RADIUS_KM, acceptsBusinesses, cityByName, cityOrDefault, findCityDistrict, nearestArea } from '@/lib/cities';
 import { formatTrPhone, isPhone } from '@/lib/validation';
 import { isReservedEmail } from '@/lib/phoneLogin';
 import { useAuth } from '@/contexts/AuthContext';
@@ -97,7 +97,7 @@ function validateStep(step: number, f: SetupForm): SetupErrors {
     if (!isPhone(f.phone)) e.phone = 'Geçerli bir telefon numarası girin (ör. 0532 123 45 67).';
   }
   if (step === 1) {
-    if (!cityByName(f.city)?.active) e.city = 'Hizmet verdiğimiz şehirlerden birini seçin.';
+    if (!acceptsBusinesses(cityByName(f.city))) e.city = 'Listeden bir şehir seçin.';
     if (!f.district || !findCityDistrict(f.city, f.district)) e.district = 'Bir ilçe seçin.';
   }
   if (step === 2) {
@@ -119,7 +119,7 @@ export default function CreateBusiness({ onCreated }: { onCreated: (b: Business)
     category_id: '',
     gender_focus: 'unisex',
     phone: formatTrPhone(profile?.phone ?? ''),
-    city: cityByName(profile?.city)?.active ? cityByName(profile?.city)!.name : '',
+    city: acceptsBusinesses(cityByName(profile?.city)) ? cityByName(profile?.city)!.name : '',
     district: '',
     address: '',
     description: '',
@@ -164,7 +164,7 @@ export default function CreateBusiness({ onCreated }: { onCreated: (b: Business)
     // A pinned location tells us the city and district; fill them in if the district is still empty.
     if (c && !form.district) {
       const near = nearestArea(c.latitude, c.longitude);
-      if (near.km < SERVICE_RADIUS_KM && near.city.active) {
+      if (near.km < SERVICE_RADIUS_KM && acceptsBusinesses(near.city)) {
         set('city', near.city.name);
         set('district', near.district.name);
       }

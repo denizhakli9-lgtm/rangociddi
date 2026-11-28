@@ -1,5 +1,5 @@
 import { Input, Select, Textarea } from '@/components/ui/Field';
-import { ACTIVE_CITIES, cityByName, cityOrDefault, findCityDistrict } from '@/lib/cities';
+import { REGISTRATION_CITIES, cityByName, cityOrDefault, findCityDistrict } from '@/lib/cities';
 import { isEmail, isPhone } from '@/lib/validation';
 import type { Category, GenderFocus } from '@/lib/types';
 
@@ -94,18 +94,22 @@ export function BasicsFields({ form, errors, categories, onChange }: Props) {
 }
 
 /**
- * The cities open for businesses, most populous first. A business already saved in a city that
- * is not open yet keeps it as an option, so editing its profile does not silently move it.
+ * The cities that accept businesses, most populous first: the open ones and those opening soon
+ * (their first businesses are what opens them to customers). A business already saved in a city
+ * outside that list keeps it as an option, so editing its profile does not silently move it.
  */
 export function CitySelect({ value, error, onChange }: { value: string; error?: string; onChange: (city: string) => void }) {
   const current = cityByName(value);
-  const options = current && !current.active ? [...ACTIVE_CITIES, current] : ACTIVE_CITIES;
+  const options = current && !REGISTRATION_CITIES.includes(current) ? [...REGISTRATION_CITIES, current] : REGISTRATION_CITIES;
+  const soon = REGISTRATION_CITIES.filter((c) => c.status === 'soon').map((c) => c.name);
+  const hint = soon.length ? `${soon.join(', ')} müşterilere çok yakında açılıyor; şimdiden kaydolan işletmeler şehrin ilk işletmeleri olur.` : undefined;
   return (
-    <Select label="Şehir" name="city" value={value} error={error} hint={`Şu an ${ACTIVE_CITIES.map((c) => c.name).join(', ')} için kayıt alıyoruz; diğer büyükşehirler yakında.`} onChange={(e) => onChange(e.target.value)}>
+    <Select label="Şehir" name="city" value={value} error={error} hint={hint} onChange={(e) => onChange(e.target.value)}>
       <option value="">Seçin</option>
       {options.map((c) => (
         <option key={c.name} value={c.name}>
           {c.name}
+          {c.status === 'soon' ? ' (çok yakında)' : ''}
         </option>
       ))}
     </Select>

@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Check, Clock, LocateFixed, MapPin, Search } from 'lucide-react';
-import { ACTIVE_CITIES, ALL_DISTRICTS, CITY_LIST, SERVICE_RADIUS_KM, cityOrDefault, nearestArea, type City } from '@/lib/cities';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowRight, Check, Clock, LocateFixed, MapPin, Search, Sparkles } from 'lucide-react';
+import { ALL_DISTRICTS, CITY_LIST, SERVICE_RADIUS_KM, cityOrDefault, nearestArea, type City } from '@/lib/cities';
+import { useOpenCities } from '@/lib/useOpenCities';
 import { locativeTr } from '@/lib/seo/places';
 import { useUserLocation } from '@/contexts/LocationContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -12,21 +13,20 @@ import { tx } from '@/i18n/locale';
 const FOLD: Record<string, string> = { ç: 'c', ğ: 'g', ı: 'i', ö: 'o', ş: 's', ü: 'u' };
 const fold = (s: string) => s.toLocaleLowerCase('tr-TR').replace(/[çğıöşü]/g, (c) => FOLD[c] ?? c);
 
-const UPCOMING = CITY_LIST.filter((c) => !c.active);
-
-/** "İstanbul, Ankara, İzmir ve Bursa" */
-function joinNames(names: string[], and: string): string {
+/** "İstanbul, Ankara ve Bursa" */
+function joinNames(cities: City[], and: string): string {
+  const names = cities.map((c) => c.name);
   return names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} ${and} ${names[names.length - 1]}`;
 }
-const ACTIVE_TR = joinNames(ACTIVE_CITIES.map((c) => c.name), 've');
-const ACTIVE_EN = joinNames(ACTIVE_CITIES.map((c) => c.name), 'and');
 
-function CityChip({ city, selected, current, onClick }: { city: City; selected: boolean; current: boolean; onClick: () => void }) {
+type Availability = 'open' | 'soon';
+
+function CityChip({ city, availability, selected, current, onClick }: { city: City; availability: Availability; selected: boolean; current: boolean; onClick: () => void }) {
   const look = selected
     ? 'border-gold-500/70 bg-gold-500/10 text-white'
-    : city.active
+    : availability === 'open'
       ? 'border-line bg-coal text-mist hover:border-white/40 hover:text-white'
-      : 'border-dashed border-line text-mist-2 hover:border-white/30 hover:text-mist';
+      : 'border-dashed border-gold-500/40 text-mist hover:border-gold-500/70 hover:text-white';
   return (
     <button type="button" role="radio" aria-checked={selected} onClick={onClick} className={`flex h-10 shrink-0 items-center gap-1.5 rounded-full border px-4 text-sm transition-colors ${look}`}>
       {city.name}
@@ -43,6 +43,14 @@ export default function LocationSelect() {
   const [locating, setLocating] = useState(false);
   const [cityName, setCityName] = useState(() => cityOrDefault(location.city).name);
   const city = cityOrDefault(cityName);
+  const { isOpen } = useOpenCities();
+  // A "soon" city opens by itself once its first business is live (src/lib/useOpenCities.ts).
+  const availability = (c: City): Availability => (isOpen(c) ? 'open' : 'soon');
+  const open = CITY_LIST.filter((c) => availability(c) === 'open');
+  const soon = CITY_LIST.filter((c) => availability(c) === 'soon');
+  const openTr = joinNames(open, 've');
+  const openEn = joinNames(open, 'and');
+  const cityAvailability = availability(city);
 
   const choose = async (label: string, cityLabel: string, lat: number, lng: number) => {
     await setLocation({ label, city: cityLabel, lat, lng });
@@ -60,9 +68,10 @@ export default function LocationSelect() {
         const nearest = nearestArea(latitude, longitude);
         // Only the matched district centre is kept, never the exact device fix,
         // so a precise home address is never stored on the account.
-        if (nearest.km < SERVICE_RADIUS_KM && !nearest.city.active) {
+        if (nearest.km < SERVICE_RADIUS_KM && !isOpen(nearest.city)) {
           setCityName(nearest.city.name);
-          toast(tx(`Rango henüz ${locativeTr(nearest.city.name)} hizmet vermiyor, çok yakında orada olacağız. Şimdilik ${ACTIVE_TR} içinden bir semt seçebilirsiniz.`, `Rango is not in ${nearest.city.name} yet; it is coming soon. For now you can choose an area in ${ACTIVE_EN}.`), 'info');
+          setQuery('');
+          toast(tx(`Rango ${locativeTr(nearest.city.name)} çok yakında! Şimdilik ${locativeTr(openTr)} randevu alabilirsiniz.`, `Rango is coming to ${nearest.city.name} very soon! For now you can book in ${openEn}.`), 'info');
         } else if (nearest.km < SERVICE_RADIUS_KM) {
           choose(`${nearest.district.name} (${tx('Konumum', 'My location')})`, nearest.city.name, nearest.district.lat, nearest.district.lng);
         } else {
@@ -81,7 +90,7 @@ export default function LocationSelect() {
   const q = fold(query.trim());
   const list = q
     ? ALL_DISTRICTS.filter((e) => fold(e.district.name).includes(q) || fold(e.city.name).includes(q))
-    : city.active
+    : cityAvailability === 'open'
       ? city.districts.map((district) => ({ city, district }))
       : [];
   const selectCity = (c: City) => {
@@ -92,7 +101,10 @@ export default function LocationSelect() {
   return (
     <div className="mx-auto max-w-xl animate-fade-up">
       <h1 className="text-2xl font-semibold tracking-tight sm:text-[28px] text-white">{tx('Konumunuzu seçin', 'Choose your location')}</h1>
-      <p className="mt-2 text-sm text-mist">{tx(`Size en yakın işletmeleri göstermek için konumunuzu seçin. Rango şu an ${locativeTr(ACTIVE_TR)} hizmet veriyor; ${UPCOMING.length} şehir daha yakında.`, `Choose your location to see the businesses nearest to you. Rango currently serves ${ACTIVE_EN}; ${UPCOMING.length} more cities are coming soon.`)}</p>
+      <p className="mt-2 text-sm text-mist">{tx(
+          `Size en yakın işletmeleri göstermek için konumunuzu seçin. Rango şu an ${locativeTr(openTr)} hizmet veriyor${soon.length ? `; ${joinNames(soon, 've')} çok yakında` : ''}.`,
+          `Choose your location to see the businesses nearest to you. Rango currently serves ${openEn}${soon.length ? `; ${joinNames(soon, 'and')} are coming very soon` : ''}.`,
+        )}</p>
 
       <Button variant="outline" full size="lg" className="mt-8" loading={locating} icon={<LocateFixed className="h-4 w-4" />} onClick={useDevice}>
         {tx('Mevcut konumumu kullan', 'Use my current location')}
@@ -100,15 +112,15 @@ export default function LocationSelect() {
       <p className="mt-2 text-xs leading-relaxed text-mist-2">{tx('Konumunuz yalnızca size en yakın semti bulmak için cihazınızda kullanılır; tam konumunuz saklanmaz, yalnızca seçilen semt kaydedilir.', 'Your location is only used on your device to find the nearest area; your exact position is never stored, only the chosen area.')}</p>
 
       <div role="radiogroup" aria-label={tx('Şehir', 'City')} className="mt-8">
-        <p className="text-[13px] font-medium text-mist-2">{tx('Hizmet verdiğimiz şehirler', 'Cities we serve')}</p>
+        <p className="text-[13px] font-medium text-mist-2">{open.length > 1 ? tx('Hizmet verdiğimiz şehirler', 'Cities we serve') : tx('Hizmet verdiğimiz şehir', 'City we serve')}</p>
         <div className="mt-2 flex flex-wrap gap-2">
-          {ACTIVE_CITIES.map((c) => <CityChip key={c.name} city={c} selected={c.name === city.name} current={location.city === c.name} onClick={() => selectCity(c)} />)}
+          {open.map((c) => <CityChip key={c.name} city={c} availability="open" selected={c.name === city.name} current={location.city === c.name} onClick={() => selectCity(c)} />)}
         </div>
-        {UPCOMING.length > 0 && (
+        {soon.length > 0 && (
           <>
-            <p className="mt-5 flex items-center gap-1.5 text-[13px] font-medium text-mist-2"><Clock className="h-3.5 w-3.5" />{tx('Yakında', 'Coming soon')}</p>
-            <div className="no-scrollbar -mx-4 mt-2 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
-              {UPCOMING.map((c) => <CityChip key={c.name} city={c} selected={c.name === city.name} current={false} onClick={() => selectCity(c)} />)}
+            <p className="mt-5 flex items-center gap-1.5 text-[13px] font-medium text-gold-400"><Clock className="h-3.5 w-3.5" />{tx('Çok yakında', 'Coming very soon')}</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {soon.map((c) => <CityChip key={c.name} city={c} availability="soon" selected={c.name === city.name} current={false} onClick={() => selectCity(c)} />)}
             </div>
           </>
         )}
@@ -116,20 +128,40 @@ export default function LocationSelect() {
 
       <div className="relative mt-5">
         <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-mist-2" />
-        <input aria-label={tx('Semt veya şehir ara', 'Search areas or cities')} value={query} onChange={(e) => setQuery(e.target.value)} placeholder={city.active ? tx(`${city.name} içinde semt ara`, `Search areas in ${city.name}`) : tx('Semt veya şehir ara', 'Search areas or cities')} className="h-12 w-full rounded-xl border border-line bg-coal pl-11 pr-4 text-sm text-white placeholder:text-mist-3 focus:border-gold-500/60 focus:outline-none" />
+        <input aria-label={tx('Semt veya şehir ara', 'Search areas or cities')} value={query} onChange={(e) => setQuery(e.target.value)} placeholder={cityAvailability === 'open' ? tx(`${city.name} içinde semt ara`, `Search areas in ${city.name}`) : tx('Semt veya şehir ara', 'Search areas or cities')} className="h-12 w-full rounded-xl border border-line bg-coal pl-11 pr-4 text-sm text-white placeholder:text-mist-3 focus:border-gold-500/60 focus:outline-none" />
       </div>
 
-      {!q && !city.active ? (
-        <div className="mt-4 rounded-2xl border border-dashed border-line px-5 py-8 text-center">
-          <Clock className="mx-auto h-6 w-6 text-gold-400" />
-          <p className="mt-3 text-base font-semibold text-white">{tx(`Rango ${locativeTr(city.name)} çok yakında`, `Rango is coming to ${city.name} soon`)}</p>
-          <p className="mx-auto mt-1.5 max-w-sm text-sm leading-relaxed text-mist">{tx(`Şimdilik ${locativeTr(ACTIVE_TR)} randevu alabilirsiniz. ${city.name} açıldığında burada semtleri göreceksiniz.`, `For now you can book in ${ACTIVE_EN}. Once ${city.name} opens, its areas will appear here.`)}</p>
+      {!q && cityAvailability === 'soon' ? (
+        <div className="mt-4 overflow-hidden rounded-2xl border border-gold-500/40 bg-gold-500/[0.06] px-6 py-9 text-center">
+          <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-gold-500/15">
+            <Sparkles className="h-6 w-6 text-gold-400" />
+          </span>
+          <p className="mt-4 text-[13px] font-semibold uppercase tracking-[0.14em] text-gold-400">{tx('Çok yakında', 'Coming very soon')}</p>
+          <h2 className="mt-1.5 font-display text-[26px] leading-tight text-white">{tx(`Rango ${locativeTr(city.name)} çok yakında!`, `Rango is coming to ${city.name}!`)}</h2>
+          <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-mist">
+            {tx(
+              `${locativeTr(city.name)}ki kuaför, berber ve güzellik salonlarını Rango’ya taşıyoruz. Çok yakında buradan birkaç dokunuşla randevu alabileceksiniz.`,
+              `We are bringing ${city.name}’s hair, barber and beauty salons to Rango. Very soon you will be able to book them here in a few taps.`,
+            )}
+          </p>
+          <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-mist-2">{tx(`O zamana kadar ${locativeTr(openTr)} randevu alabilirsiniz.`, `Until then, you can book in ${openEn}.`)}</p>
+          <div className="mt-6 flex flex-col items-center gap-1">
+            {open[0] && (
+              <Button variant="outline" onClick={() => selectCity(open[0])}>
+                {tx(`${open[0].name} semtlerini gör`, `See areas in ${open[0].name}`)}
+              </Button>
+            )}
+            <Link to="/isletmeler-icin" className="inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-white underline-offset-4 hover:underline">
+              {tx(`İşletmeniz ${locativeTr(city.name)} ${locativeTr(city.name).endsWith('a') ? 'mı' : 'mi'}? Şimdiden katılın`, `Business in ${city.name}? Join now`)} <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
         </div>
       ) : (
       <div className="mt-4 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-coal">
         {list.map(({ city: c, district: d }) => {
           const active = location.city === c.name && location.label === d.name;
-          if (!c.active) {
+          const state = availability(c);
+          if (state !== 'open') {
             return (
               <div key={`${c.name}/${d.name}`} aria-disabled="true" className="flex w-full items-center gap-3 px-5 py-4 opacity-60">
                 <MapPin className="h-4 w-4 text-mist-3" />
@@ -137,7 +169,7 @@ export default function LocationSelect() {
                   <span className="block text-sm text-white">{d.name}</span>
                   <span className="text-xs text-mist-2">{c.name}</span>
                 </span>
-                <span className="rounded-full border border-line px-2.5 py-0.5 text-[11px] font-medium text-mist-2">{tx('Yakında', 'Soon')}</span>
+                <span className="rounded-full border border-line px-2.5 py-0.5 text-[11px] font-medium text-mist-2">{tx('Çok yakında', 'Very soon')}</span>
               </div>
             );
           }

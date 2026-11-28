@@ -1,7 +1,6 @@
 /**
- * Rango'nun hizmet verdiği şehirler ve her şehrin en hareketli semtleri.
- *
- * Şehirler nüfusa göre sıralıdır (TÜİK ADNKS, 31.12.2024; yuvarlanmış). Semt listesi her şehrin
+ * Rango'nun şehirleri ve her şehrin en hareketli semtleri: Türkiye'nin en kalabalık dört
+ * büyükşehri, nüfusa göre sıralı (TÜİK ADNKS, 31.12.2024; yuvarlanmış). Semt listesi her şehrin
  * kalabalık, çarşısı ve kuaför/berber yoğunluğu yüksek merkez ilçe ve semtleridir; tam ilçe
  * listesi değildir. Koordinatlar semt merkezinin yaklaşık konumudur: en yakın işletmeleri
  * sıralamak ve işletme sahibi konum işaretlemediğinde haritada göstermek için kullanılır.
@@ -11,14 +10,21 @@
  */
 import { distanceKm, type District } from './geo';
 
+/**
+ * - `open`: müşteriler konum seçip randevu alabilir, işletmeler kayıt olabilir.
+ * - `soon`: işletmeler kayıt olabilir; müşterilere "Çok yakında" mesajı gösterilir ve şehirde
+ *   onaylı ilk gerçek işletme yayına girdiği an müşterilere kendiliğinden açılır
+ *   (src/lib/useOpenCities.ts).
+ */
+export type CityStatus = 'open' | 'soon';
+
 export interface City {
   name: string;
   /** Plaka kodu. */
   plate: number;
   /** Nüfus, milyon (yaklaşık). */
   population: number;
-  /** Müşteriler bu şehirde konum seçebilir ve işletmeler kayıt olabilir. Kapalı şehirler "Yakında" görünür. */
-  active: boolean;
+  status: CityStatus;
   /** Şehir merkezi: konum seçilmemişken kullanılan nokta. */
   center: District;
   districts: District[];
@@ -31,7 +37,7 @@ export const CITY_LIST: City[] = [
     name: 'İstanbul',
     plate: 34,
     population: 15.7,
-    active: true,
+    status: 'soon',
     center: d('Şişli', 41.06, 28.987),
     districts: [
       d('Kadıköy', 40.9906, 29.029),
@@ -62,7 +68,7 @@ export const CITY_LIST: City[] = [
     name: 'Ankara',
     plate: 6,
     population: 5.86,
-    active: true,
+    status: 'soon',
     center: d('Kızılay', 39.9208, 32.8541),
     districts: [
       d('Kızılay', 39.9208, 32.8541),
@@ -86,7 +92,7 @@ export const CITY_LIST: City[] = [
     name: 'İzmir',
     plate: 35,
     population: 4.49,
-    active: true,
+    status: 'open',
     center: d('Konak', 38.4189, 27.1287),
     // Pilot şehrin listesi: kayıtlı işletmeler bu adları kullanıyor, sıra ve adlar korunmalı.
     districts: [
@@ -112,7 +118,7 @@ export const CITY_LIST: City[] = [
     name: 'Bursa',
     plate: 16,
     population: 3.24,
-    active: true,
+    status: 'soon',
     center: d('Osmangazi', 40.195, 29.06),
     districts: [
       d('Nilüfer', 40.215, 28.985),
@@ -125,175 +131,14 @@ export const CITY_LIST: City[] = [
       d('İnegöl', 40.078, 29.51),
     ],
   },
-  {
-    name: 'Antalya',
-    plate: 7,
-    population: 2.72,
-    active: false,
-    center: d('Muratpaşa', 36.89, 30.725),
-    districts: [
-      d('Muratpaşa', 36.89, 30.725),
-      d('Lara', 36.855, 30.795),
-      d('Konyaaltı', 36.87, 30.635),
-      d('Kepez', 36.93, 30.7),
-      d('Alanya', 36.544, 31.999),
-      d('Manavgat', 36.787, 31.443),
-      d('Kemer', 36.6, 30.56),
-      d('Serik', 36.917, 31.1),
-    ],
-  },
-  {
-    name: 'Konya',
-    plate: 42,
-    population: 2.33,
-    active: false,
-    center: d('Selçuklu', 37.93, 32.5),
-    districts: [
-      d('Selçuklu', 37.93, 32.5),
-      d('Meram', 37.855, 32.44),
-      d('Karatay', 37.87, 32.52),
-      d('Ereğli', 37.513, 34.047),
-      d('Akşehir', 38.357, 31.416),
-    ],
-  },
-  {
-    name: 'Adana',
-    plate: 1,
-    population: 2.28,
-    active: false,
-    center: d('Seyhan', 36.9914, 35.3308),
-    districts: [
-      d('Seyhan', 36.9914, 35.3308),
-      d('Çukurova', 37.04, 35.295),
-      d('Yüreğir', 36.99, 35.39),
-      d('Sarıçam', 37.05, 35.45),
-      d('Ceyhan', 37.028, 35.813),
-      d('Kozan', 37.455, 35.815),
-    ],
-  },
-  {
-    name: 'Şanlıurfa',
-    plate: 63,
-    population: 2.24,
-    active: false,
-    center: d('Haliliye', 37.16, 38.795),
-    districts: [
-      d('Haliliye', 37.16, 38.795),
-      d('Eyyübiye', 37.13, 38.79),
-      d('Karaköprü', 37.19, 38.8),
-      d('Siverek', 37.755, 39.317),
-      d('Viranşehir', 37.235, 39.763),
-    ],
-  },
-  {
-    name: 'Gaziantep',
-    plate: 27,
-    population: 2.18,
-    active: false,
-    center: d('Şahinbey', 37.05, 37.36),
-    districts: [
-      d('Şahinbey', 37.05, 37.36),
-      d('Şehitkamil', 37.085, 37.37),
-      d('Nizip', 37.01, 37.795),
-      d('İslahiye', 37.026, 36.631),
-    ],
-  },
-  {
-    name: 'Kocaeli',
-    plate: 41,
-    population: 2.13,
-    active: false,
-    center: d('İzmit', 40.765, 29.94),
-    districts: [
-      d('İzmit', 40.765, 29.94),
-      d('Gebze', 40.802, 29.43),
-      d('Darıca', 40.76, 29.385),
-      d('Başiskele', 40.713, 29.96),
-      d('Kartepe', 40.753, 30.02),
-      d('Derince', 40.756, 29.831),
-      d('Körfez', 40.775, 29.74),
-      d('Gölcük', 40.717, 29.82),
-    ],
-  },
-  {
-    name: 'Mersin',
-    plate: 33,
-    population: 1.94,
-    active: false,
-    center: d('Akdeniz', 36.81, 34.64),
-    districts: [
-      d('Yenişehir', 36.79, 34.58),
-      d('Akdeniz', 36.81, 34.64),
-      d('Mezitli', 36.75, 34.53),
-      d('Toroslar', 36.83, 34.61),
-      d('Tarsus', 36.918, 34.895),
-      d('Erdemli', 36.605, 34.308),
-      d('Silifke', 36.377, 33.934),
-    ],
-  },
-  {
-    name: 'Diyarbakır',
-    plate: 21,
-    population: 1.82,
-    active: false,
-    center: d('Yenişehir', 37.93, 40.22),
-    districts: [
-      d('Kayapınar', 37.94, 40.16),
-      d('Yenişehir', 37.93, 40.22),
-      d('Bağlar', 37.905, 40.19),
-      d('Sur', 37.91, 40.235),
-      d('Ergani', 38.265, 39.76),
-    ],
-  },
-  {
-    name: 'Hatay',
-    plate: 31,
-    population: 1.54,
-    active: false,
-    center: d('Antakya', 36.202, 36.16),
-    districts: [
-      d('Antakya', 36.202, 36.16),
-      d('Defne', 36.18, 36.14),
-      d('İskenderun', 36.587, 36.173),
-      d('Dörtyol', 36.838, 36.225),
-      d('Kırıkhan', 36.498, 36.358),
-      d('Reyhanlı', 36.269, 36.567),
-    ],
-  },
-  {
-    name: 'Manisa',
-    plate: 45,
-    population: 1.48,
-    active: false,
-    center: d('Yunusemre', 38.615, 27.4),
-    districts: [
-      d('Yunusemre', 38.615, 27.4),
-      d('Şehzadeler', 38.615, 27.43),
-      d('Akhisar', 38.918, 27.84),
-      d('Turgutlu', 38.5, 27.7),
-      d('Salihli', 38.483, 28.14),
-      d('Soma', 39.188, 27.609),
-    ],
-  },
-  {
-    name: 'Kayseri',
-    plate: 38,
-    population: 1.45,
-    active: false,
-    center: d('Melikgazi', 38.715, 35.505),
-    districts: [
-      d('Melikgazi', 38.715, 35.505),
-      d('Kocasinan', 38.74, 35.48),
-      d('Talas', 38.69, 35.555),
-      d('Hacılar', 38.645, 35.45),
-      d('İncesu', 38.622, 35.185),
-      d('Develi', 38.39, 35.49),
-    ],
-  },
 ];
 
-/** Açık şehirler. Başlangıçta en kalabalık 4 büyükşehir; yeni şehir açmak için o şehirde `active: true` yapmak yeterli. */
-export const ACTIVE_CITIES = CITY_LIST.filter((c) => c.active);
+/** Cities where businesses can sign up: all of them, including those opening soon. */
+export const REGISTRATION_CITIES = CITY_LIST;
+
+export function acceptsBusinesses(city: City | undefined): boolean {
+  return !!city;
+}
 
 /** Pilot şehir: eski kayıtlarda şehir bilgisi yoksa bu kabul edilir. */
 export const DEFAULT_CITY_NAME = 'İzmir';

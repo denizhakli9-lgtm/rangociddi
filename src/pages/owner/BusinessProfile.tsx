@@ -38,6 +38,7 @@ export default function BusinessProfile() {
   const [basics, setBasics] = useState<BasicsForm>({
     name: business.name,
     category_id: business.category_id,
+    extra_category_ids: business.extra_category_ids ?? [],
     city: cityOrDefault(business.city).name,
     district: business.district,
     address: business.address,
@@ -87,6 +88,7 @@ export default function BusinessProfile() {
       .update({
         name: basics.name.trim(),
         category_id: basics.category_id,
+        extra_category_ids: basics.extra_category_ids,
         city: basics.city,
         district: basics.district,
         address: basics.address.trim(),

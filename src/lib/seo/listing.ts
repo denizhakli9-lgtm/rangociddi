@@ -20,6 +20,33 @@ export interface ListingBusiness extends SeoBusiness {
   booking_count?: number | null;
 }
 
+/** The part of a category these helpers need: its id (to resolve `extra_category_ids`) and slug. */
+export interface CategoryRef {
+  id?: string;
+  slug: string;
+}
+
+/**
+ * Every category of a business as slugs: the primary one first, then the extra ones in the owner's
+ * order. Extra categories are stored as ids, so they need the category list to be resolved; without
+ * it only the primary category is known.
+ */
+export function categorySlugsOf(b: Pick<SeoBusiness, 'categories' | 'extra_category_ids'>, categories: readonly CategoryRef[] = []): string[] {
+  const slugs: string[] = [];
+  const primary = b.categories?.slug;
+  if (primary) slugs.push(primary);
+  for (const id of b.extra_category_ids ?? []) {
+    const slug = categories.find((c) => c.id === id)?.slug;
+    if (slug && !slugs.includes(slug)) slugs.push(slug);
+  }
+  return slugs;
+}
+
+/** Whether a business offers a category, as its primary or as an extra category. */
+export function inCategory(b: Pick<SeoBusiness, 'categories' | 'extra_category_ids'>, slug: string, categories: readonly CategoryRef[] = []): boolean {
+  return categorySlugsOf(b, categories).includes(slug);
+}
+
 /** Seeded sample businesses have no owner; they are shown as examples and cannot be booked. */
 export function isSampleBusiness(b: Pick<SeoBusiness, 'owner_id'>): boolean {
   return b.owner_id === null;
@@ -49,10 +76,10 @@ export interface LandingScope {
   categorySlug?: string;
 }
 
-/** The businesses of a city that belong to a district and/or category. */
-export function filterByScope<T extends ListingBusiness>(city: PlaceCity, businesses: T[], scope: LandingScope): T[] {
+/** The businesses of a city that belong to a district and/or category (primary or extra). */
+export function filterByScope<T extends ListingBusiness>(city: PlaceCity, businesses: T[], scope: LandingScope, categories: readonly CategoryRef[] = []): T[] {
   return businesses.filter((b) => {
-    if (scope.categorySlug && b.categories?.slug !== scope.categorySlug) return false;
+    if (scope.categorySlug && !inCategory(b, scope.categorySlug, categories)) return false;
     if (scope.district && districtByName(city, b.district)?.slug !== scope.district.slug) return false;
     return true;
   });
@@ -91,18 +118,22 @@ export interface Facets {
   byDistrictCategory: Map<string, number>;
 }
 
-/** Counts of bookable businesses per category, district and district+category in a city. */
-export function buildFacets(city: PlaceCity, businesses: ListingBusiness[]): Facets {
+/**
+ * Counts of bookable businesses per category, district and district+category in a city. A business
+ * counts once under each of its categories (primary and extra).
+ */
+export function buildFacets(city: PlaceCity, businesses: ListingBusiness[], categories: readonly CategoryRef[] = []): Facets {
   const facets: Facets = { total: 0, byCategory: new Map(), byDistrict: new Map(), byDistrictCategory: new Map() };
   const bump = (map: Map<string, number>, key: string) => map.set(key, (map.get(key) ?? 0) + 1);
   for (const b of businesses) {
     if (!isBookable(b)) continue;
     facets.total += 1;
-    const category = b.categories?.slug ?? '';
     const district = districtByName(city, b.district)?.slug ?? '';
-    if (category) bump(facets.byCategory, category);
     if (district) bump(facets.byDistrict, district);
-    if (category && district) bump(facets.byDistrictCategory, `${district}/${category}`);
+    for (const category of categorySlugsOf(b, categories)) {
+      bump(facets.byCategory, category);
+      if (district) bump(facets.byDistrictCategory, `${district}/${category}`);
+    }
   }
   return facets;
 }

@@ -4,7 +4,7 @@ import { PUBLIC_BUSINESS_FIELDS, PUBLIC_REVIEW_FIELDS } from '@/lib/seo/queries'
 
 /** Keep owner_id: isDemoBusiness() (src/lib/demo.ts) uses owner_id === null to mark seeded sample businesses. */
 export const BUSINESS_LIST_COLUMNS =
-  'id, owner_id, category_id, name, slug, description, address, district, city, latitude, longitude, logo_url, cover_url, gallery, gender_focus, deposit_type, deposit_value, cancellation_hours, auto_confirm, status, is_verified, is_featured, rating_avg, review_count, booking_count, min_price, created_at, phone, email, categories(name, slug, icon)';
+  'id, owner_id, category_id, extra_category_ids, name, slug, description, address, district, city, latitude, longitude, logo_url, cover_url, gallery, gender_focus, deposit_type, deposit_value, cancellation_hours, auto_confirm, status, is_verified, is_featured, rating_avg, review_count, booking_count, min_price, created_at, phone, email, categories(name, slug, icon)';
 
 /**
  * What customers and visitors get: the same, minus the business's phone and e-mail.

@@ -8,7 +8,7 @@ import { fromPrice } from '@/lib/format';
 import { categoryDescription, categoryName } from '@/i18n/categories';
 import { locale, tx } from '@/i18n/locale';
 import { categoriesMeta } from '@/lib/seo/meta';
-import { isBookable, isLandingIndexable, lowestPrice } from '@/lib/seo/listing';
+import { inCategory, isBookable, isLandingIndexable, lowestPrice } from '@/lib/seo/listing';
 import { useSeo } from '@/lib/seo/useSeo';
 import { DEFAULT_CITY, cityCategoryPath } from '@/lib/seo/places';
 
@@ -24,7 +24,7 @@ export default function Categories() {
   const meta = useMemo(() => {
     if (!data) return null;
     // The structured list names only the categories whose own page may be indexed.
-    const indexable = categories.filter((c) => isLandingIndexable('cityCategory', bookable.filter((b) => b.categories?.slug === c.slug).length));
+    const indexable = categories.filter((c) => isLandingIndexable('cityCategory', bookable.filter((b) => inCategory(b, c.slug, categories)).length));
     return categoriesMeta(lang, indexable.map((c) => ({ slug: c.slug, name: categoryName(c) })));
   }, [data, categories, bookable, lang]);
   useSeo(meta);
@@ -41,7 +41,7 @@ export default function Categories() {
           {loading
             ? Array.from({ length: 6 }).map((_, i) => <li key={i} className="border-t border-line py-5"><div className="skeleton h-12" /></li>)
             : categories.map((c) => {
-                const listed = bookable.filter((b) => b.categories?.slug === c.slug);
+                const listed = bookable.filter((b) => inCategory(b, c.slug, categories));
                 const count = listed.length;
                 const minPrice = lowestPrice(listed) ?? 0;
                 const description = categoryDescription(c);

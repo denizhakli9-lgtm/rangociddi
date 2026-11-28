@@ -1,3 +1,4 @@
+import { ExtraCategoriesField, MAX_EXTRA_CATEGORIES } from './ExtraCategoriesField';
 import { Input, Select, Textarea } from '@/components/ui/Field';
 import { REGISTRATION_CITIES, cityByName, cityOrDefault, findCityDistrict } from '@/lib/cities';
 import { useOpenCities } from '@/lib/useOpenCities';
@@ -7,6 +8,8 @@ import type { Category, GenderFocus } from '@/lib/types';
 export interface BasicsForm {
   name: string;
   category_id: string;
+  /** Categories besides the primary one (ExtraCategoriesField). */
+  extra_category_ids: string[];
   city: string;
   district: string;
   address: string;
@@ -22,6 +25,7 @@ export function validateBasics(f: BasicsForm): BasicsErrors {
   const e: BasicsErrors = {};
   if (f.name.trim().length < 2) e.name = 'İşletme adı en az 2 karakter olmalıdır.';
   if (!f.category_id) e.category_id = 'Bir kategori seçin.';
+  if (f.extra_category_ids.length > MAX_EXTRA_CATEGORIES) e.extra_category_ids = `En fazla ${MAX_EXTRA_CATEGORIES} ek kategori seçebilirsiniz.`;
   if (!f.city) e.city = 'Bir şehir seçin.';
   if (!f.district || !findCityDistrict(f.city, f.district)) e.district = 'Bir ilçe seçin.';
   if (f.address.trim().length < 5) e.address = 'Açık adres girin.';
@@ -49,7 +53,18 @@ export function BasicsFields({ form, errors, categories, onChange }: Props) {
       <div className="sm:col-span-2">
         <Input label="İşletme adı" name="name" value={form.name} error={errors.name} maxLength={80} onChange={(e) => onChange('name', e.target.value)} placeholder="ör. Atelier Nova Kuaför" />
       </div>
-      <Select label="Kategori" name="category_id" value={form.category_id} error={errors.category_id} onChange={(e) => onChange('category_id', e.target.value)}>
+      <Select
+        label="Ana kategori"
+        name="category_id"
+        value={form.category_id}
+        error={errors.category_id}
+        onChange={(e) => {
+          const primary = e.target.value;
+          onChange('category_id', primary);
+          // The primary category is never also an extra one.
+          if (form.extra_category_ids.includes(primary)) onChange('extra_category_ids', form.extra_category_ids.filter((id) => id !== primary));
+        }}
+      >
         <option value="">Seçin</option>
         {categories.map((c) => (
           <option key={c.id} value={c.id}>
@@ -62,6 +77,10 @@ export function BasicsFields({ form, errors, categories, onChange }: Props) {
         <option value="female">Kadın</option>
         <option value="male">Erkek</option>
       </Select>
+      <div className="sm:col-span-2">
+        <ExtraCategoriesField categories={categories} primaryId={form.category_id} value={form.extra_category_ids} onChange={(ids) => onChange('extra_category_ids', ids)} />
+        {errors.extra_category_ids && <p className="mt-1.5 text-xs text-error-300">{errors.extra_category_ids}</p>}
+      </div>
       <CitySelect value={form.city} error={errors.city} onChange={(city) => { onChange('city', city); onChange('district', ''); }} />
       <Select label={`İlçe / semt (${form.city || 'önce şehir seçin'})`} name="district" value={form.district} error={errors.district} disabled={!form.city} onChange={(e) => onChange('district', e.target.value)}>
         <option value="">Seçin</option>

@@ -28,7 +28,7 @@ export default function Landing() {
 
   const page = useMemo(() => {
     if (!categoriesQ.data || !listingQ.data) return null;
-    const categories = categoriesQ.data.map((c) => ({ slug: c.slug, name: categoryName(c), description: categoryDescription(c) }));
+    const categories = categoriesQ.data.map((c) => ({ id: c.id, slug: c.slug, name: categoryName(c), description: categoryDescription(c) }));
     const bySlug = (slug?: string) => categories.find((c) => c.slug === slug);
     let category = undefined as (typeof categories)[number] | undefined;
     let district = undefined as ReturnType<typeof findDistrict>;

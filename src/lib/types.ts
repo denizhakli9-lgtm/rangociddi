@@ -47,7 +47,10 @@ export interface Category {
 export interface Business {
   id: string;
   owner_id: string | null;
+  /** The primary category. */
   category_id: string;
+  /** Up to 4 more categories besides the primary one, in the owner's order. */
+  extra_category_ids?: string[] | null;
   name: string;
   slug: string;
   description: string;

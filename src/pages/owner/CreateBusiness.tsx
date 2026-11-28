@@ -18,6 +18,7 @@ import { Input, Select, Textarea } from '@/components/ui/Field';
 import type { Business, GenderFocus } from '@/lib/types';
 import { isInCity, type Coords } from '@/lib/maps';
 import { CitySelect, districtCoords } from './BusinessFields';
+import { ExtraCategoriesField } from './ExtraCategoriesField';
 import { LocationField } from './LocationField';
 import { SectorCoverPicker } from './SectorCoverPicker';
 
@@ -46,6 +47,8 @@ type SetupErrors = Partial<Record<keyof SetupForm, string>>;
 interface Draft {
   step: number;
   form: SetupForm;
+  /** Extra categories besides form.category_id (older drafts have none). */
+  extras?: string[];
   cover: string | null;
   pin: Coords | null;
 }
@@ -130,6 +133,7 @@ export default function CreateBusiness({ onCreated }: { onCreated: (b: Business)
   const [errors, setErrors] = useState<SetupErrors>({});
   const [cover, setCover] = useState<string | null>(draft?.cover ?? null);
   const [pin, setPin] = useState<Coords | null>(draft?.pin ?? null);
+  const [extras, setExtras] = useState<string[]>(() => (Array.isArray(draft?.extras) ? draft.extras : []));
   const [saving, setSaving] = useState(false);
   const [created, setCreated] = useState<Business | null>(null);
   // Code of the Rango field agent who visited the business, carried over from their link.
@@ -139,11 +143,11 @@ export default function CreateBusiness({ onCreated }: { onCreated: (b: Business)
   useEffect(() => {
     if (!profile?.id || created) return;
     try {
-      localStorage.setItem(draftKey(profile.id), JSON.stringify({ step, form, cover, pin } satisfies Draft));
+      localStorage.setItem(draftKey(profile.id), JSON.stringify({ step, form, extras, cover, pin } satisfies Draft));
     } catch {
       /* storage unavailable: the form still works, just without a draft */
     }
-  }, [profile?.id, created, step, form, cover, pin]);
+  }, [profile?.id, created, step, form, extras, cover, pin]);
 
   useEffect(() => {
     window.scrollTo({ top: 0 });
@@ -152,7 +156,11 @@ export default function CreateBusiness({ onCreated }: { onCreated: (b: Business)
   const set = <K extends keyof SetupForm>(key: K, value: SetupForm[K]) => {
     setForm((f) => ({ ...f, [key]: value }));
     // Ready-made covers are per sector; a new category gets a fresh choice.
-    if (key === 'category_id') setCover(null);
+    if (key === 'category_id') {
+      setCover(null);
+      // The primary category is never also an extra one.
+      setExtras((ids) => ids.filter((id) => id !== value));
+    }
     setErrors((e) => ({ ...e, [key]: undefined }));
   };
 
@@ -192,6 +200,7 @@ export default function CreateBusiness({ onCreated }: { onCreated: (b: Business)
           name: form.name.trim(),
           slug,
           category_id: form.category_id,
+          extra_category_ids: extras,
           district: form.district,
           city: form.city,
           address: form.address.trim(),
@@ -314,7 +323,7 @@ export default function CreateBusiness({ onCreated }: { onCreated: (b: Business)
               onBlur={blur('name')}
               placeholder="ör. Atelier Nova Kuaför"
             />
-            <Select label="Kategori" name="category_id" value={form.category_id} error={errors.category_id} hint="Yaptığınız işe en yakın olanı seçin." onChange={(e) => set('category_id', e.target.value)}>
+            <Select label="Ana kategori" name="category_id" value={form.category_id} error={errors.category_id} hint="Yaptığınız işe en yakın olanı seçin." onChange={(e) => set('category_id', e.target.value)}>
               <option value="">Seçin</option>
               {(categories ?? []).map((c) => (
                 <option key={c.id} value={c.id}>
@@ -322,6 +331,7 @@ export default function CreateBusiness({ onCreated }: { onCreated: (b: Business)
                 </option>
               ))}
             </Select>
+            {form.category_id && <ExtraCategoriesField categories={categories ?? []} primaryId={form.category_id} value={extras} onChange={setExtras} />}
             <Select label="Hizmet verilen müşteri" name="gender_focus" value={form.gender_focus} onChange={(e) => set('gender_focus', e.target.value as GenderFocus)}>
               <option value="unisex">Kadın & Erkek</option>
               <option value="female">Kadın</option>

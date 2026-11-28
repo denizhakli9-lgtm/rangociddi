@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, BadgeCheck, CalendarClock, Clock, Heart, MapPin, MessageSquare, Navigation, Share2, ShieldCheck, Star, Store } from 'lucide-react';
 import { fetchBusinessDetail, fetchBusinessReviews } from '@/lib/api';
 import { useCached } from '@/lib/useCached';
+import { useCategories } from '@/lib/landingApi';
+import type { Category } from '@/lib/types';
 import { prerendered } from '@/lib/prerenderData';
 import { useFavorites } from '@/lib/useFavorites';
 import { depositFor, formatDuration, formatRelative, formatTRY, isoWeekday, dateKey, shortTime } from '@/lib/format';
@@ -50,6 +52,8 @@ export default function BusinessDetail() {
   const { ids, toggle } = useFavorites();
   const [tab, setTab] = useState<Tab>('services');
   const [photo, setPhoto] = useState(0);
+  // Resolves the business's extra categories (stored as ids) to names and slugs.
+  const categoriesQ = useCategories();
 
   // A page published as static HTML embeds its data, so the app shows the business at once
   // instead of a spinner; it is always refreshed from the server (ttl 0) because prices and
@@ -103,6 +107,9 @@ export default function BusinessDetail() {
   // City and category links only while the business's city has its own pages (places.ts).
   const pageCity = pagesCityOf(b.city);
   const categoryHref = pageCity && b.categories?.slug ? cityCategoryPath(pageCity, b.categories.slug) : null;
+  const extraCategories = (b.extra_category_ids ?? [])
+    .map((id) => categoriesQ.data?.find((c) => c.id === id))
+    .filter((c): c is Category => !!c);
   const crumbs = [
     { name: 'Rango', path: '/' },
     ...(pageCity ? [{ name: pageCity.name, path: cityPath(pageCity) }] : []),
@@ -169,6 +176,12 @@ export default function BusinessDetail() {
             <div className="mb-4"><Blocks blocks={[{ kind: 'breadcrumb', items: crumbs }]} /></div>
             <div className="flex flex-wrap items-center gap-2 text-[13px] text-mist">
               {categoryHref ? <Link to={categoryHref} className="hover:underline">{categoryLabel}</Link> : categoryLabel}
+              {extraCategories.map((c) => (
+                <Fragment key={c.id}>
+                  <span className="text-mist-3">·</span>
+                  {pageCity ? <Link to={cityCategoryPath(pageCity, c.slug)} className="hover:underline">{categoryName(c)}</Link> : categoryName(c)}
+                </Fragment>
+              ))}
               <span className="text-mist-3">·</span>
               <span>{t.genderFocus[b.gender_focus]}</span>
             </div>

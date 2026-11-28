@@ -30,6 +30,8 @@ export interface PageMeta {
 }
 
 export interface SeoCategory {
+  /** Present when the category list comes from the database; maps `extra_category_ids` to slugs. */
+  id?: string;
   slug: string;
   name: string;
   description?: string | null;
@@ -50,6 +52,8 @@ export interface SeoBusiness {
   review_count?: number | null;
   min_price?: number | string | null;
   categories?: { name?: string | null; slug?: string | null } | null;
+  /** Categories besides the primary one (`categories`); see categorySlugsOf() in listing.ts. */
+  extra_category_ids?: string[] | null;
 }
 
 export interface SeoService {

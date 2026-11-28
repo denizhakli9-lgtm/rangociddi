@@ -1,3 +1,4 @@
+import { isNative } from '@/lib/platform';
 import type { PlatformSettings } from '@/lib/types';
 
 /**
@@ -8,6 +9,15 @@ import type { PlatformSettings } from '@/lib/types';
  */
 export function isDemoBusiness(b: { owner_id?: string | null } | null | undefined): boolean {
   return !!b && b.owner_id === null;
+}
+
+/**
+ * Sample businesses are shown on the website only (labelled "Örnek profil", never bookable). The
+ * Android / iOS app leaves them out of its lists and search: app review treats unbookable sample
+ * listings as placeholder content.
+ */
+export function withoutAppSamples<T>(rows: T[], businessOf: (row: T) => { owner_id?: string | null } | null | undefined): T[] {
+  return isNative ? rows.filter((row) => !isDemoBusiness(businessOf(row))) : rows;
 }
 
 /**

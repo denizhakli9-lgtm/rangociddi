@@ -17,6 +17,8 @@ export interface City {
   plate: number;
   /** Nüfus, milyon (yaklaşık). */
   population: number;
+  /** Müşteriler bu şehirde konum seçebilir ve işletmeler kayıt olabilir. Kapalı şehirler "Yakında" görünür. */
+  active: boolean;
   /** Şehir merkezi: konum seçilmemişken kullanılan nokta. */
   center: District;
   districts: District[];
@@ -29,6 +31,7 @@ export const CITY_LIST: City[] = [
     name: 'İstanbul',
     plate: 34,
     population: 15.7,
+    active: true,
     center: d('Şişli', 41.06, 28.987),
     districts: [
       d('Kadıköy', 40.9906, 29.029),
@@ -59,6 +62,7 @@ export const CITY_LIST: City[] = [
     name: 'Ankara',
     plate: 6,
     population: 5.86,
+    active: true,
     center: d('Kızılay', 39.9208, 32.8541),
     districts: [
       d('Kızılay', 39.9208, 32.8541),
@@ -82,6 +86,7 @@ export const CITY_LIST: City[] = [
     name: 'İzmir',
     plate: 35,
     population: 4.49,
+    active: true,
     center: d('Konak', 38.4189, 27.1287),
     // Pilot şehrin listesi: kayıtlı işletmeler bu adları kullanıyor, sıra ve adlar korunmalı.
     districts: [
@@ -107,6 +112,7 @@ export const CITY_LIST: City[] = [
     name: 'Bursa',
     plate: 16,
     population: 3.24,
+    active: true,
     center: d('Osmangazi', 40.195, 29.06),
     districts: [
       d('Nilüfer', 40.215, 28.985),
@@ -123,6 +129,7 @@ export const CITY_LIST: City[] = [
     name: 'Antalya',
     plate: 7,
     population: 2.72,
+    active: false,
     center: d('Muratpaşa', 36.89, 30.725),
     districts: [
       d('Muratpaşa', 36.89, 30.725),
@@ -139,6 +146,7 @@ export const CITY_LIST: City[] = [
     name: 'Konya',
     plate: 42,
     population: 2.33,
+    active: false,
     center: d('Selçuklu', 37.93, 32.5),
     districts: [
       d('Selçuklu', 37.93, 32.5),
@@ -152,6 +160,7 @@ export const CITY_LIST: City[] = [
     name: 'Adana',
     plate: 1,
     population: 2.28,
+    active: false,
     center: d('Seyhan', 36.9914, 35.3308),
     districts: [
       d('Seyhan', 36.9914, 35.3308),
@@ -166,6 +175,7 @@ export const CITY_LIST: City[] = [
     name: 'Şanlıurfa',
     plate: 63,
     population: 2.24,
+    active: false,
     center: d('Haliliye', 37.16, 38.795),
     districts: [
       d('Haliliye', 37.16, 38.795),
@@ -179,6 +189,7 @@ export const CITY_LIST: City[] = [
     name: 'Gaziantep',
     plate: 27,
     population: 2.18,
+    active: false,
     center: d('Şahinbey', 37.05, 37.36),
     districts: [
       d('Şahinbey', 37.05, 37.36),
@@ -191,6 +202,7 @@ export const CITY_LIST: City[] = [
     name: 'Kocaeli',
     plate: 41,
     population: 2.13,
+    active: false,
     center: d('İzmit', 40.765, 29.94),
     districts: [
       d('İzmit', 40.765, 29.94),
@@ -207,6 +219,7 @@ export const CITY_LIST: City[] = [
     name: 'Mersin',
     plate: 33,
     population: 1.94,
+    active: false,
     center: d('Akdeniz', 36.81, 34.64),
     districts: [
       d('Yenişehir', 36.79, 34.58),
@@ -222,6 +235,7 @@ export const CITY_LIST: City[] = [
     name: 'Diyarbakır',
     plate: 21,
     population: 1.82,
+    active: false,
     center: d('Yenişehir', 37.93, 40.22),
     districts: [
       d('Kayapınar', 37.94, 40.16),
@@ -235,6 +249,7 @@ export const CITY_LIST: City[] = [
     name: 'Hatay',
     plate: 31,
     population: 1.54,
+    active: false,
     center: d('Antakya', 36.202, 36.16),
     districts: [
       d('Antakya', 36.202, 36.16),
@@ -249,6 +264,7 @@ export const CITY_LIST: City[] = [
     name: 'Manisa',
     plate: 45,
     population: 1.48,
+    active: false,
     center: d('Yunusemre', 38.615, 27.4),
     districts: [
       d('Yunusemre', 38.615, 27.4),
@@ -263,6 +279,7 @@ export const CITY_LIST: City[] = [
     name: 'Kayseri',
     plate: 38,
     population: 1.45,
+    active: false,
     center: d('Melikgazi', 38.715, 35.505),
     districts: [
       d('Melikgazi', 38.715, 35.505),
@@ -274,6 +291,9 @@ export const CITY_LIST: City[] = [
     ],
   },
 ];
+
+/** Açık şehirler. Başlangıçta en kalabalık 4 büyükşehir; yeni şehir açmak için o şehirde `active: true` yapmak yeterli. */
+export const ACTIVE_CITIES = CITY_LIST.filter((c) => c.active);
 
 /** Pilot şehir: eski kayıtlarda şehir bilgisi yoksa bu kabul edilir. */
 export const DEFAULT_CITY_NAME = 'İzmir';

@@ -1,5 +1,5 @@
 import { Input, Select, Textarea } from '@/components/ui/Field';
-import { CITY_LIST, cityOrDefault, findCityDistrict } from '@/lib/cities';
+import { ACTIVE_CITIES, cityByName, cityOrDefault, findCityDistrict } from '@/lib/cities';
 import { isEmail, isPhone } from '@/lib/validation';
 import type { Category, GenderFocus } from '@/lib/types';
 
@@ -93,12 +93,17 @@ export function BasicsFields({ form, errors, categories, onChange }: Props) {
   );
 }
 
-/** The cities Rango serves, most populous first. */
+/**
+ * The cities open for businesses, most populous first. A business already saved in a city that
+ * is not open yet keeps it as an option, so editing its profile does not silently move it.
+ */
 export function CitySelect({ value, error, onChange }: { value: string; error?: string; onChange: (city: string) => void }) {
+  const current = cityByName(value);
+  const options = current && !current.active ? [...ACTIVE_CITIES, current] : ACTIVE_CITIES;
   return (
-    <Select label="Şehir" name="city" value={value} error={error} onChange={(e) => onChange(e.target.value)}>
+    <Select label="Şehir" name="city" value={value} error={error} hint={`Şu an ${ACTIVE_CITIES.map((c) => c.name).join(', ')} için kayıt alıyoruz; diğer büyükşehirler yakında.`} onChange={(e) => onChange(e.target.value)}>
       <option value="">Seçin</option>
-      {CITY_LIST.map((c) => (
+      {options.map((c) => (
         <option key={c.name} value={c.name}>
           {c.name}
         </option>

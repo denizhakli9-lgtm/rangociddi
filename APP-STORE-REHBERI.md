@@ -33,7 +33,7 @@ Apple incelemesi genelde 1–2 gün.
 2. iPhone'a App Store'dan **Apple Developer** uygulamasını kur → **Account → Enroll Now**.
 3. Kimlik doğrulaması (TC kimlik kartı olmazsa pasaport), açık adres, ödeme.
 4. 24 saatte "Welcome" e-postası gelmezse: https://developer.apple.com/contact/ (Enrollment ID ile).
-5. Onay gelince https://developer.apple.com/account adresinden **Team ID**'ni not et (10 karakter, ör. `AB12CD34EF`). Bu gizli bir bilgi değil.
+5. Onay gelince https://developer.apple.com/account adresinden **Team ID**'ni not et (10 karakter). Bu gizli bir bilgi değil. Rango'nunki `VYVFYV3996`; projeye işlendi.
 
 ---
 
@@ -101,11 +101,12 @@ Yapılacaklar:
 npm ci
 ```
 ```bash
-IOS_TEAM_ID=AB12CD34EF npm run ios
+npm run ios
 ```
-(`AB12CD34EF` yerine kendi Team ID'n.) Bu komut siteyi derler; `ios/` projesini hazırlar (simge, açılış ekranı, izin metinleri, gizlilik bildirimi, sürüm) ve Xcode'u açar.
-Team ID vermezsen Xcode'da elle seç: sol üstte **App** projesi → **App** hedefi → **Signing & Capabilities** →
-"Automatically manage signing" işaretli → **Team**: kendi hesabın. Bundle Identifier `tr.com.rango.app` olmalı, **değiştirme**.
+Bu komut siteyi derler; `ios/` projesini hazırlar (simge, açılış ekranı, izin metinleri, gizlilik bildirimi, sürüm) ve Xcode'u açar.
+Rango'nun Team ID'si (`VYVFYV3996`) projeye işlendi; ayrıca yazman gerekmez. Xcode'da **App** projesi → **App** hedefi →
+**Signing & Capabilities** altında "Automatically manage signing" işaretli ve **Team** Apple hesabın olmalı; Xcode bir kez
+Apple hesabınla giriş yapmanı isteyebilir (Xcode → Settings → Accounts). Bundle Identifier `tr.com.rango.app` olmalı, **değiştirme**.
 
 **Simülatörde dene:** Xcode üst çubuğunda cihaz olarak **iPhone 17 Pro Max**'i seç → ▶ (Run).
 **Kendi iPhone'unda dene (önerilir):** iPhone'u kabloyla bağla. iPhone'da Ayarlar → Gizlilik ve Güvenlik → **Geliştirici Modu**'nu aç. Xcode'da cihazı seç → ▶.
@@ -231,7 +232,7 @@ Kart numarası PayTR'nin sayfasında girilir; Rango toplamaz.
 
 1. Kodda değişiklik olduysa:
    ```bash
-   IOS_TEAM_ID=AB12CD34EF npm run ios
+   npm run ios
    ```
 2. Xcode üst çubuğunda cihaz: **Any iOS Device (arm64)**.
 3. **Product → Archive.** Bitince **Organizer** açılır.
@@ -241,7 +242,7 @@ Kart numarası PayTR'nin sayfasında girilir; Rango toplamaz.
 
 **Sonraki her yüklemede** derleme numarasını artır (aynı numara ikinci kez kabul edilmez):
 ```bash
-IOS_BUILD_NUMBER=2 IOS_TEAM_ID=AB12CD34EF npm run ios
+IOS_BUILD_NUMBER=2 npm run ios
 ```
 Yeni sürüm (ör. 1.0.1) için `IOS_VERSION=1.0.1 IOS_BUILD_NUMBER=3 …`.
 

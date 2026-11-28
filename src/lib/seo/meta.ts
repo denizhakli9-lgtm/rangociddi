@@ -8,7 +8,8 @@
 import { COMPANY, LEGAL_LINKS, type LegalSlug } from '../legal';
 import { isTestBusiness } from './config';
 import { formatPrice } from './format';
-import { DEFAULT_CITY, cityCategoryPath, cityPath } from './places';
+import { ALL_DISTRICTS } from '../cities';
+import { DEFAULT_CITY, cityCategoryPath, cityPath, pagesCityOf } from './places';
 
 export const SITE_URL = 'https://rango.com.tr';
 export const SITE_NAME = 'Rango';
@@ -193,7 +194,7 @@ const MAX_SCHEMA_REVIEWS = 5;
 
 /** Same test as `isDistrictCentre` in src/lib/maps.ts. */
 function isDistrictCentre(latitude: number, longitude: number): boolean {
-  return DEFAULT_CITY.districts.some((d) => Math.abs(d.lat - latitude) < 0.00005 && Math.abs(d.lng - longitude) < 0.00005);
+  return ALL_DISTRICTS.some(({ district: d }) => Math.abs(d.lat - latitude) < 0.00005 && Math.abs(d.lng - longitude) < 0.00005);
 }
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -371,11 +372,13 @@ export function businessMeta(
   const category = categoryLabel || b.categories?.name || '';
   const place = [b.district, b.city].filter(Boolean).join(', ');
   const indexable = isIndexableBusiness(b, services);
-  const crumbs = [
-    { name: SITE_NAME, path: '/' },
-    { name: DEFAULT_CITY.name, path: cityPath(DEFAULT_CITY) },
-  ];
-  if (b.categories?.slug && category) crumbs.push({ name: category, path: categoryPath(b.categories.slug) });
+  // City and category crumbs only while the business's city has its own pages.
+  const pageCity = pagesCityOf(b.city);
+  const crumbs = [{ name: SITE_NAME, path: '/' }];
+  if (pageCity) {
+    crumbs.push({ name: pageCity.name, path: cityPath(pageCity) });
+    if (b.categories?.slug && category) crumbs.push({ name: category, path: cityCategoryPath(pageCity, b.categories.slug) });
+  }
   crumbs.push({ name: b.name, path: businessPath(b.slug) });
 
   // Title: the fullest form that fits a search result; optional parts are dropped, never cut mid-word.

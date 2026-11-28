@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ExternalLink, ImagePlus, Save, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { cityOrDefault } from '@/lib/cities';
 import { useAsync } from '@/lib/useAsync';
 import { fetchCategories } from '@/lib/api';
 import { depositFor, formatTRY } from '@/lib/format';
@@ -18,7 +19,7 @@ import { Spinner } from '@/components/ui/Feedback';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useOwnerBusiness } from './OwnerContext';
 import { useImageUpload } from './useImageUpload';
-import { hasExactPin, type Coords } from '@/lib/maps';
+import { hasExactPin, isInCity, type Coords } from '@/lib/maps';
 import { BasicsFields, districtCoords, validateBasics, type BasicsErrors, type BasicsForm } from './BusinessFields';
 import { LocationField } from './LocationField';
 import { SectorCoverPicker } from './SectorCoverPicker';
@@ -37,6 +38,7 @@ export default function BusinessProfile() {
   const [basics, setBasics] = useState<BasicsForm>({
     name: business.name,
     category_id: business.category_id,
+    city: cityOrDefault(business.city).name,
     district: business.district,
     address: business.address,
     phone: business.phone ?? '',
@@ -60,6 +62,8 @@ export default function BusinessProfile() {
 
   const setBasic = <K extends keyof BasicsForm>(key: K, value: BasicsForm[K]) => {
     setBasics((f) => ({ ...f, [key]: value }));
+    // A pin from another city would leave the saved city and coordinates disagreeing.
+    if (key === 'city' && pin && !isInCity(pin, value as string)) setPin(null);
     setErrors((e) => ({ ...e, [key]: undefined }));
   };
 
@@ -77,12 +81,13 @@ export default function BusinessProfile() {
       return;
     }
     setSaving(true);
-    const coords = pin ?? districtCoords(basics.district);
+    const coords = pin ?? districtCoords(basics.city, basics.district);
     const { error } = await supabase
       .from('businesses')
       .update({
         name: basics.name.trim(),
         category_id: basics.category_id,
+        city: basics.city,
         district: basics.district,
         address: basics.address.trim(),
         phone: basics.phone.trim(),
@@ -198,7 +203,7 @@ export default function BusinessProfile() {
         <section className="card p-6">
           <h2 className="mb-1 text-base font-semibold text-white">Mağaza konumu</h2>
           <p className="mb-5 text-xs text-mist-2">Müşteriler profilinizdeki “Yol tarifi al” butonuyla doğrudan bu noktaya yönlendirilir.</p>
-          <LocationField value={pin} district={basics.district} onChange={setPin} />
+          <LocationField value={pin} city={basics.city} district={basics.district} onChange={setPin} />
         </section>
 
         <section className="card p-6">

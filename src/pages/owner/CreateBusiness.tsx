@@ -7,7 +7,7 @@ import { BUSINESS_LIST_COLUMNS, fetchCategories } from '@/lib/api';
 import { claimBusinessReferral, clearStoredReferralCode, normalizeReferralCode, REFERRAL_CODE_PATTERN, storedReferralCode } from '@/lib/fieldAgent';
 import { slugify } from '@/lib/format';
 import { friendlyError } from '@/lib/errors';
-import { IZMIR_DISTRICTS, distanceKm } from '@/lib/geo';
+import { acceptsBusinesses, areaAt, cityByName, cityOrDefault, findCityDistrict } from '@/lib/cities';
 import { formatTrPhone, isPhone } from '@/lib/validation';
 import { isReservedEmail } from '@/lib/phoneLogin';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,8 +16,8 @@ import { AuthShell } from '@/pages/auth/AuthShell';
 import { Button } from '@/components/ui/Button';
 import { Input, Select, Textarea } from '@/components/ui/Field';
 import type { Business, GenderFocus } from '@/lib/types';
-import type { Coords } from '@/lib/maps';
-import { districtCoords } from './BusinessFields';
+import { isInCity, type Coords } from '@/lib/maps';
+import { CitySelect, districtCoords } from './BusinessFields';
 import { LocationField } from './LocationField';
 import { SectorCoverPicker } from './SectorCoverPicker';
 
@@ -35,6 +35,7 @@ interface SetupForm {
   category_id: string;
   gender_focus: GenderFocus;
   phone: string;
+  city: string;
   district: string;
   address: string;
   description: string;
@@ -96,7 +97,8 @@ function validateStep(step: number, f: SetupForm): SetupErrors {
     if (!isPhone(f.phone)) e.phone = 'Geçerli bir telefon numarası girin (ör. 0532 123 45 67).';
   }
   if (step === 1) {
-    if (!f.district) e.district = 'Bir ilçe seçin.';
+    if (!acceptsBusinesses(cityByName(f.city))) e.city = 'Listeden bir şehir seçin.';
+    if (!f.district || !findCityDistrict(f.city, f.district)) e.district = 'Bir ilçe seçin.';
   }
   if (step === 2) {
     if (f.description.length > 1000) e.description = 'Açıklama en fazla 1000 karakter olabilir.';
@@ -104,18 +106,6 @@ function validateStep(step: number, f: SetupForm): SetupErrors {
   return e;
 }
 
-function nearestDistrict(c: Coords): string {
-  let best = IZMIR_DISTRICTS[0];
-  let bestKm = Infinity;
-  for (const d of IZMIR_DISTRICTS) {
-    const km = distanceKm(c.latitude, c.longitude, d.lat, d.lng);
-    if (km < bestKm) {
-      best = d;
-      bestKm = km;
-    }
-  }
-  return best.name;
-}
 
 export default function CreateBusiness({ onCreated }: { onCreated: (b: Business) => void }) {
   const { profile, signOut } = useAuth();
@@ -129,6 +119,9 @@ export default function CreateBusiness({ onCreated }: { onCreated: (b: Business)
     category_id: '',
     gender_focus: 'unisex',
     phone: formatTrPhone(profile?.phone ?? ''),
+    // Not taken from profile.city: that column defaults to İzmir for every account. A draft saved
+    // before cities existed already has an İzmir district, so it stays in İzmir.
+    city: (draft?.form as Partial<SetupForm> | undefined)?.city === undefined && draft?.form?.district ? 'İzmir' : '',
     district: '',
     address: '',
     description: '',
@@ -170,8 +163,14 @@ export default function CreateBusiness({ onCreated }: { onCreated: (b: Business)
 
   const changePin = (c: Coords | null) => {
     setPin(c);
-    // A pinned location tells us the district; fill it in if it is still empty.
-    if (c && !form.district) set('district', nearestDistrict(c));
+    // A pinned location tells us the city and district; fill them in if the district is still empty.
+    if (c && !form.district) {
+      const area = areaAt(c.latitude, c.longitude);
+      if (area && acceptsBusinesses(area.city)) {
+        set('city', area.city.name);
+        set('district', area.district.name);
+      }
+    }
   };
 
   const create = async () => {
@@ -194,7 +193,7 @@ export default function CreateBusiness({ onCreated }: { onCreated: (b: Business)
           slug,
           category_id: form.category_id,
           district: form.district,
-          city: 'İzmir',
+          city: form.city,
           address: form.address.trim(),
           phone: form.phone.trim(),
           // Never publish a phone account's technical login address as the salon's e-mail.
@@ -202,7 +201,7 @@ export default function CreateBusiness({ onCreated }: { onCreated: (b: Business)
           description: form.description.trim(),
           gender_focus: form.gender_focus,
           cover_url: cover,
-          ...(pin ?? districtCoords(form.district)),
+          ...(pin ?? districtCoords(form.city, form.district)),
         })
         .select(BUSINESS_LIST_COLUMNS)
         .maybeSingle();
@@ -357,11 +356,21 @@ export default function CreateBusiness({ onCreated }: { onCreated: (b: Business)
 
         {step === 1 && (
           <div className="space-y-6">
-            <LocationField value={pin} district={form.district} onChange={changePin} />
+            <LocationField value={pin} city={form.city} district={form.district} onChange={changePin} />
             <div className="space-y-4 border-t border-line pt-6">
-              <Select label="İlçe (İzmir)" name="district" value={form.district} error={errors.district} hint="Konumunuzu eklediyseniz ilçeyi sizin için seçtik; yanlışsa değiştirin." onChange={(e) => set('district', e.target.value)}>
+              <CitySelect
+                value={form.city}
+                error={errors.city}
+                onChange={(city) => {
+                  set('city', city);
+                  set('district', '');
+                  // A pin from another city would leave the saved city and coordinates disagreeing.
+                  if (pin && !isInCity(pin, city)) setPin(null);
+                }}
+              />
+              <Select label={`İlçe / semt (${form.city || 'önce şehir seçin'})`} name="district" value={form.district} error={errors.district} disabled={!form.city} hint="Konumunuzu eklediyseniz şehri ve ilçeyi sizin için seçtik; yanlışsa değiştirin." onChange={(e) => set('district', e.target.value)}>
                 <option value="">Seçin</option>
-                {IZMIR_DISTRICTS.map((d) => (
+                {cityOrDefault(form.city).districts.map((d) => (
                   <option key={d.name} value={d.name}>
                     {d.name}
                   </option>

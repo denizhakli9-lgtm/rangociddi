@@ -1,11 +1,11 @@
 /**
  * Şehir ve semt sayfalarının adresleri (`/izmir`, `/izmir/karsiyaka`, `/izmir/karsiyaka/berber`).
  *
- * Semt listesi uygulamanın kendi listesidir (`src/lib/geo.ts`); işletme sahipleri ilçeyi bu
+ * Semt listesi uygulamanın kendi listesidir (`src/lib/cities.ts`); işletme sahipleri ilçeyi bu
  * listeden seçtiği için işletmelerin `district` alanı buradaki adlarla birebir aynıdır.
  * Saf veri/işlev dosyasıdır: hem tarayıcıda hem derleme eklentisinde kullanılır.
  */
-import { IZMIR_DISTRICTS } from '../geo';
+import { cityOrDefault } from '../cities';
 
 export interface PlaceDistrict {
   name: string;
@@ -58,16 +58,36 @@ export function locativeTr(name: string): string {
   return `${name}’${consonant}${vowel}`;
 }
 
-export const CITIES: PlaceCity[] = [
-  {
-    name: 'İzmir',
-    slug: 'izmir',
-    districts: IZMIR_DISTRICTS.map((d) => ({ name: d.name, slug: slugifyTr(d.name), lat: d.lat, lng: d.lng })),
-  },
-];
+/**
+ * Kendi sayfaları (`/izmir`, `/izmir/karsiyaka`, …) olan şehirler.
+ *
+ * Uygulama `src/lib/cities.ts` içindeki tüm açık şehirlerde çalışır, ama bir şehrin sayfaları
+ * ancak o şehirde işletme kayıtları başladığında açılır; boş şehir sayfası üretilmez. Şimdilik
+ * yalnızca kayıtlı işletmesi olan pilot şehir İzmir burada.
+ *
+ * Yeni bir şehrin sayfalarını açmak: adını bu listeye ekleyin. Not: statik derleme
+ * (seo/prerender.ts) şu an yalnızca `DEFAULT_CITY` için sayfa ve sitemap üretiyor; ikinci şehir
+ * açılırken orası da bu listeyi dolaşacak şekilde güncellenmeli.
+ */
+const CITIES_WITH_PAGES = ['İzmir'];
+
+export const CITIES: PlaceCity[] = CITIES_WITH_PAGES.map((name) => {
+  const city = cityOrDefault(name);
+  return { name: city.name, slug: slugifyTr(city.name), districts: city.districts.map((d) => ({ name: d.name, slug: slugifyTr(d.name), lat: d.lat, lng: d.lng })) };
+});
 
 /** Rango's pilot city; every landing address currently starts with it. */
 export const DEFAULT_CITY = CITIES[0];
+
+/**
+ * The landing-page city a business belongs to, or undefined while its city has no pages yet
+ * (its page then links to neither a city nor a city category). Records saved before cities
+ * existed have no other city than İzmir.
+ */
+export function pagesCityOf(cityName: string | null | undefined): PlaceCity | undefined {
+  const name = (cityName?.trim() || DEFAULT_CITY.name).toLocaleLowerCase('tr-TR');
+  return CITIES.find((c) => c.name.toLocaleLowerCase('tr-TR') === name);
+}
 
 export function findCity(slug: string | undefined): PlaceCity | undefined {
   return CITIES.find((c) => c.slug === slug);
